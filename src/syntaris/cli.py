@@ -6,7 +6,7 @@ from syntaris.bootstrap.init_app import build_runtime
 from syntaris.contracts.runtime import TalkRequest
 from syntaris.orchestration.doctor import run_doctor
 from syntaris.orchestration.live_loop import run_live_loop, run_live_loop_interactive
-from syntaris.orchestration.talk import init_db, list_threads, resolve_active_state, talk_once, trace_last
+from syntaris.orchestration.talk import init_db, list_threads, session_status, talk_once, trace_last
 from syntaris.trace.events import build_boot_trace
 
 
@@ -50,6 +50,8 @@ def _print_turn_result(result) -> None:
                     "reason": result.route.reason,
                     "thread_key": result.route.thread_key,
                     "created_thread": result.route.created_thread,
+                    "pending_resolution": result.route.pending_resolution.value,
+                    "execution_message": result.route.execution_message,
                     "transition": {
                         "before_thread_id": result.route.transition.before_thread_id,
                         "before_thread_key": result.route.transition.before_thread_key,
@@ -62,6 +64,12 @@ def _print_turn_result(result) -> None:
                     }
                     if result.route.transition
                     else None,
+                    "pending_proposal": {
+                        "proposed_thread_key": result.route.pending_proposal.proposed_thread_key,
+                        "current_thread_key": result.route.pending_proposal.current_thread_key,
+                        "reason": result.route.pending_proposal.reason,
+                        "held_user_message": result.route.pending_proposal.held_user_message,
+                    } if result.route.pending_proposal else None,
                 },
             },
             indent=2,
@@ -103,7 +111,7 @@ def main() -> int:
             return 0
 
         if args.script:
-            with open(args.script, "r", encoding="utf-8") as f:
+            with open(args.script, "r", encoding="utf-8-sig") as f:
                 lines = [line.rstrip("\n") for line in f]
             result = run_live_loop(runtime, lines)
             for output in result.outputs:
@@ -121,6 +129,12 @@ def main() -> int:
                             "turn_id": output.turn_id,
                             "backend": output.backend,
                             "degraded": output.degraded,
+                            "pending_route": {
+                                "pending_action": output.state.pending_route.pending_action,
+                                "pending_thread_key": output.state.pending_route.pending_thread_key,
+                                "pending_reason": output.state.pending_route.pending_reason,
+                                "pending_original_message": output.state.pending_route.pending_original_message,
+                            } if output.state.pending_route else None,
                         },
                         sort_keys=True,
                     )
@@ -128,7 +142,7 @@ def main() -> int:
             return 0
 
     if args.command == "session-status":
-        state = resolve_active_state(runtime)
+        state = session_status(runtime)
         print(
             json.dumps(
                 {
@@ -140,6 +154,15 @@ def main() -> int:
                     "last_turn_id": state.last_turn_id,
                     "previous_thread_id": state.previous_thread_id,
                     "previous_thread_key": state.previous_thread_key,
+                    "pending_route": {
+                        "pending_action": state.pending_route.pending_action,
+                        "pending_thread_key": state.pending_route.pending_thread_key,
+                        "pending_reason": state.pending_route.pending_reason,
+                        "pending_original_message": state.pending_route.pending_original_message,
+                        "match_pattern": state.pending_route.match_pattern,
+                        "source": state.pending_route.source,
+                        "proposed_at": state.pending_route.proposed_at,
+                    } if state.pending_route else None,
                 },
                 indent=2,
             )

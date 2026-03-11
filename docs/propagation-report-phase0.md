@@ -1,3 +1,11 @@
+## REBUILD-007 propagation
+
+- Contracts extended with first-class pending-route proposal/status/resolution types.
+- Orchestration now runs a shared pre-turn route/pending resolver across once/live/script paths.
+- Persistence now stores pending-route state explicitly in `app_meta.pending_route`.
+- CLI `session-status` and scripted live output expose pending metadata.
+- Trace payloads include pending proposal/resolution metadata.
+
 # Propagation report — REBUILD-006 deterministic topic-shift + previous-thread foundation
 
 ## Direct changes

@@ -1,3 +1,19 @@
+## 0.7.1 - REBUILD-007a previous-thread suggestive + BOM-safe script hotfix
+
+- Reclassified `folytassuk az előzőt` as suggestive previous-thread routing so it creates pending clarification instead of direct switch.
+- Fixed pending proposal trace/action propagation to preserve `propose_switch_previous` for previous-thread suggestive proposals.
+- Made `talk --script` BOM-safe by reading script input with UTF-8 BOM handling (`utf-8-sig`).
+- Added deterministic tests for previous-thread pending confirm/reject flow and BOM-prefixed scripted pending resolution.
+
+## 0.7.0 - REBUILD-007 deterministic pending-route clarification foundation
+
+- Added first-class pending-route contracts (`PendingRouteProposal`, `PendingRouteStatusView`, `PendingResolutionAction`, `SessionStatusView`) and extended route decision metadata.
+- Extended deterministic Hungarian-first routing with suggestive phrase families that create persisted pending proposals instead of immediate route changes.
+- Added deterministic yes/no pending resolution (confirm/reject/cancel) with held-message execution semantics.
+- Kept once/live/script aligned through shared route+pending resolution before normal turn execution.
+- Exposed pending state via `session-status` and propagated pending metadata to trace events and payloads.
+- Added deterministic tests for suggestive pending proposals, confirmation/rejection/cancellation behavior, and live loop alignment.
+
 # Changelog
 
 ## 0.6.0 - REBUILD-006 deterministic topic-shift + previous-thread foundation

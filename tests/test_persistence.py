@@ -1,5 +1,6 @@
 import sqlite3
 
+from syntaris.contracts.runtime import PendingRouteProposal
 from syntaris.persistence.store import PersistenceStore
 
 
@@ -115,3 +116,32 @@ def test_active_state_tracks_previous_thread(tmp_path):
     assert back is not None
     assert back.thread_key == "work"
     assert back.previous_thread_key == "default"
+
+
+def test_pending_route_roundtrip(tmp_path):
+    db_path = tmp_path / "runtime.db"
+    store = PersistenceStore(str(db_path))
+    store.initialize(data_dir=str(tmp_path))
+
+    state = store.resolve_or_create_active(default_thread_key="default", default_mode="chat")
+    pending = store.set_pending_route(
+        proposal=PendingRouteProposal(
+            held_user_message="folytassuk a worköt",
+            proposed_thread_key="work",
+            current_thread_key="default",
+            reason="matched_suggestive_named_thread_phrase",
+            match_pattern="suggestive_named_folytassuk",
+            source="talk_once",
+            proposed_at="2024-01-01T00:00:00+00:00",
+        )
+    )
+    assert pending.pending_thread_key == "work"
+
+    status = store.get_session_status_view(default_thread_key="default", default_mode="chat")
+    assert status.session_id == state.session_id
+    assert status.pending_route is not None
+    assert status.pending_route.pending_original_message == "folytassuk a worköt"
+
+    store.clear_pending_route()
+    cleared = store.get_session_status_view(default_thread_key="default", default_mode="chat")
+    assert cleared.pending_route is None

@@ -17,7 +17,7 @@ def build_turn_trace_events(
     source: str,
     route: RouteDecision,
 ) -> list[dict[str, object]]:
-    return [
+    events = [
         {
             "event_name": "route_decision_computed",
             "payload": {
@@ -34,6 +34,8 @@ def build_turn_trace_events(
                 "after_thread_key": route.transition.after_thread_key if route.transition else None,
                 "after_previous_thread_id": route.transition.after_previous_thread_id if route.transition else None,
                 "after_previous_thread_key": route.transition.after_previous_thread_key if route.transition else None,
+                "pending_resolution": route.pending_resolution.value,
+                "execution_message": route.execution_message,
             },
         },
         {
@@ -64,3 +66,23 @@ def build_turn_trace_events(
             "payload": {"source": source},
         },
     ]
+
+    if route.action.value.startswith("propose_switch"):
+        events.append(
+            {
+                "event_name": "pending_route_proposed",
+                "payload": {
+                    "target_thread_key": route.pending_proposal.proposed_thread_key if route.pending_proposal else route.thread_key,
+                    "reason": route.reason,
+                },
+            }
+        )
+
+    if route.pending_resolution.value == "confirmed":
+        events.append({"event_name": "pending_route_confirmed", "payload": {"executed_message": route.execution_message}})
+    elif route.pending_resolution.value == "rejected":
+        events.append({"event_name": "pending_route_rejected", "payload": {"executed_message": route.execution_message}})
+    elif route.pending_resolution.value == "cancelled":
+        events.append({"event_name": "pending_route_cancelled", "payload": {"new_message": turn.user_message}})
+
+    return events

@@ -1,6 +1,6 @@
 # Syntaris (Greenfield Rebuild)
 
-Phase-0 runtime foundation with an explicit session/thread/mode conversational state layer.
+Phase-0 runtime foundation with an explicit session/thread/mode conversational state layer plus deterministic pending-route clarification for suggestive routing phrases.
 
 ## Current scope
 

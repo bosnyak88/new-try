@@ -94,6 +94,7 @@ class ActiveConversationState:
     last_turn_id: int | None = None
     previous_thread_id: int | None = None
     previous_thread_key: str | None = None
+    pending_route: PendingRouteStatusView | None = None
 
 
 @dataclass(frozen=True)
@@ -108,7 +109,38 @@ class RouteDecisionAction(str, Enum):
     SWITCH_EXISTING = "switch_existing"
     CREATE_AND_SWITCH = "create_and_switch"
     SWITCH_PREVIOUS = "switch_previous"
+    PROPOSE_SWITCH_EXISTING = "propose_switch_existing"
+    PROPOSE_SWITCH_PREVIOUS = "propose_switch_previous"
     NO_ROUTE_CHANGE = "no_route_change"
+
+
+class PendingResolutionAction(str, Enum):
+    NONE = "none"
+    CONFIRMED = "confirmed"
+    REJECTED = "rejected"
+    CANCELLED = "cancelled"
+
+
+@dataclass(frozen=True)
+class PendingRouteProposal:
+    held_user_message: str
+    proposed_thread_key: str
+    current_thread_key: str
+    reason: str
+    match_pattern: str | None
+    source: str
+    proposed_at: str
+
+
+@dataclass(frozen=True)
+class PendingRouteStatusView:
+    pending_action: str
+    pending_thread_key: str
+    pending_reason: str
+    pending_original_message: str
+    match_pattern: str | None
+    source: str
+    proposed_at: str
 
 
 @dataclass(frozen=True)
@@ -137,6 +169,9 @@ class RouteDecision:
     match: RouteMatch | None = None
     created_thread: bool = False
     transition: RouteStateTransition | None = None
+    pending_proposal: PendingRouteProposal | None = None
+    pending_resolution: PendingResolutionAction = PendingResolutionAction.NONE
+    execution_message: str | None = None
 
 
 @dataclass(frozen=True)
@@ -186,6 +221,7 @@ class LiveConversationState:
     last_turn_id: int | None
     previous_thread_id: int | None = None
     previous_thread_key: str | None = None
+    pending_route: PendingRouteStatusView | None = None
 
 
 @dataclass(frozen=True)
@@ -196,6 +232,19 @@ class LiveTurnOutput:
     turn_id: int | None = None
     backend: str | None = None
     degraded: bool | None = None
+
+
+@dataclass(frozen=True)
+class SessionStatusView:
+    session_id: int
+    thread_id: int
+    thread_key: str
+    mode: str
+    turn_count: int
+    last_turn_id: int | None
+    previous_thread_id: int | None = None
+    previous_thread_key: str | None = None
+    pending_route: PendingRouteStatusView | None = None
 
 
 @dataclass(frozen=True)

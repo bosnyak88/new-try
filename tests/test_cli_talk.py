@@ -214,3 +214,144 @@ def test_previous_thread_and_topic_shift_phrases(tmp_path, monkeypatch, capsys):
     third = json.loads(capsys.readouterr().out)
     assert third["thread_key"] == "admin"
     assert third["route"]["action"] == "switch_previous"
+
+
+def test_cli_pending_route_confirm_and_reject(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "vissza a default szálra"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "folytassuk a worköt"])
+    cli.main()
+    proposed = json.loads(capsys.readouterr().out)
+    assert proposed["route"]["action"] == "propose_switch_existing"
+    assert "váltsak" in proposed["reply"]
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "session-status"])
+    cli.main()
+    status = json.loads(capsys.readouterr().out)
+    assert status["pending_route"]["pending_thread_key"] == "work"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "igen"])
+    cli.main()
+    confirmed = json.loads(capsys.readouterr().out)
+    assert confirmed["thread_key"] == "work"
+    assert confirmed["route"]["pending_resolution"] == "confirmed"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "vissza a default szálra"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "folytassuk a worköt"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "nem"])
+    cli.main()
+    rejected = json.loads(capsys.readouterr().out)
+    assert rejected["thread_key"] == "default"
+    assert rejected["route"]["pending_resolution"] == "rejected"
+
+
+def test_cli_pending_cancel_and_trace(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work"])
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "vissza a default szálra"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "folytassuk a worköt"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "valami más"])
+    cli.main()
+    out = json.loads(capsys.readouterr().out)
+    assert out["route"]["pending_resolution"] == "cancelled"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
+    cli.main()
+    trace = json.loads(capsys.readouterr().out)
+    names = [event["event_name"] for event in trace["trace_events"]]
+    assert "pending_route_cancelled" in names
+
+
+def test_cli_previous_suggestive_pending_confirm_reject(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work"])
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "vissza a default szálra"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "folytassuk az előzőt"])
+    cli.main()
+    proposed = json.loads(capsys.readouterr().out)
+    assert proposed["route"]["action"] == "propose_switch_previous"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "session-status"])
+    cli.main()
+    status = json.loads(capsys.readouterr().out)
+    assert status["pending_route"] is not None
+    assert status["pending_route"]["pending_thread_key"] == "work"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "igen"])
+    cli.main()
+    confirmed = json.loads(capsys.readouterr().out)
+    assert confirmed["thread_key"] == "work"
+    assert confirmed["route"]["pending_resolution"] == "confirmed"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "vissza a default szálra"])
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "folytassuk az előzőt"])
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "nem"])
+    cli.main()
+    rejected = json.loads(capsys.readouterr().out)
+    assert rejected["thread_key"] == "default"
+    assert rejected["route"]["pending_resolution"] == "rejected"
+
+
+def test_cli_script_bom_safe_pending(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    script = tmp_path / "bom-script.txt"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work"])
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "vissza a default szálra"])
+    cli.main()
+    capsys.readouterr()
+
+    script.write_text("﻿folytassuk az előzőt\nigen\n/kilep\n", encoding="utf-8")
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--script", str(script)])
+    assert cli.main() == 0
+    lines = [json.loads(line) for line in capsys.readouterr().out.strip().splitlines()]
+    turns = [line for line in lines if line["kind"] == "turn"]
+    assert turns[0]["message"].startswith("A(z) work")
+    assert turns[1]["thread_key"] == "work"

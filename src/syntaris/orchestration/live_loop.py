@@ -61,6 +61,7 @@ def _to_live_state(context: RuntimeContext) -> LiveConversationState:
         last_turn_id=state.last_turn_id,
         previous_thread_id=state.previous_thread_id,
         previous_thread_key=state.previous_thread_key,
+        pending_route=state.pending_route,
     )
 
 
@@ -183,4 +184,13 @@ def _status_payload(state: LiveConversationState) -> dict[str, int | str | None]
         "last_turn_id": state.last_turn_id,
         "previous_thread_id": state.previous_thread_id,
         "previous_thread_key": state.previous_thread_key,
+        "pending_route": {
+            "pending_action": state.pending_route.pending_action,
+            "pending_thread_key": state.pending_route.pending_thread_key,
+            "pending_reason": state.pending_route.pending_reason,
+            "pending_original_message": state.pending_route.pending_original_message,
+            "match_pattern": state.pending_route.match_pattern,
+            "source": state.pending_route.source,
+            "proposed_at": state.pending_route.proposed_at,
+        } if state.pending_route else None,
     }
