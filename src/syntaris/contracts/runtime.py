@@ -101,6 +101,45 @@ class TalkRequest:
     mode: str | None = None
 
 
+class RouteDecisionAction(str, Enum):
+    CONTINUE_ACTIVE = "continue_active"
+    SWITCH_EXISTING = "switch_existing"
+    CREATE_AND_SWITCH = "create_and_switch"
+    NO_ROUTE_CHANGE = "no_route_change"
+
+
+@dataclass(frozen=True)
+class RouteMatch:
+    pattern_name: str
+    thread_key: str
+
+
+@dataclass(frozen=True)
+class RouteDecision:
+    action: RouteDecisionAction
+    reason: str
+    thread_key: str | None = None
+    match: RouteMatch | None = None
+    created_thread: bool = False
+
+
+@dataclass(frozen=True)
+class ThreadSummaryView:
+    thread_id: int
+    thread_key: str
+    turn_count: int
+    last_turn_id: int | None
+    is_active: bool
+
+
+@dataclass(frozen=True)
+class ThreadListView:
+    session_id: int
+    active_thread_id: int
+    active_thread_key: str
+    threads: list[ThreadSummaryView]
+
+
 class LoopAction(str, Enum):
     TURN = "turn"
     STATUS = "status"

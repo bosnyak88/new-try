@@ -66,3 +66,20 @@ def test_live_loop_controls_not_persisted_as_turns(tmp_path):
     assert last.turn.user_message == "masodik"
     assert last.turn.thread_key == "munka"
     assert last.turn.mode == "focus"
+
+
+def test_live_loop_natural_routing_and_slash_precedence(tmp_path):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+    runtime = build_runtime(config_path=str(config))
+
+    result = run_live_loop(runtime, ["új szál: work", "/szal manual", "vissza a work szálra", "/kilep"])
+    turns = [item for item in result.outputs if item.kind == "turn"]
+    assert turns[0].state.thread_key == "work"
+    assert turns[1].state.thread_key == "work"
+
+    controls = [item for item in result.outputs if item.kind == "control"]
+    assert len(controls) == 1
+    assert '"thread_key": "manual"' in controls[0].message

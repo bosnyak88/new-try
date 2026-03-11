@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0 - REBUILD-005 deterministic natural thread routing
+
+- Added first-class routing contracts and thread list view contracts.
+- Added deterministic Hungarian-first natural route resolver for return/switch and create/switch thread phrases.
+- Unified routing path in shared turn execution for once/live/script message execution.
+- Added `thread-list` CLI command for known-thread inspection and active marker visibility.
+- Extended turn trace events with route decision metadata.
+- Added deterministic tests for route matching, route precedence, thread listing, and trace alignment.
+- Updated architecture/operations/bootstrap/README propagation docs for route behavior and precedence.
+
 ## 0.4.0 - REBUILD-004 multi-turn conversational loop
 
 - Added live-loop contracts: `LoopAction`, `LoopCommand`, `LiveConversationState`, and `LiveTurnOutput`.

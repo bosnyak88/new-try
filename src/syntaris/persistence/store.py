@@ -10,7 +10,9 @@ from syntaris.contracts.runtime import (
     LastTurnTraceView,
     PersistenceBootstrapResult,
     SessionRecord,
+    ThreadListView,
     ThreadRecord,
+    ThreadSummaryView,
     TraceEventRecord,
     TurnResult,
 )
@@ -200,6 +202,46 @@ class PersistenceStore:
                 session_id=session_id,
                 thread_key=thread_key,
                 created_at=datetime.fromisoformat(str(row["created_at"])),
+            )
+
+
+    def list_threads_view(self, session_id: int, active_thread_id: int) -> ThreadListView:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                """
+                SELECT
+                    t.thread_id,
+                    t.thread_key,
+                    COUNT(turns.turn_id) AS turn_count,
+                    MAX(turns.turn_id) AS last_turn_id
+                FROM threads t
+                LEFT JOIN turns ON turns.thread_id = t.thread_id
+                WHERE t.session_id = ?
+                GROUP BY t.thread_id, t.thread_key
+                ORDER BY t.thread_id ASC
+                """,
+                (session_id,),
+            ).fetchall()
+
+            threads = [
+                ThreadSummaryView(
+                    thread_id=int(row["thread_id"]),
+                    thread_key=str(row["thread_key"]),
+                    turn_count=int(row["turn_count"] or 0),
+                    last_turn_id=int(row["last_turn_id"]) if row["last_turn_id"] is not None else None,
+                    is_active=int(row["thread_id"]) == active_thread_id,
+                )
+                for row in rows
+            ]
+
+            active_thread = next((thread for thread in threads if thread.thread_id == active_thread_id), None)
+            active_key = active_thread.thread_key if active_thread is not None else ""
+            return ThreadListView(
+                session_id=session_id,
+                active_thread_id=active_thread_id,
+                active_thread_key=active_key,
+                threads=threads,
             )
 
     def create_turn(

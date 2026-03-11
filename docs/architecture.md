@@ -1,10 +1,11 @@
-# Architecture (REBUILD-004 live loop foundation)
+# Architecture (REBUILD-005 deterministic routing foundation)
 
 ## Design principles
 
 - Contract-first: loop/state/turn outputs are explicit dataclasses.
 - Structure-first: config/bootstrap/persistence/reply/orchestration/trace/CLI remain separated.
 - No monolithic pipeline: one reusable single-turn path is called by both CLI wrappers.
+- Routing is a dedicated orchestration layer, reused by once/live/script message execution.
 
 ## Conversation model
 
@@ -39,3 +40,11 @@
 - `/mod <mode>` (alias `/mode ...`) - switch active mode
 
 Control commands are not persisted as normal turns.
+
+
+## Routing layer
+
+- `orchestration/routing.py` resolves deterministic route decisions before turn execution.
+- Actions: `CONTINUE_ACTIVE`, `SWITCH_EXISTING`, `CREATE_AND_SWITCH`, `NO_ROUTE_CHANGE`.
+- `execute_turn()` applies precedence: explicit request thread override first, then deterministic natural routing, else continue active.
+- live slash commands stay explicit controls and are handled before natural routing phrases.
