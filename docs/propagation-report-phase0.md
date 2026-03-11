@@ -5,17 +5,18 @@
 - Created package and module boundaries for contracts/config/bootstrap/core/orchestration/trace/cli.
 - Added configuration templates for external LLM bin/model path support.
 - Added baseline doctor and trace commands.
+- Added bootstrap `.env` autoload so CLI commands consume repository-local runtime env without manual shell exports.
 
 ## Propagated layers
 
 - Contracts: runtime dataclasses created first to anchor interfaces.
 - Config: TOML + env override loader wired to contract models.
-- Bootstrap: runtime context assembler added.
+- Bootstrap: runtime context assembler now auto-loads `.env` before config resolution.
 - Orchestration: doctor flow delegates checks to core utilities.
 - Trace: explicit bootstrap event projection added.
 - CLI: command surface added for doctor + trace-boot.
-- Docs: architecture/bootstrap/operations docs synced to code.
-- Tests: config override and doctor behavior covered.
+- Docs: architecture/bootstrap/operations docs synced to code and precedence policy made explicit.
+- Tests: config override, doctor behavior, and `.env` autoload precedence covered.
 - Versioning: initial `CHANGELOG.md` entry added.
 
 ## Deferred intentionally
