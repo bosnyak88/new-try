@@ -17,8 +17,8 @@ host = "127.0.0.1"
 port = 8080
 
 [paths]
-data_dir = "{data_dir}"
-db_path = "{db_path}"
+data_dir = "{data_dir.as_posix()}"
+db_path = "{db_path.as_posix()}"
 
 [reply]
 backend = "deterministic"
