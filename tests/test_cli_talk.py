@@ -23,6 +23,7 @@ db_path = "{db_path.as_posix()}"
 [conversation]
 default_thread_key = "default"
 default_mode = "chat"
+context_turn_window = 3
 
 [reply]
 backend = "deterministic"
@@ -355,3 +356,94 @@ def test_cli_script_bom_safe_pending(tmp_path, monkeypatch, capsys):
     turns = [line for line in lines if line["kind"] == "turn"]
     assert turns[0]["message"].startswith("A(z) work")
     assert turns[1]["thread_key"] == "work"
+
+
+def test_cli_thread_view_current_previous_named_and_missing(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "elso"]) 
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "masodik"]) 
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "harmadik"]) 
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work"]) 
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-view", "--current"])
+    cli.main()
+    current = json.loads(capsys.readouterr().out)
+    assert current["found"] is True
+    assert current["pack"]["thread_key"] == "work"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-view", "--previous"])
+    cli.main()
+    previous = json.loads(capsys.readouterr().out)
+    assert previous["found"] is True
+    assert previous["pack"]["thread_key"] == "default"
+    assert len(previous["pack"]["recent_turns"]) == 3
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-view", "default", "--limit", "2"])
+    cli.main()
+    named = json.loads(capsys.readouterr().out)
+    assert named["found"] is True
+    assert named["pack"]["thread_key"] == "default"
+    assert len(named["pack"]["recent_turns"]) == 2
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-view", "missing"])
+    cli.main()
+    missing = json.loads(capsys.readouterr().out)
+    assert missing["found"] is False
+    assert missing["pack"] is None
+
+
+def test_thread_context_loaded_trace_for_once_and_script(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    script = tmp_path / "loop.txt"
+    _write_config(config, db_path, data_dir)
+    script.write_text("elso\n/kilep\n", encoding="utf-8")
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "szia"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
+    cli.main()
+    once_trace = json.loads(capsys.readouterr().out)
+    once_context = next(event for event in once_trace["trace_events"] if event["event_name"] == "thread_context_loaded")
+    assert '"source": "execution_target"' in once_context["payload"]
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--script", str(script)])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
+    cli.main()
+    script_trace = json.loads(capsys.readouterr().out)
+    names = [event["event_name"] for event in script_trace["trace_events"]]
+    assert "thread_context_loaded" in names
+    source_event = next(event for event in script_trace["trace_events"] if event["event_name"] == "turn_execution_source")
+    assert '"source": "talk_live"' in source_event["payload"]
+
+
+def test_cli_thread_view_previous_missing(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-view", "--previous"])
+    exit_code = cli.main()
+    out = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert out["found"] is False

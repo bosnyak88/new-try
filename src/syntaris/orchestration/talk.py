@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from syntaris.contracts.runtime import ActiveConversationState, LastTurnTraceView, RuntimeContext, SessionStatusView, TalkRequest, ThreadListView
+from syntaris.contracts.runtime import ActiveConversationState, ContextSource, LastTurnTraceView, RuntimeContext, SessionStatusView, TalkRequest, ThreadContextRequest, ThreadContextView, ThreadListView
+from syntaris.orchestration.context_pack import build_thread_context_view
 from syntaris.orchestration.turns import TalkRunResult, execute_turn
 from syntaris.persistence import PersistenceStore
 
@@ -50,4 +51,25 @@ def session_status(context: RuntimeContext) -> SessionStatusView:
     return store.get_session_status_view(
         default_thread_key=context.config.conversation.default_thread_key,
         default_mode=context.config.conversation.default_mode,
+    )
+
+
+def thread_view_current(context: RuntimeContext, limit: int | None = None) -> ThreadContextView:
+    return build_thread_context_view(
+        context,
+        ThreadContextRequest(source=ContextSource.CURRENT.value, limit=limit),
+    )
+
+
+def thread_view_previous(context: RuntimeContext, limit: int | None = None) -> ThreadContextView:
+    return build_thread_context_view(
+        context,
+        ThreadContextRequest(source=ContextSource.PREVIOUS.value, limit=limit),
+    )
+
+
+def thread_view_named(context: RuntimeContext, thread_key: str, limit: int | None = None) -> ThreadContextView:
+    return build_thread_context_view(
+        context,
+        ThreadContextRequest(source=ContextSource.NAMED.value, thread_key=thread_key, limit=limit),
     )

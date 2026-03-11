@@ -1,4 +1,4 @@
-from syntaris.contracts.runtime import ActiveConversationState, RouteDecision, RuntimeContext, TurnResult
+from syntaris.contracts.runtime import ActiveConversationState, ContextLoadResult, RouteDecision, RuntimeContext, TurnResult
 
 
 def build_boot_trace(context: RuntimeContext) -> dict[str, str | bool]:
@@ -16,6 +16,7 @@ def build_turn_trace_events(
     degraded: bool,
     source: str,
     route: RouteDecision,
+    context_load: ContextLoadResult,
 ) -> list[dict[str, object]]:
     events = [
         {
@@ -52,6 +53,17 @@ def build_turn_trace_events(
         {
             "event_name": "thread_resolved_or_created",
             "payload": {"thread_id": turn.thread_id, "thread_key": turn.thread_key},
+        },
+        {
+            "event_name": "thread_context_loaded",
+            "payload": {
+                "source": context_load.source.value,
+                "thread_id": context_load.pack.thread_id,
+                "thread_key": context_load.pack.thread_key,
+                "recent_turn_count": len(context_load.pack.recent_turns),
+                "turn_count": context_load.pack.turn_count,
+                "last_turn_id": context_load.pack.last_turn_id,
+            },
         },
         {
             "event_name": "reply_generated",

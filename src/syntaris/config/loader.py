@@ -59,6 +59,10 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
             os.getenv("SYNTARIS_DEFAULT_THREAD_KEY"), conversation.get("default_thread_key", "default")
         ),
         default_mode=_pick(os.getenv("SYNTARIS_DEFAULT_MODE"), conversation.get("default_mode", "chat")),
+        context_turn_window=_pick_int(
+            os.getenv("SYNTARIS_CONTEXT_TURN_WINDOW"),
+            conversation.get("context_turn_window", 5),
+        ),
     )
 
     return AppConfig(

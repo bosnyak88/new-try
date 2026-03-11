@@ -12,7 +12,7 @@ It does not load `.env` implicitly.
 - `app`: name/environment
 - `llm`: external llama runtime paths and host/port
 - `paths`: `data_dir`, `db_path`
-- `conversation`: `default_thread_key`, `default_mode`
+- `conversation`: `default_thread_key`, `default_mode`, `context_turn_window`
 - `reply`: backend config (`deterministic` or `llama-http`)
 - `trace`: trace flags
 

@@ -19,6 +19,7 @@ db_path = "./.syntaris/runtime.db"
 [conversation]
 default_thread_key = "default"
 default_mode = "chat"
+context_turn_window = 5
 
 [reply]
 # deterministic | llama-http

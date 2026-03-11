@@ -13,6 +13,8 @@ from syntaris.contracts.runtime import (
     PersistenceBootstrapResult,
     SessionRecord,
     SessionStatusView,
+    ThreadContextPack,
+    ThreadContextTurn,
     ThreadListView,
     ThreadRecord,
     ThreadSummaryView,
@@ -310,6 +312,110 @@ class PersistenceStore:
                 created_at=datetime.fromisoformat(str(row["created_at"])),
             )
 
+
+
+
+    def get_previous_thread(self) -> ThreadRecord | None:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            previous_row = conn.execute(
+                "SELECT value FROM app_meta WHERE key = ?",
+                ("previous_thread_id",),
+            ).fetchone()
+            if previous_row is None:
+                return None
+            row = conn.execute(
+                "SELECT thread_id, session_id, thread_key, created_at FROM threads WHERE thread_id = ?",
+                (int(previous_row["value"]),),
+            ).fetchone()
+            if row is None:
+                return None
+            return ThreadRecord(
+                thread_id=int(row["thread_id"]),
+                session_id=int(row["session_id"]),
+                thread_key=str(row["thread_key"]),
+                created_at=datetime.fromisoformat(str(row["created_at"])),
+            )
+
+    def get_thread_by_key(self, session_id: int, thread_key: str) -> ThreadRecord | None:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            row = conn.execute(
+                "SELECT thread_id, session_id, thread_key, created_at FROM threads WHERE session_id = ? AND thread_key = ?",
+                (session_id, thread_key),
+            ).fetchone()
+            if row is None:
+                return None
+            return ThreadRecord(
+                thread_id=int(row["thread_id"]),
+                session_id=int(row["session_id"]),
+                thread_key=str(row["thread_key"]),
+                created_at=datetime.fromisoformat(str(row["created_at"])),
+            )
+
+    def build_thread_context_pack(self, thread_id: int, mode: str, turn_window: int) -> ThreadContextPack | None:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            thread_row = conn.execute(
+                "SELECT thread_id, session_id, thread_key FROM threads WHERE thread_id = ?",
+                (thread_id,),
+            ).fetchone()
+            if thread_row is None:
+                return None
+
+            turn_count, last_turn_id = conn.execute(
+                "SELECT COUNT(1), MAX(turn_id) FROM turns WHERE thread_id = ?",
+                (thread_id,),
+            ).fetchone()
+
+            rows = conn.execute(
+                """
+                SELECT turn_id, turn_index, user_message, assistant_reply, reply_backend, degraded
+                FROM turns
+                WHERE thread_id = ?
+                ORDER BY turn_id DESC
+                LIMIT ?
+                """,
+                (thread_id, max(1, turn_window)),
+            ).fetchall()
+
+            recent_turns = [
+                ThreadContextTurn(
+                    turn_id=int(row["turn_id"]),
+                    turn_index=int(row["turn_index"]),
+                    user_message=str(row["user_message"]),
+                    assistant_reply=str(row["assistant_reply"]),
+                    backend=str(row["reply_backend"]),
+                    degraded=bool(row["degraded"]),
+                )
+                for row in reversed(rows)
+            ]
+
+            previous_row = conn.execute(
+                "SELECT value FROM app_meta WHERE key = ?",
+                ("previous_thread_id",),
+            ).fetchone()
+            previous_thread_id = int(previous_row["value"]) if previous_row is not None else None
+            previous_thread_key = None
+            if previous_thread_id is not None:
+                prev = conn.execute(
+                    "SELECT thread_key FROM threads WHERE thread_id = ?",
+                    (previous_thread_id,),
+                ).fetchone()
+                if prev is not None:
+                    previous_thread_key = str(prev["thread_key"])
+
+            return ThreadContextPack(
+                session_id=int(thread_row["session_id"]),
+                thread_id=int(thread_row["thread_id"]),
+                thread_key=str(thread_row["thread_key"]),
+                mode=mode,
+                turn_count=int(turn_count or 0),
+                last_turn_id=int(last_turn_id) if last_turn_id is not None else None,
+                recent_turns=recent_turns,
+                previous_thread_id=previous_thread_id,
+                previous_thread_key=previous_thread_key,
+            )
 
     def list_threads_view(self, session_id: int, active_thread_id: int) -> ThreadListView:
         with sqlite3.connect(self.db_path) as conn:
