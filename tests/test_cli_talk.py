@@ -136,3 +136,55 @@ def test_cli_talk_script_runs_multi_turn_with_controls(tmp_path, monkeypatch, ca
     trace_output = json.loads(capsys.readouterr().out)
     event_names = [event["event_name"] for event in trace_output["trace_events"]]
     assert "turn_execution_source" in event_names
+
+
+def test_cli_natural_routing_thread_list_and_trace_metadata(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work"])
+    cli.main()
+    first = json.loads(capsys.readouterr().out)
+    assert first["thread_key"] == "work"
+    assert first["route"]["action"] == "create_and_switch"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "szia ott"])
+    cli.main()
+    second = json.loads(capsys.readouterr().out)
+    assert second["thread_key"] == "work"
+    assert second["route"]["action"] == "continue_active"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "vissza a default szálra"])
+    cli.main()
+    third = json.loads(capsys.readouterr().out)
+    assert third["thread_key"] == "default"
+    assert third["route"]["action"] == "switch_existing"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-list"])
+    cli.main()
+    listing = json.loads(capsys.readouterr().out)
+    keys = [item["thread_key"] for item in listing["threads"]]
+    assert keys == ["default", "work"]
+    assert listing["active_thread_key"] == "default"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
+    cli.main()
+    trace_output = json.loads(capsys.readouterr().out)
+    route_event = next(event for event in trace_output["trace_events"] if event["event_name"] == "route_decision_computed")
+    assert '"action": "switch_existing"' in route_event["payload"]
+
+
+def test_explicit_thread_override_beats_inferred_routing(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work", "--thread", "manual"])
+    cli.main()
+    out = json.loads(capsys.readouterr().out)
+
+    assert out["thread_key"] == "manual"
+    assert out["route"]["reason"] == "explicit_thread_override"

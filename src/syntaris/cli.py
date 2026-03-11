@@ -6,7 +6,7 @@ from syntaris.bootstrap.init_app import build_runtime
 from syntaris.contracts.runtime import TalkRequest
 from syntaris.orchestration.doctor import run_doctor
 from syntaris.orchestration.live_loop import run_live_loop, run_live_loop_interactive
-from syntaris.orchestration.talk import init_db, resolve_active_state, talk_once, trace_last
+from syntaris.orchestration.talk import init_db, list_threads, resolve_active_state, talk_once, trace_last
 from syntaris.trace.events import build_boot_trace
 
 
@@ -29,6 +29,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("trace-last", help="Inspect the latest persisted turn and trace events")
     sub.add_parser("session-status", help="Inspect active session/thread/mode")
+    sub.add_parser("thread-list", help="List known threads and active thread")
     return parser
 
 
@@ -44,6 +45,12 @@ def _print_turn_result(result) -> None:
                 "turn_id": result.turn.turn_id,
                 "backend": result.turn.reply_backend,
                 "degraded": result.turn.degraded,
+                "route": {
+                    "action": result.route.action.value,
+                    "reason": result.route.reason,
+                    "thread_key": result.route.thread_key,
+                    "created_thread": result.route.created_thread,
+                },
             },
             indent=2,
         )
@@ -119,6 +126,31 @@ def main() -> int:
                     "mode": state.mode,
                     "turn_count": state.turn_count,
                     "last_turn_id": state.last_turn_id,
+                },
+                indent=2,
+            )
+        )
+        return 0
+
+
+    if args.command == "thread-list":
+        view = list_threads(runtime)
+        print(
+            json.dumps(
+                {
+                    "session_id": view.session_id,
+                    "active_thread_id": view.active_thread_id,
+                    "active_thread_key": view.active_thread_key,
+                    "threads": [
+                        {
+                            "thread_id": thread.thread_id,
+                            "thread_key": thread.thread_key,
+                            "turn_count": thread.turn_count,
+                            "last_turn_id": thread.last_turn_id,
+                            "is_active": thread.is_active,
+                        }
+                        for thread in view.threads
+                    ],
                 },
                 indent=2,
             )

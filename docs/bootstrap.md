@@ -34,3 +34,8 @@ On one-shot talk, live loop entry, and status:
 2. if missing, create new session + default thread and set default mode
 3. apply thread/mode switches as requested
 4. persist resulting active pointers for subsequent turns
+
+
+## Routing bootstrap note
+
+No additional boot-time providers are required for REBUILD-005 routing. The deterministic phrase matcher runs inside orchestration using persisted active state plus known thread list from storage.

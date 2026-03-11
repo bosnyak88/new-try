@@ -13,6 +13,7 @@ The current repository contains:
 - a reply adapter boundary with deterministic fallback behavior
 - shared single-turn orchestration used by both one-shot and live loop execution
 - live multi-turn conversation loop with explicit control commands
+- deterministic Hungarian-first natural routing for thread switching/creation
 - state and latest-trace inspection from CLI
 
 ## Quick start
@@ -32,7 +33,9 @@ The current repository contains:
    - `python -m syntaris.cli --config config/syntaris.example.toml talk --script path/to/loop.txt`
 7. Inspect active conversation state:
    - `python -m syntaris.cli --config config/syntaris.example.toml session-status`
-8. Inspect latest persisted trace:
+8. List known threads:
+   - `python -m syntaris.cli --config config/syntaris.example.toml thread-list`
+9. Inspect latest persisted trace:
    - `python -m syntaris.cli --config config/syntaris.example.toml trace-last`
 
 ## Commands currently available
@@ -44,4 +47,13 @@ The current repository contains:
 - `talk --live`
 - `talk --script <path>`
 - `session-status`
+- `thread-list`
 - `trace-last`
+
+
+## Natural routing phrases (deterministic)
+
+- switch/return existing thread: `vissza a <thread_key> szálra`, `menjünk vissza a <thread_key> szálra`, `váltsunk a <thread_key> szálra`
+- create/switch thread: `új szál: <thread_key>`, `legyen új szál: <thread_key>`, `nyiss új szálat: <thread_key>`
+- unmatched text defaults to active-thread continuation
+- precedence: explicit `--thread` > live slash commands > natural routing phrase > continue active

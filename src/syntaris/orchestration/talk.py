@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from syntaris.contracts.runtime import ActiveConversationState, LastTurnTraceView, RuntimeContext, TalkRequest
+from syntaris.contracts.runtime import ActiveConversationState, LastTurnTraceView, RuntimeContext, TalkRequest, ThreadListView
 from syntaris.orchestration.turns import TalkRunResult, execute_turn
 from syntaris.persistence import PersistenceStore
 
@@ -32,3 +32,13 @@ def trace_last(context: RuntimeContext) -> LastTurnTraceView:
     store = PersistenceStore(context.config.paths.db_path)
     store.initialize(data_dir=context.config.paths.data_dir)
     return store.read_last_turn_trace()
+
+
+def list_threads(context: RuntimeContext) -> ThreadListView:
+    store = PersistenceStore(context.config.paths.db_path)
+    store.initialize(data_dir=context.config.paths.data_dir)
+    state = store.resolve_or_create_active(
+        default_thread_key=context.config.conversation.default_thread_key,
+        default_mode=context.config.conversation.default_mode,
+    )
+    return store.list_threads_view(session_id=state.session_id, active_thread_id=state.thread_id)

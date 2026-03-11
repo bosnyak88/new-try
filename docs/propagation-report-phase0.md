@@ -1,32 +1,33 @@
-# Propagation report — REBUILD-004 multi-turn conversational loop
+# Propagation report — REBUILD-005 natural topic/thread routing foundation
 
 ## Direct changes
 
-- Added explicit live-loop contracts (`LoopAction`, `LoopCommand`, `LiveConversationState`, `LiveTurnOutput`).
-- Introduced `orchestration/turns.py` with single reusable `execute_turn()` path.
-- Refactored `talk_once` to delegate to shared turn execution.
-- Added `orchestration/live_loop.py` for multi-turn orchestration and control command routing.
-- Expanded CLI talk surface with `--live` and deterministic `--script` loop mode.
-- Added loop-aware trace metadata (`turn_execution_source`) and loop lifecycle/control events.
+- Added first-class routing contracts (`RouteDecisionAction`, `RouteMatch`, `RouteDecision`, `ThreadSummaryView`, `ThreadListView`).
+- Added `orchestration/routing.py` with deterministic Hungarian-first phrase routing.
+- Reused one shared turn path so `talk --once`, `talk --live`, and `talk --script` all route through the same decision flow.
+- Added `thread-list` CLI command for thread observability.
+- Extended trace events with `route_decision_computed` metadata.
 
-## Propagated layers
+## Supported deterministic phrases
 
-- **Contracts:** loop flow is typed and explicit; no loose command strings across layers.
-- **Orchestration:** loop, one-shot, and turn execution have distinct module boundaries.
-- **Persistence:** existing session/thread/mode/turn persistence is reused without schema sprawl.
-- **Trace:** live/once execution source is visible and loop command handling is auditable.
-- **Docs/tests/changelog:** synchronized to new CLI and loop behavior.
+- Return/switch existing thread: `vissza a <thread_key> szálra`, `menjünk vissza a <thread_key> szálra`, `váltsunk a <thread_key> szálra`
+- Create/switch thread: `új szál: <thread_key>`, `legyen új szál: <thread_key>`, `nyiss új szálat: <thread_key>`
+
+## Precedence
+
+1. explicit CLI overrides
+2. explicit live slash commands
+3. deterministic natural routing phrases
+4. continue active thread
 
 ## Structural self-check
 
-- No giant central pipeline file introduced.
-- `talk --once` and live loop share one turn path (`execute_turn`).
-- CLI remains thin and does not duplicate business orchestration.
-- Loop control parsing is centralized in `live_loop.py`.
+- No central monolithic pipeline was introduced.
+- Routing, live control parsing, turn execution, persistence, and CLI boundary remain modular.
+- Routing logic is not duplicated across once/live/script flows.
 
 ## Deferred intentionally
 
-- advanced routing
-- memory/recall graph
-- proactive autonomy
-- TUI/GUI interaction
+- semantic/LLM routing
+- embeddings or fuzzy intent classification
+- thread summarization or memory graph

@@ -4,11 +4,14 @@ from dataclasses import dataclass
 
 from syntaris.contracts.runtime import (
     ActiveConversationState,
+    RouteDecision,
+    RouteDecisionAction,
     RuntimeContext,
     TalkRequest,
     TurnInput,
     TurnResult,
 )
+from syntaris.orchestration.routing import resolve_route_decision
 from syntaris.persistence import PersistenceStore
 from syntaris.reply.adapters import ReplyOutput
 from syntaris.reply.factory import build_reply_adapter
@@ -19,6 +22,7 @@ from syntaris.trace.events import build_turn_trace_events
 class TalkRunResult:
     turn: TurnResult
     state: ActiveConversationState
+    route: RouteDecision
 
 
 def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "talk_once") -> TalkRunResult:
@@ -31,7 +35,18 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     )
 
     mode = request.mode or state.mode
-    thread_key = request.thread_key or state.thread_key
+
+    known_threads = store.list_threads_view(session_id=state.session_id, active_thread_id=state.thread_id).threads
+    if request.thread_key:
+        thread_key = request.thread_key
+        route = RouteDecision(
+            action=RouteDecisionAction.NO_ROUTE_CHANGE,
+            reason="explicit_thread_override",
+            thread_key=thread_key,
+        )
+    else:
+        route = resolve_route_decision(request.message, state, known_threads)
+        thread_key = route.thread_key or state.thread_key
 
     thread = store.open_or_create_thread(state.session_id, thread_key)
     store.set_active_state(session_id=state.session_id, thread_id=thread.thread_id, mode=mode)
@@ -71,6 +86,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         backend=reply.backend,
         degraded=reply.degraded,
         source=source,
+        route=route,
     )
     store.create_trace_events(
         session_id=turn.session_id,
@@ -83,4 +99,4 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     )
 
     updated_state = store.get_active_state() or effective_state
-    return TalkRunResult(turn=turn, state=updated_state)
+    return TalkRunResult(turn=turn, state=updated_state, route=route)
