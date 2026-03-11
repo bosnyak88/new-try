@@ -3,8 +3,9 @@ import json
 
 from syntaris.bootstrap.env import load_repo_env
 from syntaris.bootstrap.init_app import build_runtime
+from syntaris.contracts.runtime import TalkRequest
 from syntaris.orchestration.doctor import run_doctor
-from syntaris.orchestration.talk import init_db, talk_once, trace_last
+from syntaris.orchestration.talk import init_db, resolve_active_state, talk_once, trace_last
 from syntaris.trace.events import build_boot_trace
 
 
@@ -19,8 +20,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     talk_parser = sub.add_parser("talk", help="Execute talk flows")
     talk_parser.add_argument("--once", required=True, help="Run a single-turn interaction")
+    talk_parser.add_argument("--thread", dest="thread_key", default=None, help="Open/create and activate thread key")
+    talk_parser.add_argument("--mode", default=None, help="Explicit mode metadata persisted on turn")
 
     sub.add_parser("trace-last", help="Inspect the latest persisted turn and trace events")
+    sub.add_parser("session-status", help="Inspect active session/thread/mode")
     return parser
 
 
@@ -45,15 +49,36 @@ def main() -> int:
         return 0
 
     if args.command == "talk":
-        result = talk_once(runtime, args.once)
+        request = TalkRequest(message=args.once, thread_key=args.thread_key, mode=args.mode)
+        result = talk_once(runtime, request)
         print(
             json.dumps(
                 {
                     "reply": result.turn.assistant_reply,
                     "session_id": result.turn.session_id,
+                    "thread_id": result.turn.thread_id,
+                    "thread_key": result.turn.thread_key,
+                    "mode": result.turn.mode,
                     "turn_id": result.turn.turn_id,
                     "backend": result.turn.reply_backend,
                     "degraded": result.turn.degraded,
+                },
+                indent=2,
+            )
+        )
+        return 0
+
+    if args.command == "session-status":
+        state = resolve_active_state(runtime)
+        print(
+            json.dumps(
+                {
+                    "session_id": state.session_id,
+                    "thread_id": state.thread_id,
+                    "thread_key": state.thread_key,
+                    "mode": state.mode,
+                    "turn_count": state.turn_count,
+                    "last_turn_id": state.last_turn_id,
                 },
                 indent=2,
             )
@@ -71,6 +96,10 @@ def main() -> int:
                     "turn": {
                         "turn_id": last.turn.turn_id,
                         "session_id": last.turn.session_id,
+                        "thread_id": last.turn.thread_id,
+                        "thread_key": last.turn.thread_key,
+                        "mode": last.turn.mode,
+                        "turn_index": last.turn.turn_index,
                         "user_message": last.turn.user_message,
                         "assistant_reply": last.turn.assistant_reply,
                         "backend": last.turn.reply_backend,
@@ -79,6 +108,9 @@ def main() -> int:
                     "trace_events": [
                         {
                             "trace_id": event.trace_id,
+                            "session_id": event.session_id,
+                            "thread_id": event.thread_id,
+                            "mode": event.mode,
                             "event_name": event.event_name,
                             "backend": event.backend,
                             "degraded": event.degraded,

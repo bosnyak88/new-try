@@ -14,3 +14,5 @@ def test_env_overrides_llm_paths(tmp_path, monkeypatch):
 
     assert config.llm.server_bin_path == str(server)
     assert config.llm.model_path == str(model)
+    assert config.conversation.default_thread_key == "default"
+    assert config.conversation.default_mode == "chat"

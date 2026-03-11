@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 - REBUILD-003 session/thread/mode foundation
+
+- Added first-class contracts for mode/thread/active conversation state and talk request metadata.
+- Added `[conversation]` config defaults (`default_thread_key`, `default_mode`).
+- Extended persistence schema with `threads` and active-state pointers, and persisted thread/mode fields on turns and trace events.
+- Added migration behavior to keep REBUILD-002 databases readable while moving to schema version 2.
+- Updated orchestration to resolve/reuse active session/thread state and support `talk --once` thread/mode overrides.
+- Added `session-status` CLI command and expanded `trace-last` output with session/thread/mode context.
+- Extended deterministic tests for migration, active-state reuse, thread switching, mode persistence, and trace projection.
+
 ## 0.2.0 - REBUILD-002 vertical slice
 
 - Added persistence package with SQLite bootstrap schema (`app_meta`, `sessions`, `turns`, `trace_events`).

@@ -1,34 +1,32 @@
-# Propagation report — REBUILD-002 talk vertical slice
+# Propagation report — REBUILD-003 session/thread/mode foundation
 
 ## Direct changes
 
-- Added persistence layer (`src/syntaris/persistence`) with explicit SQLite schema for `app_meta`, `sessions`, `turns`, `trace_events`.
-- Extended contracts with app path/reply/session/turn/trace structures.
-- Added reply adapter boundary (`src/syntaris/reply`) with deterministic fallback and optional llama-http adapter.
-- Added orchestration flows for `init-db`, `talk --once`, and `trace-last`.
-- Expanded CLI surface without moving business logic into `cli.py`.
+- Added explicit contracts for mode/thread/active-state/talk-request.
+- Extended SQLite schema with `threads`, active-state pointers in `app_meta`, and mode/thread fields on turns and trace events.
+- Added migration path for REBUILD-002 databases (schema v1 -> v2).
+- Extended talk orchestration to resolve/reuse active state and to support explicit thread/mode overrides.
+- Expanded CLI with `session-status` and new `talk` flags (`--thread`, `--mode`).
+- Extended trace shaping and persisted trace payloads with session/thread/mode context.
 
 ## Propagated layers
 
-- Contracts: new dataclasses ensure runtime/session/turn/trace are not ad-hoc dicts.
-- Config: added `paths` and `reply` sections with env override support.
-- Bootstrap: remains side-effect-free (`.env` loading still CLI boundary only).
-- Persistence: schema bootstrap + read/write APIs are isolated in store module.
-- Reply: backend selection and degraded behavior centralized behind adapter factory.
-- Orchestration: command-level flows composed from contracts + persistence + reply + trace.
-- Trace: turn-level events persisted and queryable via `trace-last`.
-- Docs/config/examples: updated to match runtime/CLI behavior.
-- Tests: added deterministic persistence/reply/CLI talk coverage.
+- **Contracts:** no loose session/thread/mode dict passing in orchestration.
+- **Config/bootstrap:** conversation defaults added without reintroducing hidden `.env` side effects.
+- **Persistence:** active-state/session/thread/turn/trace logic centralized in store module.
+- **Orchestration:** runtime composition handles state resolution; CLI stays thin.
+- **Trace:** events now explain which conversation context handled the turn.
+- **Docs/config/tests/changelog:** synchronized with new behavior and schema version.
 
 ## Structural self-check
 
 - No giant central pipeline file introduced.
-- SQLite logic is not in config loader or CLI.
-- Reply HTTP logic is not scattered; it exists only inside reply adapter module.
-- `.env` behavior boundary from previous phase is preserved.
+- Business logic not moved into `cli.py`.
+- Session/thread/mode resolution is not duplicated across layers.
+- SQLite logic remains outside config loading and CLI parsing.
 
 ## Deferred intentionally
 
-- multi-turn session continuation UX
-- memory/recall graph tables
-- advanced routing and prompt systems
+- intelligent mode switching
+- memory graph/recall systems
+- advanced routing and planning workflows
