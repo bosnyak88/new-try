@@ -50,6 +50,18 @@ def _print_turn_result(result) -> None:
                     "reason": result.route.reason,
                     "thread_key": result.route.thread_key,
                     "created_thread": result.route.created_thread,
+                    "transition": {
+                        "before_thread_id": result.route.transition.before_thread_id,
+                        "before_thread_key": result.route.transition.before_thread_key,
+                        "before_previous_thread_id": result.route.transition.before_previous_thread_id,
+                        "before_previous_thread_key": result.route.transition.before_previous_thread_key,
+                        "after_thread_id": result.route.transition.after_thread_id,
+                        "after_thread_key": result.route.transition.after_thread_key,
+                        "after_previous_thread_id": result.route.transition.after_previous_thread_id,
+                        "after_previous_thread_key": result.route.transition.after_previous_thread_key,
+                    }
+                    if result.route.transition
+                    else None,
                 },
             },
             indent=2,
@@ -126,12 +138,13 @@ def main() -> int:
                     "mode": state.mode,
                     "turn_count": state.turn_count,
                     "last_turn_id": state.last_turn_id,
+                    "previous_thread_id": state.previous_thread_id,
+                    "previous_thread_key": state.previous_thread_key,
                 },
                 indent=2,
             )
         )
         return 0
-
 
     if args.command == "thread-list":
         view = list_threads(runtime)
@@ -141,6 +154,8 @@ def main() -> int:
                     "session_id": view.session_id,
                     "active_thread_id": view.active_thread_id,
                     "active_thread_key": view.active_thread_key,
+                    "previous_thread_id": view.previous_thread_id,
+                    "previous_thread_key": view.previous_thread_key,
                     "threads": [
                         {
                             "thread_id": thread.thread_id,
@@ -148,6 +163,7 @@ def main() -> int:
                             "turn_count": thread.turn_count,
                             "last_turn_id": thread.last_turn_id,
                             "is_active": thread.is_active,
+                            "is_previous": thread.is_previous,
                         }
                         for thread in view.threads
                     ],

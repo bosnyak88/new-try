@@ -24,7 +24,7 @@ It does not load `.env` implicitly.
 2. create/open `db_path`
 3. apply explicit SQLite schema
 4. migrate legacy REBUILD-002 schema when needed
-5. write schema metadata (`app_meta.schema_version=2`)
+5. write schema metadata (`app_meta.schema_version=2`) and preserve active/previous thread pointers in `app_meta`
 
 ## Active state resolution
 
@@ -32,7 +32,7 @@ On one-shot talk, live loop entry, and status:
 
 1. resolve active state from `app_meta` pointers
 2. if missing, create new session + default thread and set default mode
-3. apply thread/mode switches as requested
+3. apply thread/mode switches as requested and maintain previous-thread pointer whenever active thread changes
 4. persist resulting active pointers for subsequent turns
 
 

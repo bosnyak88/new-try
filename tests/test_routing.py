@@ -2,7 +2,7 @@ from syntaris.contracts.runtime import ActiveConversationState, ThreadSummaryVie
 from syntaris.orchestration.routing import resolve_route_decision
 
 
-def _active() -> ActiveConversationState:
+def _active(previous_thread_key: str | None = None) -> ActiveConversationState:
     return ActiveConversationState(
         session_id=1,
         thread_id=1,
@@ -10,6 +10,8 @@ def _active() -> ActiveConversationState:
         mode="chat",
         turn_count=0,
         last_turn_id=None,
+        previous_thread_id=2 if previous_thread_key else None,
+        previous_thread_key=previous_thread_key,
     )
 
 
@@ -34,6 +36,29 @@ def test_resolve_route_return_existing():
     )
     assert decision.action.value == "switch_existing"
     assert decision.thread_key == "work"
+
+
+def test_resolve_route_previous_thread_phrase():
+    decision = resolve_route_decision(
+        "folytassuk az előzőt",
+        _active(previous_thread_key="work"),
+        [
+            ThreadSummaryView(thread_id=1, thread_key="default", turn_count=0, last_turn_id=None, is_active=True),
+            ThreadSummaryView(thread_id=2, thread_key="work", turn_count=0, last_turn_id=None, is_active=False),
+        ],
+    )
+    assert decision.action.value == "switch_previous"
+    assert decision.thread_key == "work"
+
+
+def test_resolve_route_topic_shift_phrase():
+    decision = resolve_route_decision(
+        "más téma: admin",
+        _active(),
+        [ThreadSummaryView(thread_id=1, thread_key="default", turn_count=0, last_turn_id=None, is_active=True)],
+    )
+    assert decision.action.value == "create_and_switch"
+    assert decision.thread_key == "admin"
 
 
 def test_resolve_route_non_matching_defaults_continue():

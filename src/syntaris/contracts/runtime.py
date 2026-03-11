@@ -92,6 +92,8 @@ class ActiveConversationState:
     mode: str
     turn_count: int
     last_turn_id: int | None = None
+    previous_thread_id: int | None = None
+    previous_thread_key: str | None = None
 
 
 @dataclass(frozen=True)
@@ -105,6 +107,7 @@ class RouteDecisionAction(str, Enum):
     CONTINUE_ACTIVE = "continue_active"
     SWITCH_EXISTING = "switch_existing"
     CREATE_AND_SWITCH = "create_and_switch"
+    SWITCH_PREVIOUS = "switch_previous"
     NO_ROUTE_CHANGE = "no_route_change"
 
 
@@ -115,12 +118,25 @@ class RouteMatch:
 
 
 @dataclass(frozen=True)
+class RouteStateTransition:
+    before_thread_id: int
+    before_thread_key: str
+    before_previous_thread_id: int | None
+    before_previous_thread_key: str | None
+    after_thread_id: int
+    after_thread_key: str
+    after_previous_thread_id: int | None
+    after_previous_thread_key: str | None
+
+
+@dataclass(frozen=True)
 class RouteDecision:
     action: RouteDecisionAction
     reason: str
     thread_key: str | None = None
     match: RouteMatch | None = None
     created_thread: bool = False
+    transition: RouteStateTransition | None = None
 
 
 @dataclass(frozen=True)
@@ -130,6 +146,7 @@ class ThreadSummaryView:
     turn_count: int
     last_turn_id: int | None
     is_active: bool
+    is_previous: bool = False
 
 
 @dataclass(frozen=True)
@@ -137,6 +154,8 @@ class ThreadListView:
     session_id: int
     active_thread_id: int
     active_thread_key: str
+    previous_thread_id: int | None
+    previous_thread_key: str | None
     threads: list[ThreadSummaryView]
 
 
@@ -165,6 +184,8 @@ class LiveConversationState:
     mode: str
     turn_count: int
     last_turn_id: int | None
+    previous_thread_id: int | None = None
+    previous_thread_key: str | None = None
 
 
 @dataclass(frozen=True)

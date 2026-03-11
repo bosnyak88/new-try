@@ -100,3 +100,18 @@ def test_v1_migration_adds_thread_mode_columns(tmp_path):
     assert view.turn.thread_key == "default"
     assert view.turn.mode == "chat"
     assert view.trace_events[0].mode == "chat"
+
+
+def test_active_state_tracks_previous_thread(tmp_path):
+    db_path = tmp_path / "runtime.db"
+    store = PersistenceStore(str(db_path))
+    store.initialize(data_dir=str(tmp_path))
+
+    state = store.resolve_or_create_active(default_thread_key="default", default_mode="chat")
+    work = store.open_or_create_thread(state.session_id, "work")
+    store.set_active_state(session_id=state.session_id, thread_id=work.thread_id, mode="chat")
+    back = store.get_active_state()
+
+    assert back is not None
+    assert back.thread_key == "work"
+    assert back.previous_thread_key == "default"

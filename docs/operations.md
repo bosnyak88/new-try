@@ -31,7 +31,7 @@ Each output row is emitted as compact JSON for tests.
 
 ### `session-status`
 
-Prints compact JSON view of active conversation state.
+Prints compact JSON view of active conversation state, including `previous_thread_id` and `previous_thread_key`.
 
 ### `trace-last`
 
@@ -40,11 +40,12 @@ Prints latest persisted turn and its trace events including session/thread/mode/
 
 ### `thread-list`
 
-Prints known threads for the active session with active marker, turn counts, and last turn ids.
+Prints known threads for the active session with active/previous markers, turn counts, and last turn ids.
 
 ## Route precedence
 
 1. explicit CLI flags (`--thread`, `--mode`)
 2. live slash control commands (`/szal`, `/mod`, etc.)
-3. deterministic natural routing phrases
-4. active-thread continuation fallback
+3. deterministic named thread-routing phrases
+4. deterministic previous-thread/topic-shift phrases
+5. active-thread continuation fallback

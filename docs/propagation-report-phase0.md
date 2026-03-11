@@ -1,33 +1,38 @@
-# Propagation report — REBUILD-005 natural topic/thread routing foundation
+# Propagation report — REBUILD-006 deterministic topic-shift + previous-thread foundation
 
 ## Direct changes
 
-- Added first-class routing contracts (`RouteDecisionAction`, `RouteMatch`, `RouteDecision`, `ThreadSummaryView`, `ThreadListView`).
-- Added `orchestration/routing.py` with deterministic Hungarian-first phrase routing.
-- Reused one shared turn path so `talk --once`, `talk --live`, and `talk --script` all route through the same decision flow.
-- Added `thread-list` CLI command for thread observability.
-- Extended trace events with `route_decision_computed` metadata.
+- Extended active conversation contracts/state with explicit `previous_thread_id` / `previous_thread_key`.
+- Extended route contracts with `SWITCH_PREVIOUS` and before/after transition metadata.
+- Expanded deterministic Hungarian-first routing with previous-thread return phrases and topic-shift aliases.
+- Kept one shared route/state resolution path in turn orchestration used by once/live/script execution for normal talk turns.
+- Extended session/thread inspection CLI outputs for current + previous thread visibility.
+- Extended trace payloads with route decision transition fields (before/after + previous-thread context).
 
 ## Supported deterministic phrases
 
 - Return/switch existing thread: `vissza a <thread_key> szálra`, `menjünk vissza a <thread_key> szálra`, `váltsunk a <thread_key> szálra`
+- Return to previous thread: `vissza az előző szálra`, `folytassuk az előzőt`, `térjünk vissza az előző témára`
 - Create/switch thread: `új szál: <thread_key>`, `legyen új szál: <thread_key>`, `nyiss új szálat: <thread_key>`
+- Topic-shift aliases: `más téma: <thread_key>`, `új téma: <thread_key>`, `egy másik dolog: <thread_key>`
 
 ## Precedence
 
-1. explicit CLI overrides
+1. explicit CLI overrides (`--thread`, `--mode`)
 2. explicit live slash commands
-3. deterministic natural routing phrases
-4. continue active thread
+3. deterministic named thread-routing phrases
+4. deterministic previous-thread/topic-shift phrases
+5. continue active thread
 
 ## Structural self-check
 
-- No central monolithic pipeline was introduced.
-- Routing, live control parsing, turn execution, persistence, and CLI boundary remain modular.
-- Routing logic is not duplicated across once/live/script flows.
+- No monolithic central pipeline was introduced.
+- Routing, turn execution, live controls, persistence, trace, and CLI boundary remain separated.
+- No fuzzy semantic routing, embeddings, or LLM intent routing was added.
 
 ## Deferred intentionally
 
 - semantic/LLM routing
 - embeddings or fuzzy intent classification
-- thread summarization or memory graph
+- broad thread history stack beyond current+previous
+- summarization or memory graph
