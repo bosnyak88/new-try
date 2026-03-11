@@ -26,6 +26,14 @@ def build_turn_trace_events(
                 "thread_key": route.thread_key,
                 "created_thread": route.created_thread,
                 "match_pattern": route.match.pattern_name if route.match else None,
+                "before_thread_id": route.transition.before_thread_id if route.transition else None,
+                "before_thread_key": route.transition.before_thread_key if route.transition else None,
+                "before_previous_thread_id": route.transition.before_previous_thread_id if route.transition else None,
+                "before_previous_thread_key": route.transition.before_previous_thread_key if route.transition else None,
+                "after_thread_id": route.transition.after_thread_id if route.transition else None,
+                "after_thread_key": route.transition.after_thread_key if route.transition else None,
+                "after_previous_thread_id": route.transition.after_previous_thread_id if route.transition else None,
+                "after_previous_thread_key": route.transition.after_previous_thread_key if route.transition else None,
             },
         },
         {
@@ -35,6 +43,8 @@ def build_turn_trace_events(
                 "thread_id": state.thread_id,
                 "thread_key": state.thread_key,
                 "mode": state.mode,
+                "previous_thread_id": state.previous_thread_id,
+                "previous_thread_key": state.previous_thread_key,
             },
         },
         {

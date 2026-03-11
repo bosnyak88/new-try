@@ -116,7 +116,7 @@ class PersistenceStore:
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             row = conn.execute(
-                "SELECT key, value FROM app_meta WHERE key IN ('active_session_id', 'active_thread_id', 'active_mode')"
+                "SELECT key, value FROM app_meta WHERE key IN ('active_session_id', 'active_thread_id', 'active_mode', 'previous_thread_id')"
             ).fetchall()
             values = {str(item["key"]): str(item["value"]) for item in row}
             if "active_session_id" not in values or "active_thread_id" not in values:
@@ -134,6 +134,16 @@ class PersistenceStore:
                 (int(thread["thread_id"]),),
             ).fetchone()
 
+            previous_thread_id = int(values["previous_thread_id"]) if "previous_thread_id" in values else None
+            previous_thread_key: str | None = None
+            if previous_thread_id is not None:
+                prev = conn.execute(
+                    "SELECT thread_key FROM threads WHERE thread_id = ?",
+                    (previous_thread_id,),
+                ).fetchone()
+                if prev is not None:
+                    previous_thread_key = str(prev["thread_key"])
+
             return ActiveConversationState(
                 session_id=int(values["active_session_id"]),
                 thread_id=int(thread["thread_id"]),
@@ -141,10 +151,23 @@ class PersistenceStore:
                 mode=values.get("active_mode", "chat"),
                 turn_count=int(turn_count or 0),
                 last_turn_id=int(last_turn_id) if last_turn_id is not None else None,
+                previous_thread_id=previous_thread_id,
+                previous_thread_key=previous_thread_key,
             )
 
     def set_active_state(self, session_id: int, thread_id: int, mode: str) -> None:
         with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            current_active = conn.execute(
+                "SELECT value FROM app_meta WHERE key = ?",
+                ("active_thread_id",),
+            ).fetchone()
+            previous_thread_id: int | None = None
+            if current_active is not None:
+                existing = int(current_active["value"])
+                if existing != thread_id:
+                    previous_thread_id = existing
+
             conn.execute(
                 "INSERT OR REPLACE INTO app_meta(key, value) VALUES(?, ?)",
                 ("active_session_id", str(session_id)),
@@ -157,6 +180,11 @@ class PersistenceStore:
                 "INSERT OR REPLACE INTO app_meta(key, value) VALUES(?, ?)",
                 ("active_mode", mode),
             )
+            if previous_thread_id is not None:
+                conn.execute(
+                    "INSERT OR REPLACE INTO app_meta(key, value) VALUES(?, ?)",
+                    ("previous_thread_id", str(previous_thread_id)),
+                )
             conn.commit()
 
     def resolve_or_create_active(self, default_thread_key: str, default_mode: str) -> ActiveConversationState:
@@ -224,6 +252,12 @@ class PersistenceStore:
                 (session_id,),
             ).fetchall()
 
+            previous_row = conn.execute(
+                "SELECT value FROM app_meta WHERE key = ?",
+                ("previous_thread_id",),
+            ).fetchone()
+            previous_thread_id = int(previous_row["value"]) if previous_row is not None else None
+
             threads = [
                 ThreadSummaryView(
                     thread_id=int(row["thread_id"]),
@@ -231,16 +265,21 @@ class PersistenceStore:
                     turn_count=int(row["turn_count"] or 0),
                     last_turn_id=int(row["last_turn_id"]) if row["last_turn_id"] is not None else None,
                     is_active=int(row["thread_id"]) == active_thread_id,
+                    is_previous=int(row["thread_id"]) == previous_thread_id,
                 )
                 for row in rows
             ]
 
             active_thread = next((thread for thread in threads if thread.thread_id == active_thread_id), None)
+            previous_thread = next((thread for thread in threads if thread.thread_id == previous_thread_id), None)
             active_key = active_thread.thread_key if active_thread is not None else ""
+            previous_key = previous_thread.thread_key if previous_thread is not None else None
             return ThreadListView(
                 session_id=session_id,
                 active_thread_id=active_thread_id,
                 active_thread_key=active_key,
+                previous_thread_id=previous_thread_id,
+                previous_thread_key=previous_key,
                 threads=threads,
             )
 

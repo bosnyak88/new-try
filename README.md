@@ -13,7 +13,7 @@ The current repository contains:
 - a reply adapter boundary with deterministic fallback behavior
 - shared single-turn orchestration used by both one-shot and live loop execution
 - live multi-turn conversation loop with explicit control commands
-- deterministic Hungarian-first natural routing for thread switching/creation
+- deterministic Hungarian-first routing for named switching/creation plus previous-thread return phrases
 - state and latest-trace inspection from CLI
 
 ## Quick start
@@ -54,6 +54,8 @@ The current repository contains:
 ## Natural routing phrases (deterministic)
 
 - switch/return existing thread: `vissza a <thread_key> szálra`, `menjünk vissza a <thread_key> szálra`, `váltsunk a <thread_key> szálra`
+- return to previous thread: `vissza az előző szálra`, `folytassuk az előzőt`, `térjünk vissza az előző témára`
 - create/switch thread: `új szál: <thread_key>`, `legyen új szál: <thread_key>`, `nyiss új szálat: <thread_key>`
+- named topic-shift aliases: `más téma: <thread_key>`, `új téma: <thread_key>`, `egy másik dolog: <thread_key>`
 - unmatched text defaults to active-thread continuation
-- precedence: explicit `--thread` > live slash commands > natural routing phrase > continue active
+- precedence: explicit `--thread`/`--mode` > live slash commands > named thread phrases > previous-thread/topic-shift phrases > continue active

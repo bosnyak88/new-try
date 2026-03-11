@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.0 - REBUILD-006 deterministic topic-shift + previous-thread foundation
+
+- Extended conversation state contracts and persistence projection with explicit previous-thread metadata.
+- Added `SWITCH_PREVIOUS` route action and explicit route transition metadata (before/after thread pointers).
+- Expanded deterministic Hungarian-first routing with previous-thread return phrases and topic-shift alias phrases.
+- Kept once/live/script normal turn execution aligned through shared route/state resolution in turn orchestration.
+- Extended `session-status`, `thread-list`, and trace payload visibility for current vs previous thread context.
+- Added deterministic tests for previous-thread return, topic-shift routing, slash-command precedence, and persistence of previous-thread state.
+- Updated README and architecture/bootstrap/operations/propagation docs with precedence and scope details.
+
 ## 0.5.0 - REBUILD-005 deterministic natural thread routing
 
 - Added first-class routing contracts and thread list view contracts.

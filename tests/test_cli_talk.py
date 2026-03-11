@@ -82,6 +82,7 @@ def test_cli_talk_once_reuses_active_state_and_supports_thread_and_mode(tmp_path
     assert status["session_id"] == first["session_id"]
     assert status["thread_key"] == "work"
     assert status["mode"] == "chat"
+    assert status["previous_thread_key"] == "default"
 
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
     trace_exit_code = cli.main()
@@ -168,6 +169,7 @@ def test_cli_natural_routing_thread_list_and_trace_metadata(tmp_path, monkeypatc
     keys = [item["thread_key"] for item in listing["threads"]]
     assert keys == ["default", "work"]
     assert listing["active_thread_key"] == "default"
+    assert listing["previous_thread_key"] == "work"
 
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
     cli.main()
@@ -188,3 +190,27 @@ def test_explicit_thread_override_beats_inferred_routing(tmp_path, monkeypatch, 
 
     assert out["thread_key"] == "manual"
     assert out["route"]["reason"] == "explicit_thread_override"
+
+
+def test_previous_thread_and_topic_shift_phrases(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új téma: admin"])
+    cli.main()
+    first = json.loads(capsys.readouterr().out)
+    assert first["thread_key"] == "admin"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "vissza az előző szálra"])
+    cli.main()
+    second = json.loads(capsys.readouterr().out)
+    assert second["thread_key"] == "default"
+    assert second["route"]["action"] == "switch_previous"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "térjünk vissza az előző témára"])
+    cli.main()
+    third = json.loads(capsys.readouterr().out)
+    assert third["thread_key"] == "admin"
+    assert third["route"]["action"] == "switch_previous"

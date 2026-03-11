@@ -59,6 +59,8 @@ def _to_live_state(context: RuntimeContext) -> LiveConversationState:
         mode=state.mode,
         turn_count=state.turn_count,
         last_turn_id=state.last_turn_id,
+        previous_thread_id=state.previous_thread_id,
+        previous_thread_key=state.previous_thread_key,
     )
 
 
@@ -179,4 +181,6 @@ def _status_payload(state: LiveConversationState) -> dict[str, int | str | None]
         "mode": state.mode,
         "turn_count": state.turn_count,
         "last_turn_id": state.last_turn_id,
+        "previous_thread_id": state.previous_thread_id,
+        "previous_thread_key": state.previous_thread_key,
     }

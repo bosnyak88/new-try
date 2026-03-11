@@ -1,4 +1,4 @@
-# Architecture (REBUILD-005 deterministic routing foundation)
+# Architecture (REBUILD-006 deterministic topic-shift + previous-thread foundation)
 
 ## Design principles
 
@@ -12,7 +12,7 @@
 - **session**: top-level conversation container.
 - **thread**: named stream within one session (e.g. `default`, `work`).
 - **mode**: explicit turn metadata (currently free-form, default `chat`).
-- **active state**: persisted pointers for active session, active thread, and active mode.
+- **active state**: persisted pointers for active session, active thread, active mode, and previous active thread.
 - **live loop state**: projected from active state every loop step.
 
 ## Layer overview
@@ -45,6 +45,6 @@ Control commands are not persisted as normal turns.
 ## Routing layer
 
 - `orchestration/routing.py` resolves deterministic route decisions before turn execution.
-- Actions: `CONTINUE_ACTIVE`, `SWITCH_EXISTING`, `CREATE_AND_SWITCH`, `NO_ROUTE_CHANGE`.
-- `execute_turn()` applies precedence: explicit request thread override first, then deterministic natural routing, else continue active.
+- Actions: `CONTINUE_ACTIVE`, `SWITCH_EXISTING`, `CREATE_AND_SWITCH`, `SWITCH_PREVIOUS`, `NO_ROUTE_CHANGE`.
+- `execute_turn()` applies precedence: explicit request overrides first, then deterministic named routing, then deterministic previous-thread/topic-shift phrases, then continue active.
 - live slash commands stay explicit controls and are handled before natural routing phrases.

@@ -75,7 +75,7 @@ def test_live_loop_natural_routing_and_slash_precedence(tmp_path):
     _write_config(config, db_path, data_dir)
     runtime = build_runtime(config_path=str(config))
 
-    result = run_live_loop(runtime, ["új szál: work", "/szal manual", "vissza a work szálra", "/kilep"])
+    result = run_live_loop(runtime, ["más téma: work", "/szal manual", "folytassuk az előzőt", "/kilep"])
     turns = [item for item in result.outputs if item.kind == "turn"]
     assert turns[0].state.thread_key == "work"
     assert turns[1].state.thread_key == "work"
