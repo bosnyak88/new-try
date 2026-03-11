@@ -2,6 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
+
+
+class ModeKind(str, Enum):
+    CHAT = "chat"
 
 
 @dataclass(frozen=True)
@@ -27,12 +32,19 @@ class ReplyConfig:
 
 
 @dataclass(frozen=True)
+class ConversationConfig:
+    default_thread_key: str = "default"
+    default_mode: str = ModeKind.CHAT.value
+
+
+@dataclass(frozen=True)
 class AppConfig:
     name: str
     environment: str
     llm: LLMConfig
     paths: AppPaths
     reply: ReplyConfig
+    conversation: ConversationConfig = field(default_factory=ConversationConfig)
     trace_enabled: bool = True
     trace_level: str = "info"
 
@@ -55,6 +67,7 @@ class DoctorResult:
 class PersistenceBootstrapResult:
     db_path: str
     schema_initialized: bool
+    schema_version: int
 
 
 @dataclass(frozen=True)
@@ -64,15 +77,46 @@ class SessionRecord:
 
 
 @dataclass(frozen=True)
+class ThreadRecord:
+    thread_id: int
+    session_id: int
+    thread_key: str
+    created_at: datetime
+
+
+@dataclass(frozen=True)
+class ActiveConversationState:
+    session_id: int
+    thread_id: int
+    thread_key: str
+    mode: str
+    turn_count: int
+    last_turn_id: int | None = None
+
+
+@dataclass(frozen=True)
+class TalkRequest:
+    message: str
+    thread_key: str | None = None
+    mode: str | None = None
+
+
+@dataclass(frozen=True)
 class TurnInput:
     message: str
-    session_id: int | None = None
+    session_id: int
+    thread_id: int
+    mode: str
 
 
 @dataclass(frozen=True)
 class TurnResult:
     turn_id: int
     session_id: int
+    thread_id: int
+    thread_key: str
+    mode: str
+    turn_index: int
     user_message: str
     assistant_reply: str
     reply_backend: str
@@ -84,7 +128,9 @@ class TurnResult:
 class TraceEventRecord:
     trace_id: int
     session_id: int
+    thread_id: int
     turn_id: int
+    mode: str
     event_name: str
     backend: str
     degraded: bool

@@ -1,4 +1,4 @@
-from syntaris.contracts.runtime import RuntimeContext, TurnResult
+from syntaris.contracts.runtime import ActiveConversationState, RuntimeContext, TurnResult
 
 
 def build_boot_trace(context: RuntimeContext) -> dict[str, str | bool]:
@@ -9,18 +9,32 @@ def build_boot_trace(context: RuntimeContext) -> dict[str, str | bool]:
     }
 
 
-def build_turn_trace_events(turn: TurnResult, backend: str, degraded: bool) -> list[dict[str, object]]:
+def build_turn_trace_events(
+    state: ActiveConversationState,
+    turn: TurnResult,
+    backend: str,
+    degraded: bool,
+) -> list[dict[str, object]]:
     return [
         {
-            "event_name": "turn_received",
-            "payload": {"session_id": turn.session_id, "turn_id": turn.turn_id},
+            "event_name": "active_state_resolved",
+            "payload": {
+                "session_id": state.session_id,
+                "thread_id": state.thread_id,
+                "thread_key": state.thread_key,
+                "mode": state.mode,
+            },
+        },
+        {
+            "event_name": "thread_resolved_or_created",
+            "payload": {"thread_id": turn.thread_id, "thread_key": turn.thread_key},
         },
         {
             "event_name": "reply_generated",
-            "payload": {"backend": backend, "degraded": degraded},
+            "payload": {"backend": backend, "degraded": degraded, "mode": turn.mode},
         },
         {
             "event_name": "turn_persisted",
-            "payload": {"turn_id": turn.turn_id},
+            "payload": {"turn_id": turn.turn_id, "turn_index": turn.turn_index},
         },
     ]

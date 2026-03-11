@@ -20,6 +20,10 @@ port = 8080
 data_dir = "{data_dir.as_posix()}"
 db_path = "{db_path.as_posix()}"
 
+[conversation]
+default_thread_key = "default"
+default_mode = "chat"
+
 [reply]
 backend = "deterministic"
 live_url = ""
@@ -34,7 +38,7 @@ level = "info"
     )
 
 
-def test_cli_talk_once_persists_turn_and_trace(tmp_path, monkeypatch, capsys):
+def test_cli_talk_once_reuses_active_state_and_supports_thread_and_mode(tmp_path, monkeypatch, capsys):
     config = tmp_path / "syntaris.toml"
     data_dir = tmp_path / "data"
     db_path = data_dir / "runtime.db"
@@ -43,19 +47,48 @@ def test_cli_talk_once_persists_turn_and_trace(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(
         "sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "szia"]
     )
-
     exit_code = cli.main()
-    output = json.loads(capsys.readouterr().out)
+    first = json.loads(capsys.readouterr().out)
 
     assert exit_code == 0
-    assert output["reply"].startswith("[fallback] Deterministic reply")
-    assert output["session_id"] > 0
-    assert output["turn_id"] > 0
+    assert first["session_id"] > 0
+    assert first["thread_key"] == "default"
+    assert first["mode"] == "chat"
+
+    monkeypatch.setattr(
+        "sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "folytassuk"]
+    )
+    cli.main()
+    second = json.loads(capsys.readouterr().out)
+
+    assert second["session_id"] == first["session_id"]
+    assert second["thread_id"] == first["thread_id"]
+
+    monkeypatch.setattr(
+        "sys.argv",
+        ["syntaris", "--config", str(config), "talk", "--once", "munka", "--thread", "work", "--mode", "chat"],
+    )
+    cli.main()
+    third = json.loads(capsys.readouterr().out)
+
+    assert third["session_id"] == first["session_id"]
+    assert third["thread_key"] == "work"
+    assert third["thread_id"] != first["thread_id"]
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "session-status"])
+    cli.main()
+    status = json.loads(capsys.readouterr().out)
+
+    assert status["session_id"] == first["session_id"]
+    assert status["thread_key"] == "work"
+    assert status["mode"] == "chat"
 
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
     trace_exit_code = cli.main()
     trace_output = json.loads(capsys.readouterr().out)
 
     assert trace_exit_code == 0
-    assert trace_output["turn"]["user_message"] == "szia"
-    assert len(trace_output["trace_events"]) >= 1
+    assert trace_output["turn"]["thread_key"] == "work"
+    assert trace_output["turn"]["mode"] == "chat"
+    assert trace_output["turn"]["backend"] == "deterministic"
+    assert isinstance(trace_output["turn"]["degraded"], bool)

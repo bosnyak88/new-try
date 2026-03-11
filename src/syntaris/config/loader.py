@@ -3,7 +3,7 @@ from pathlib import Path
 
 import tomli
 
-from syntaris.contracts.runtime import AppConfig, AppPaths, LLMConfig, ReplyConfig
+from syntaris.contracts.runtime import AppConfig, AppPaths, ConversationConfig, LLMConfig, ReplyConfig
 
 
 def _pick(value: str | None, fallback: str) -> str:
@@ -31,6 +31,7 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
     trace = raw.get("trace", {})
     paths = raw.get("paths", {})
     reply = raw.get("reply", {})
+    conversation = raw.get("conversation", {})
 
     llm_config = LLMConfig(
         server_bin_path=_pick(os.getenv("SYNTARIS_LLM_SERVER_BIN"), llm.get("server_bin_path", "")),
@@ -53,12 +54,20 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
         ),
     )
 
+    conversation_config = ConversationConfig(
+        default_thread_key=_pick(
+            os.getenv("SYNTARIS_DEFAULT_THREAD_KEY"), conversation.get("default_thread_key", "default")
+        ),
+        default_mode=_pick(os.getenv("SYNTARIS_DEFAULT_MODE"), conversation.get("default_mode", "chat")),
+    )
+
     return AppConfig(
         name=app.get("name", "syntaris"),
         environment=os.getenv("SYNTARIS_ENV", app.get("environment", "development")),
         llm=llm_config,
         paths=paths_config,
         reply=reply_config,
+        conversation=conversation_config,
         trace_enabled=trace.get("enabled", True),
         trace_level=trace.get("level", "info"),
     )
