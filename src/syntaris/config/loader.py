@@ -1,8 +1,9 @@
 import os
-import tomli
 from pathlib import Path
 
-from syntaris.contracts.runtime import AppConfig, LLMConfig
+import tomli
+
+from syntaris.contracts.runtime import AppConfig, AppPaths, LLMConfig, ReplyConfig
 
 
 def _pick(value: str | None, fallback: str) -> str:
@@ -11,6 +12,10 @@ def _pick(value: str | None, fallback: str) -> str:
 
 def _pick_int(value: str | None, fallback: int) -> int:
     return int(value) if value else fallback
+
+
+def _pick_float(value: str | None, fallback: float) -> float:
+    return float(value) if value else fallback
 
 
 def load_app_config(config_path: str | None = None) -> AppConfig:
@@ -24,6 +29,8 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
     app = raw.get("app", {})
     llm = raw.get("llm", {})
     trace = raw.get("trace", {})
+    paths = raw.get("paths", {})
+    reply = raw.get("reply", {})
 
     llm_config = LLMConfig(
         server_bin_path=_pick(os.getenv("SYNTARIS_LLM_SERVER_BIN"), llm.get("server_bin_path", "")),
@@ -32,10 +39,26 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
         port=_pick_int(os.getenv("SYNTARIS_LLM_PORT"), llm.get("port", 8080)),
     )
 
+    paths_config = AppPaths(
+        data_dir=_pick(os.getenv("SYNTARIS_DATA_DIR"), paths.get("data_dir", "./.syntaris")),
+        db_path=_pick(os.getenv("SYNTARIS_DB_PATH"), paths.get("db_path", "./.syntaris/runtime.db")),
+    )
+
+    reply_config = ReplyConfig(
+        backend=_pick(os.getenv("SYNTARIS_REPLY_BACKEND"), reply.get("backend", "deterministic")),
+        live_url=_pick(os.getenv("SYNTARIS_REPLY_LIVE_URL"), reply.get("live_url", "")),
+        live_model=_pick(os.getenv("SYNTARIS_REPLY_LIVE_MODEL"), reply.get("live_model", "")),
+        timeout_seconds=_pick_float(
+            os.getenv("SYNTARIS_REPLY_TIMEOUT_SECONDS"), reply.get("timeout_seconds", 10.0)
+        ),
+    )
+
     return AppConfig(
         name=app.get("name", "syntaris"),
         environment=os.getenv("SYNTARIS_ENV", app.get("environment", "development")),
         llm=llm_config,
+        paths=paths_config,
+        reply=reply_config,
         trace_enabled=trace.get("enabled", True),
         trace_level=trace.get("level", "info"),
     )

@@ -1,24 +1,33 @@
-# Architecture (Phase-0)
+# Architecture (Phase-0 talk slice)
 
 ## Design principles
 
-- Contract-first: shared data contracts are declared under `contracts/` before orchestration logic.
-- Structure-first: responsibilities are separated into config, bootstrap, orchestration, core, and trace layers.
-- No central mega-pipeline: orchestration remains thin and delegates to explicit modules.
+- Contract-first: runtime/session/turn/trace structures are explicit dataclasses.
+- Structure-first: config/bootstrap/persistence/reply/orchestration/trace are separate layers.
+- No monolithic pipeline: CLI dispatches, orchestration composes, leaf modules execute.
 
 ## Layer overview
 
 1. `contracts/`
-   - AppConfig, LLMConfig, RuntimeContext, DoctorResult.
+   - `AppConfig`, `AppPaths`, `ReplyConfig`, `SessionRecord`, `TurnInput`, `TurnResult`, `TraceEventRecord`, `LastTurnTraceView`.
 2. `config/`
-   - TOML + environment resolution.
+   - TOML + env loading into contracts.
 3. `bootstrap/`
-   - RuntimeContext assembly.
-4. `core/`
-   - Atomic domain checks.
-5. `orchestration/`
-   - Command-level flow (`run_doctor`).
-6. `trace/`
-   - Boot trace event projection.
-7. `cli.py`
-   - Command dispatch (`doctor`, `trace-boot`).
+   - Side-effect-free `RuntimeContext` assembly.
+4. `persistence/`
+   - SQLite schema and explicit store API (`initialize`, `create_session`, `create_turn`, `create_trace_events`, `read_last_turn_trace`).
+5. `reply/`
+   - Adapter boundary (`build_reply_adapter`) with deterministic fallback and optional llama-http path.
+6. `orchestration/`
+   - `doctor`, `init_db`, `talk_once`, `trace_last` flows.
+7. `trace/`
+   - Boot and turn-level trace event shaping.
+8. `cli.py`
+   - CLI boundary + command routing.
+
+## Scope intentionally deferred
+
+- multi-turn thread routing
+- memory graphs
+- onboarding/intent systems
+- advanced planning prompts
