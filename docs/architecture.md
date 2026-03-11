@@ -1,4 +1,4 @@
-# Architecture (REBUILD-007 deterministic pending-route clarification foundation)
+## Architecture (REBUILD-008 deterministic thread context pack foundation)
 
 ## Design principles
 
@@ -55,3 +55,11 @@ Control commands are not persisted as normal turns.
 - Suggestive Hungarian-first phrases create persisted `pending_route` state instead of immediate switch.
 - The next turn resolves pending state deterministically: affirmative = switch and execute held message on proposed thread; negative = stay and execute held message on current thread; other input = cancel pending and process new input normally.
 - `talk --once`, `talk --live`, and `talk --script` share the same pre-turn route/pending resolution path in orchestration (`execute_turn`).
+
+
+## Thread context projection layer
+
+- Added a dedicated orchestration module (`orchestration/context_pack.py`) to build deterministic `ThreadContextPack` views.
+- The same projection path serves CLI inspection (`thread-view`) and turn-time context loading (`execute_turn`).
+- Projection remains bounded (`conversation.context_turn_window`, overrideable via `thread-view --limit`).
+- Context packs are raw-but-shaped: session/thread metadata + bounded recent persisted turns; no summarization, embeddings, or semantic recall.

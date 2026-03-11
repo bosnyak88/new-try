@@ -35,6 +35,7 @@ class ReplyConfig:
 class ConversationConfig:
     default_thread_key: str = "default"
     default_mode: str = ModeKind.CHAT.value
+    context_turn_window: int = 5
 
 
 @dataclass(frozen=True)
@@ -192,6 +193,56 @@ class ThreadListView:
     previous_thread_id: int | None
     previous_thread_key: str | None
     threads: list[ThreadSummaryView]
+
+
+@dataclass(frozen=True)
+class ThreadContextTurn:
+    turn_id: int
+    turn_index: int
+    user_message: str
+    assistant_reply: str
+    backend: str
+    degraded: bool
+
+
+@dataclass(frozen=True)
+class ThreadContextPack:
+    session_id: int
+    thread_id: int
+    thread_key: str
+    mode: str
+    turn_count: int
+    last_turn_id: int | None
+    recent_turns: list[ThreadContextTurn]
+    previous_thread_id: int | None = None
+    previous_thread_key: str | None = None
+
+
+@dataclass(frozen=True)
+class ThreadContextRequest:
+    source: str
+    thread_key: str | None = None
+    limit: int | None = None
+
+
+@dataclass(frozen=True)
+class ThreadContextView:
+    request: ThreadContextRequest
+    found: bool
+    pack: ThreadContextPack | None
+
+
+class ContextSource(str, Enum):
+    CURRENT = "current"
+    PREVIOUS = "previous"
+    NAMED = "named"
+    EXECUTION_TARGET = "execution_target"
+
+
+@dataclass(frozen=True)
+class ContextLoadResult:
+    source: ContextSource
+    pack: ThreadContextPack
 
 
 class LoopAction(str, Enum):

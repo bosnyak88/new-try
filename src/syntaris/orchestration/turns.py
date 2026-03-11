@@ -15,6 +15,7 @@ from syntaris.contracts.runtime import (
     TurnInput,
     TurnResult,
 )
+from syntaris.orchestration.context_pack import load_execution_context_pack
 from syntaris.orchestration.routing import resolve_route_decision
 from syntaris.persistence import PersistenceStore
 from syntaris.reply.adapters import ReplyOutput
@@ -199,6 +200,12 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             reply_backend="deterministic",
             degraded=True,
         )
+        context_load = load_execution_context_pack(
+            context=context,
+            session_id=resolved.state_after.session_id,
+            thread_id=resolved.state_after.thread_id,
+            mode=resolved.state_after.mode,
+        )
         events = build_turn_trace_events(
             state=resolved.state_after,
             turn=turn,
@@ -206,6 +213,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             degraded=True,
             source=source,
             route=resolved.route,
+            context_load=context_load,
         )
         store.create_trace_events(
             session_id=turn.session_id,
@@ -217,6 +225,13 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             events=events,
         )
         return TalkRunResult(turn=turn, state=resolved.state_after, route=resolved.route)
+
+    context_load = load_execution_context_pack(
+        context=context,
+        session_id=resolved.state_after.session_id,
+        thread_id=resolved.state_after.thread_id,
+        mode=resolved.state_after.mode,
+    )
 
     execution_message = resolved.execution_message
     reply_adapter = build_reply_adapter(context.config.reply)
@@ -246,6 +261,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         degraded=reply.degraded,
         source=source,
         route=resolved.route,
+        context_load=context_load,
     )
     store.create_trace_events(
         session_id=turn.session_id,

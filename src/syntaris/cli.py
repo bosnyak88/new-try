@@ -6,7 +6,7 @@ from syntaris.bootstrap.init_app import build_runtime
 from syntaris.contracts.runtime import TalkRequest
 from syntaris.orchestration.doctor import run_doctor
 from syntaris.orchestration.live_loop import run_live_loop, run_live_loop_interactive
-from syntaris.orchestration.talk import init_db, list_threads, session_status, talk_once, trace_last
+from syntaris.orchestration.talk import init_db, list_threads, session_status, talk_once, thread_view_current, thread_view_named, thread_view_previous, trace_last
 from syntaris.trace.events import build_boot_trace
 
 
@@ -30,6 +30,12 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("trace-last", help="Inspect the latest persisted turn and trace events")
     sub.add_parser("session-status", help="Inspect active session/thread/mode")
     sub.add_parser("thread-list", help="List known threads and active thread")
+    thread_view_parser = sub.add_parser("thread-view", help="Inspect deterministic thread context pack")
+    scope = thread_view_parser.add_mutually_exclusive_group(required=False)
+    scope.add_argument("--current", action="store_true", help="View active thread context")
+    scope.add_argument("--previous", action="store_true", help="View previous thread context")
+    thread_view_parser.add_argument("thread_key", nargs="?", default=None, help="Named thread key")
+    thread_view_parser.add_argument("--limit", type=int, default=None, help="Override context turn window")
     return parser
 
 
@@ -75,6 +81,40 @@ def _print_turn_result(result) -> None:
             indent=2,
         )
     )
+
+
+def _thread_context_payload(view) -> dict[str, object]:
+    if not view.found or view.pack is None:
+        return {"request": {"source": view.request.source, "thread_key": view.request.thread_key, "limit": view.request.limit}, "found": False, "pack": None}
+    return {
+        "request": {
+            "source": view.request.source,
+            "thread_key": view.request.thread_key,
+            "limit": view.request.limit,
+        },
+        "found": True,
+        "pack": {
+            "session_id": view.pack.session_id,
+            "thread_id": view.pack.thread_id,
+            "thread_key": view.pack.thread_key,
+            "mode": view.pack.mode,
+            "turn_count": view.pack.turn_count,
+            "last_turn_id": view.pack.last_turn_id,
+            "previous_thread_id": view.pack.previous_thread_id,
+            "previous_thread_key": view.pack.previous_thread_key,
+            "recent_turns": [
+                {
+                    "turn_id": turn.turn_id,
+                    "turn_index": turn.turn_index,
+                    "user_message": turn.user_message,
+                    "assistant_reply": turn.assistant_reply,
+                    "backend": turn.backend,
+                    "degraded": turn.degraded,
+                }
+                for turn in view.pack.recent_turns
+            ],
+        },
+    }
 
 
 def main() -> int:
@@ -194,6 +234,18 @@ def main() -> int:
                 indent=2,
             )
         )
+        return 0
+
+    if args.command == "thread-view":
+        if args.current:
+            view = thread_view_current(runtime, limit=args.limit)
+        elif args.previous:
+            view = thread_view_previous(runtime, limit=args.limit)
+        elif args.thread_key:
+            view = thread_view_named(runtime, thread_key=args.thread_key, limit=args.limit)
+        else:
+            view = thread_view_current(runtime, limit=args.limit)
+        print(json.dumps(_thread_context_payload(view), indent=2))
         return 0
 
     if args.command == "trace-last":

@@ -15,6 +15,7 @@ The current repository contains:
 - live multi-turn conversation loop with explicit control commands
 - deterministic Hungarian-first routing for named switching/creation plus previous-thread return phrases
 - state and latest-trace inspection from CLI
+- deterministic thread context-pack projection and inspection (`thread-view`)
 
 ## Quick start
 
@@ -37,6 +38,10 @@ The current repository contains:
    - `python -m syntaris.cli --config config/syntaris.example.toml thread-list`
 9. Inspect latest persisted trace:
    - `python -m syntaris.cli --config config/syntaris.example.toml trace-last`
+10. Inspect thread context packs:
+   - `python -m syntaris.cli --config config/syntaris.example.toml thread-view --current`
+   - `python -m syntaris.cli --config config/syntaris.example.toml thread-view --previous`
+   - `python -m syntaris.cli --config config/syntaris.example.toml thread-view <thread_key>`
 
 ## Commands currently available
 
@@ -48,6 +53,7 @@ The current repository contains:
 - `talk --script <path>`
 - `session-status`
 - `thread-list`
+- `thread-view [--current|--previous|<thread_key>] [--limit <N>]`
 - `trace-last`
 
 

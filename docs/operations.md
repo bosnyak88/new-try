@@ -35,12 +35,17 @@ Prints compact JSON view of active conversation state, including `previous_threa
 
 ### `trace-last`
 
-Prints latest persisted turn and its trace events including session/thread/mode/backend/degraded context.
+Prints latest persisted turn and its trace events including session/thread/mode/backend/degraded context, plus thread context-load metadata.
 
 
 ### `thread-list`
 
 Prints known threads for the active session with active/previous markers, turn counts, and last turn ids.
+
+### `thread-view --current | --previous | <thread_key> [--limit <N>]`
+
+Prints compact deterministic context-pack JSON for active, previous, or named thread target.
+Includes session/thread metadata, bounded recent turns, and previous-thread pointers when present.
 
 ## Route precedence
 

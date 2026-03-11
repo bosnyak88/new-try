@@ -1,3 +1,12 @@
+## REBUILD-008 propagation addendum
+
+- Added first-class thread context-pack contracts (`ThreadContextTurn`, `ThreadContextPack`, `ThreadContextRequest`, `ThreadContextView`) and execution-time context load result metadata.
+- Added shared projection module for current/previous/named context inspection and execution-target context loading.
+- Added `thread-view` CLI command surface (`--current`, `--previous`, named thread key, optional `--limit`).
+- Extended trace with `thread_context_loaded` event so once/live/script execution paths expose loaded-context metadata.
+- Updated config/docs/tests to keep contracts/orchestration/persistence/trace/CLI alignment explicit without reintroducing monolithic pipeline architecture.
+
+
 ## REBUILD-007 propagation
 
 - Contracts extended with first-class pending-route proposal/status/resolution types.

@@ -1,3 +1,12 @@
+## 0.8.0 - REBUILD-008 deterministic thread context / resume-pack foundation
+
+- Added first-class thread context contracts and config key `conversation.context_turn_window`.
+- Added shared context projection/loading orchestration for current/previous/named/execution-target thread context packs.
+- Added `thread-view` CLI command for deterministic context inspection (`--current`, `--previous`, named thread, optional `--limit`).
+- Wired once/live/script turn execution through shared execution-target context load path and trace propagation.
+- Extended trace events with `thread_context_loaded` metadata.
+- Added deterministic tests for thread-view behavior, missing-context handling, bounded context windows, and trace alignment.
+
 ## 0.7.1 - REBUILD-007a previous-thread suggestive + BOM-safe script hotfix
 
 - Reclassified `folytassuk az előzőt` as suggestive previous-thread routing so it creates pending clarification instead of direct switch.
