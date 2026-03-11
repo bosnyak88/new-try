@@ -1,6 +1,7 @@
 import argparse
 import json
 
+from syntaris.bootstrap.env import load_repo_env
 from syntaris.bootstrap.init_app import build_runtime
 from syntaris.orchestration.doctor import run_doctor
 from syntaris.trace.events import build_boot_trace
@@ -20,6 +21,7 @@ def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
 
+    load_repo_env()
     runtime = build_runtime(config_path=args.config)
 
     if args.command == "doctor":
