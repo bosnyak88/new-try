@@ -1,0 +1,14 @@
+[app]
+name = "syntaris"
+environment = "development"
+
+[llm]
+# Paths are intentionally external to this repository.
+server_bin_path = "/absolute/path/to/llama-server"
+model_path = "/absolute/path/to/model.gguf"
+host = "127.0.0.1"
+port = 8080
+
+[trace]
+enabled = true
+level = "info"
