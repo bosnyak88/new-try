@@ -1,32 +1,32 @@
-# Propagation report — REBUILD-003 session/thread/mode foundation
+# Propagation report — REBUILD-004 multi-turn conversational loop
 
 ## Direct changes
 
-- Added explicit contracts for mode/thread/active-state/talk-request.
-- Extended SQLite schema with `threads`, active-state pointers in `app_meta`, and mode/thread fields on turns and trace events.
-- Added migration path for REBUILD-002 databases (schema v1 -> v2).
-- Extended talk orchestration to resolve/reuse active state and to support explicit thread/mode overrides.
-- Expanded CLI with `session-status` and new `talk` flags (`--thread`, `--mode`).
-- Extended trace shaping and persisted trace payloads with session/thread/mode context.
+- Added explicit live-loop contracts (`LoopAction`, `LoopCommand`, `LiveConversationState`, `LiveTurnOutput`).
+- Introduced `orchestration/turns.py` with single reusable `execute_turn()` path.
+- Refactored `talk_once` to delegate to shared turn execution.
+- Added `orchestration/live_loop.py` for multi-turn orchestration and control command routing.
+- Expanded CLI talk surface with `--live` and deterministic `--script` loop mode.
+- Added loop-aware trace metadata (`turn_execution_source`) and loop lifecycle/control events.
 
 ## Propagated layers
 
-- **Contracts:** no loose session/thread/mode dict passing in orchestration.
-- **Config/bootstrap:** conversation defaults added without reintroducing hidden `.env` side effects.
-- **Persistence:** active-state/session/thread/turn/trace logic centralized in store module.
-- **Orchestration:** runtime composition handles state resolution; CLI stays thin.
-- **Trace:** events now explain which conversation context handled the turn.
-- **Docs/config/tests/changelog:** synchronized with new behavior and schema version.
+- **Contracts:** loop flow is typed and explicit; no loose command strings across layers.
+- **Orchestration:** loop, one-shot, and turn execution have distinct module boundaries.
+- **Persistence:** existing session/thread/mode/turn persistence is reused without schema sprawl.
+- **Trace:** live/once execution source is visible and loop command handling is auditable.
+- **Docs/tests/changelog:** synchronized to new CLI and loop behavior.
 
 ## Structural self-check
 
 - No giant central pipeline file introduced.
-- Business logic not moved into `cli.py`.
-- Session/thread/mode resolution is not duplicated across layers.
-- SQLite logic remains outside config loading and CLI parsing.
+- `talk --once` and live loop share one turn path (`execute_turn`).
+- CLI remains thin and does not duplicate business orchestration.
+- Loop control parsing is centralized in `live_loop.py`.
 
 ## Deferred intentionally
 
-- intelligent mode switching
-- memory graph/recall systems
-- advanced routing and planning workflows
+- advanced routing
+- memory/recall graph
+- proactive autonomy
+- TUI/GUI interaction

@@ -11,8 +11,8 @@ The current repository contains:
 - `doctor` and `trace-boot`
 - SQLite bootstrap and persistence for sessions, threads, turns, active state, and trace events
 - a reply adapter boundary with deterministic fallback behavior
-- talk flow with active session/thread reuse
-- explicit mode metadata persisted per turn
+- shared single-turn orchestration used by both one-shot and live loop execution
+- live multi-turn conversation loop with explicit control commands
 - state and latest-trace inspection from CLI
 
 ## Quick start
@@ -23,12 +23,16 @@ The current repository contains:
    - `python -m pip install -e .`
 3. Initialize local DB:
    - `python -m syntaris.cli --config config/syntaris.example.toml init-db`
-4. Run talk turns:
+4. Run one turn:
    - `python -m syntaris.cli --config config/syntaris.example.toml talk --once "szia"`
-   - `python -m syntaris.cli --config config/syntaris.example.toml talk --once "munka" --thread work --mode chat`
-5. Inspect active conversation state:
+5. Run live loop:
+   - `python -m syntaris.cli --config config/syntaris.example.toml talk --live`
+   - controls: `/allapot`, `/szal <thread_key>`, `/mod <mode>`, `/kilep`
+6. Run deterministic scripted loop:
+   - `python -m syntaris.cli --config config/syntaris.example.toml talk --script path/to/loop.txt`
+7. Inspect active conversation state:
    - `python -m syntaris.cli --config config/syntaris.example.toml session-status`
-6. Inspect latest persisted trace:
+8. Inspect latest persisted trace:
    - `python -m syntaris.cli --config config/syntaris.example.toml trace-last`
 
 ## Commands currently available
@@ -37,5 +41,7 @@ The current repository contains:
 - `trace-boot`
 - `init-db`
 - `talk --once "..." [--thread <thread_key>] [--mode <mode>]`
+- `talk --live`
+- `talk --script <path>`
 - `session-status`
 - `trace-last`

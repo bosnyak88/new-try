@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0 - REBUILD-004 multi-turn conversational loop
+
+- Added live-loop contracts: `LoopAction`, `LoopCommand`, `LiveConversationState`, and `LiveTurnOutput`.
+- Introduced shared single-turn orchestration (`execute_turn`) and made `talk --once` a thin wrapper around it.
+- Added multi-turn loop orchestration with in-loop control commands (`/allapot`, `/szal`, `/mod`, `/kilep` plus aliases).
+- Expanded CLI with `talk --live` and deterministic scripted loop mode `talk --script <path>`.
+- Extended trace events with turn execution source and loop lifecycle/control audit events.
+- Added deterministic tests for scripted multi-turn flow, control behavior, state reuse, and trace alignment.
+- Updated docs and propagation report to describe live-loop architecture and command surface.
+
 ## 0.3.0 - REBUILD-003 session/thread/mode foundation
 
 - Added first-class contracts for mode/thread/active conversation state and talk request metadata.

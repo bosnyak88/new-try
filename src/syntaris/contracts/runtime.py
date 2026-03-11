@@ -101,6 +101,43 @@ class TalkRequest:
     mode: str | None = None
 
 
+class LoopAction(str, Enum):
+    TURN = "turn"
+    STATUS = "status"
+    SWITCH_THREAD = "switch_thread"
+    SWITCH_MODE = "switch_mode"
+    EXIT = "exit"
+    INVALID = "invalid"
+
+
+@dataclass(frozen=True)
+class LoopCommand:
+    action: LoopAction
+    raw_input: str
+    value: str | None = None
+    error: str | None = None
+
+
+@dataclass(frozen=True)
+class LiveConversationState:
+    session_id: int
+    thread_id: int
+    thread_key: str
+    mode: str
+    turn_count: int
+    last_turn_id: int | None
+
+
+@dataclass(frozen=True)
+class LiveTurnOutput:
+    kind: str
+    message: str
+    state: LiveConversationState
+    turn_id: int | None = None
+    backend: str | None = None
+    degraded: bool | None = None
+
+
 @dataclass(frozen=True)
 class TurnInput:
     message: str
