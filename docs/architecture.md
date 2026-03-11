@@ -1,39 +1,41 @@
-# Architecture (REBUILD-003 state foundation)
+# Architecture (REBUILD-004 live loop foundation)
 
 ## Design principles
 
-- Contract-first: session/thread/mode and state view entities are explicit dataclasses.
+- Contract-first: loop/state/turn outputs are explicit dataclasses.
 - Structure-first: config/bootstrap/persistence/reply/orchestration/trace/CLI remain separated.
-- No monolithic pipeline: command orchestration composes leaf modules.
+- No monolithic pipeline: one reusable single-turn path is called by both CLI wrappers.
 
-## Session / thread / mode model
+## Conversation model
 
 - **session**: top-level conversation container.
 - **thread**: named stream within one session (e.g. `default`, `work`).
-- **mode**: explicit turn metadata (currently `chat`).
+- **mode**: explicit turn metadata (currently free-form, default `chat`).
 - **active state**: persisted pointers for active session, active thread, and active mode.
+- **live loop state**: projected from active state every loop step.
 
 ## Layer overview
 
 1. `contracts/`
-   - `ModeKind`, `ConversationConfig`, `ThreadRecord`, `ActiveConversationState`, `TalkRequest`.
-2. `config/`
-   - TOML/env loading, including `[conversation]` defaults.
-3. `bootstrap/`
-   - Side-effect-free `RuntimeContext` assembly.
-4. `persistence/`
-   - SQLite schema + migrations + store API for active state/session/thread/turn/trace.
-5. `reply/`
-   - Adapter boundary with deterministic fallback and optional llama-http path.
-6. `orchestration/`
-   - `init_db`, `resolve_active_state`, `talk_once`, `trace_last`.
-7. `trace/`
-   - state-aware turn event shaping (`active_state_resolved`, `thread_resolved_or_created`, `reply_generated`, `turn_persisted`).
-8. `cli.py`
-   - command routing only; no business logic dumping.
+   - `LoopAction`, `LoopCommand`, `LiveConversationState`, `LiveTurnOutput`, plus existing talk/session contracts.
+2. `orchestration/turns.py`
+   - single reusable `execute_turn()` orchestration path.
+3. `orchestration/talk.py`
+   - thin wrappers (`talk_once`, state helpers, trace-last).
+4. `orchestration/live_loop.py`
+   - loop command parsing, control routing, and repeated calls into `execute_turn()`.
+5. `persistence/`
+   - active state/session/thread/turn/trace persistence unchanged in shape.
+6. `trace/`
+   - turn trace enriched with execution source (`talk_once` vs `talk_live`) plus loop-level events.
+7. `cli.py`
+   - boundary routing only (`--once`, `--live`, `--script`).
 
-## Deferred intentionally
+## Live controls
 
-- advanced multi-mode routing
-- memory graph / recall subsystems
-- onboarding/reminders/planning systems
+- `/kilep` (alias `/exit`) - exit loop
+- `/allapot` (alias `/status`) - compact status output
+- `/szal <thread_key>` (alias `/thread ...`) - switch active thread
+- `/mod <mode>` (alias `/mode ...`) - switch active mode
+
+Control commands are not persisted as normal turns.

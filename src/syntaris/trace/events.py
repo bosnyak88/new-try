@@ -14,6 +14,7 @@ def build_turn_trace_events(
     turn: TurnResult,
     backend: str,
     degraded: bool,
+    source: str,
 ) -> list[dict[str, object]]:
     return [
         {
@@ -36,5 +37,9 @@ def build_turn_trace_events(
         {
             "event_name": "turn_persisted",
             "payload": {"turn_id": turn.turn_id, "turn_index": turn.turn_index},
+        },
+        {
+            "event_name": "turn_execution_source",
+            "payload": {"source": source},
         },
     ]

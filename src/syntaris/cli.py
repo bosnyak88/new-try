@@ -5,6 +5,7 @@ from syntaris.bootstrap.env import load_repo_env
 from syntaris.bootstrap.init_app import build_runtime
 from syntaris.contracts.runtime import TalkRequest
 from syntaris.orchestration.doctor import run_doctor
+from syntaris.orchestration.live_loop import run_live_loop, run_live_loop_interactive
 from syntaris.orchestration.talk import init_db, resolve_active_state, talk_once, trace_last
 from syntaris.trace.events import build_boot_trace
 
@@ -19,13 +20,34 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("init-db", help="Initialize persistence directories and schema")
 
     talk_parser = sub.add_parser("talk", help="Execute talk flows")
-    talk_parser.add_argument("--once", required=True, help="Run a single-turn interaction")
+    group = talk_parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--once", help="Run a single-turn interaction")
+    group.add_argument("--live", action="store_true", help="Run interactive multi-turn loop")
+    group.add_argument("--script", help="Run deterministic multi-turn loop from input file")
     talk_parser.add_argument("--thread", dest="thread_key", default=None, help="Open/create and activate thread key")
     talk_parser.add_argument("--mode", default=None, help="Explicit mode metadata persisted on turn")
 
     sub.add_parser("trace-last", help="Inspect the latest persisted turn and trace events")
     sub.add_parser("session-status", help="Inspect active session/thread/mode")
     return parser
+
+
+def _print_turn_result(result) -> None:
+    print(
+        json.dumps(
+            {
+                "reply": result.turn.assistant_reply,
+                "session_id": result.turn.session_id,
+                "thread_id": result.turn.thread_id,
+                "thread_key": result.turn.thread_key,
+                "mode": result.turn.mode,
+                "turn_id": result.turn.turn_id,
+                "backend": result.turn.reply_backend,
+                "degraded": result.turn.degraded,
+            },
+            indent=2,
+        )
+    )
 
 
 def main() -> int:
@@ -49,24 +71,42 @@ def main() -> int:
         return 0
 
     if args.command == "talk":
-        request = TalkRequest(message=args.once, thread_key=args.thread_key, mode=args.mode)
-        result = talk_once(runtime, request)
-        print(
-            json.dumps(
-                {
-                    "reply": result.turn.assistant_reply,
-                    "session_id": result.turn.session_id,
-                    "thread_id": result.turn.thread_id,
-                    "thread_key": result.turn.thread_key,
-                    "mode": result.turn.mode,
-                    "turn_id": result.turn.turn_id,
-                    "backend": result.turn.reply_backend,
-                    "degraded": result.turn.degraded,
-                },
-                indent=2,
-            )
-        )
-        return 0
+        if args.once is not None:
+            request = TalkRequest(message=args.once, thread_key=args.thread_key, mode=args.mode)
+            result = talk_once(runtime, request)
+            _print_turn_result(result)
+            return 0
+
+        if args.live:
+            result = run_live_loop_interactive(runtime)
+            for output in result.outputs:
+                print(output.message)
+            return 0
+
+        if args.script:
+            with open(args.script, "r", encoding="utf-8") as f:
+                lines = [line.rstrip("\n") for line in f]
+            result = run_live_loop(runtime, lines)
+            for output in result.outputs:
+                print(
+                    json.dumps(
+                        {
+                            "kind": output.kind,
+                            "message": output.message,
+                            "session_id": output.state.session_id,
+                            "thread_id": output.state.thread_id,
+                            "thread_key": output.state.thread_key,
+                            "mode": output.state.mode,
+                            "turn_count": output.state.turn_count,
+                            "last_turn_id": output.state.last_turn_id,
+                            "turn_id": output.turn_id,
+                            "backend": output.backend,
+                            "degraded": output.degraded,
+                        },
+                        sort_keys=True,
+                    )
+                )
+            return 0
 
     if args.command == "session-status":
         state = resolve_active_state(runtime)
