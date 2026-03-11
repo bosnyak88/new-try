@@ -49,3 +49,9 @@ Prints known threads for the active session with active/previous markers, turn c
 3. deterministic named thread-routing phrases
 4. deterministic previous-thread/topic-shift phrases
 5. active-thread continuation fallback
+
+
+## Pending-route operations
+
+- `session-status` now surfaces `pending_route` metadata when clarification is waiting.
+- `trace-last` includes proposal/resolution metadata (`pending_route_proposed`, `pending_route_confirmed`, `pending_route_rejected`, `pending_route_cancelled`).

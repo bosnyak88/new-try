@@ -1,3 +1,12 @@
+## 0.7.0 - REBUILD-007 deterministic pending-route clarification foundation
+
+- Added first-class pending-route contracts (`PendingRouteProposal`, `PendingRouteStatusView`, `PendingResolutionAction`, `SessionStatusView`) and extended route decision metadata.
+- Extended deterministic Hungarian-first routing with suggestive phrase families that create persisted pending proposals instead of immediate route changes.
+- Added deterministic yes/no pending resolution (confirm/reject/cancel) with held-message execution semantics.
+- Kept once/live/script aligned through shared route+pending resolution before normal turn execution.
+- Exposed pending state via `session-status` and propagated pending metadata to trace events and payloads.
+- Added deterministic tests for suggestive pending proposals, confirmation/rejection/cancellation behavior, and live loop alignment.
+
 # Changelog
 
 ## 0.6.0 - REBUILD-006 deterministic topic-shift + previous-thread foundation

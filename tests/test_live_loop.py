@@ -83,3 +83,16 @@ def test_live_loop_natural_routing_and_slash_precedence(tmp_path):
     controls = [item for item in result.outputs if item.kind == "control"]
     assert len(controls) == 1
     assert '"thread_key": "manual"' in controls[0].message
+
+
+def test_live_loop_pending_resolution(tmp_path):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+    runtime = build_runtime(config_path=str(config))
+
+    result = run_live_loop(runtime, ["új szál: work", "vissza a default szálra", "folytassuk a worköt", "igen", "/kilep"])
+    turns = [item for item in result.outputs if item.kind == "turn"]
+    assert turns[2].message.startswith("A(z) work")
+    assert turns[3].state.thread_key == "work"

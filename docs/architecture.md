@@ -1,4 +1,4 @@
-# Architecture (REBUILD-006 deterministic topic-shift + previous-thread foundation)
+# Architecture (REBUILD-007 deterministic pending-route clarification foundation)
 
 ## Design principles
 
@@ -48,3 +48,10 @@ Control commands are not persisted as normal turns.
 - Actions: `CONTINUE_ACTIVE`, `SWITCH_EXISTING`, `CREATE_AND_SWITCH`, `SWITCH_PREVIOUS`, `NO_ROUTE_CHANGE`.
 - `execute_turn()` applies precedence: explicit request overrides first, then deterministic named routing, then deterministic previous-thread/topic-shift phrases, then continue active.
 - live slash commands stay explicit controls and are handled before natural routing phrases.
+
+
+## Pending-route clarification layer
+
+- Suggestive Hungarian-first phrases create persisted `pending_route` state instead of immediate switch.
+- The next turn resolves pending state deterministically: affirmative = switch and execute held message on proposed thread; negative = stay and execute held message on current thread; other input = cancel pending and process new input normally.
+- `talk --once`, `talk --live`, and `talk --script` share the same pre-turn route/pending resolution path in orchestration (`execute_turn`).

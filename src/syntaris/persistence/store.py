@@ -8,8 +8,11 @@ from pathlib import Path
 from syntaris.contracts.runtime import (
     ActiveConversationState,
     LastTurnTraceView,
+    PendingRouteProposal,
+    PendingRouteStatusView,
     PersistenceBootstrapResult,
     SessionRecord,
+    SessionStatusView,
     ThreadListView,
     ThreadRecord,
     ThreadSummaryView,
@@ -21,6 +24,39 @@ from syntaris.persistence.schema import SCHEMA_SQL, SCHEMA_VERSION
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _parse_pending_route(value: str | None) -> PendingRouteStatusView | None:
+    if value is None:
+        return None
+    try:
+        data = json.loads(value)
+    except json.JSONDecodeError:
+        return None
+    required = {"pending_action", "pending_thread_key", "pending_reason", "pending_original_message", "source", "proposed_at"}
+    if not required.issubset(set(data.keys())):
+        return None
+    return PendingRouteStatusView(
+        pending_action=str(data["pending_action"]),
+        pending_thread_key=str(data["pending_thread_key"]),
+        pending_reason=str(data["pending_reason"]),
+        pending_original_message=str(data["pending_original_message"]),
+        match_pattern=str(data["match_pattern"]) if data.get("match_pattern") is not None else None,
+        source=str(data["source"]),
+        proposed_at=str(data["proposed_at"]),
+    )
+
+
+def _pending_status_from_proposal(proposal: PendingRouteProposal) -> PendingRouteStatusView:
+    return PendingRouteStatusView(
+        pending_action="switch_thread",
+        pending_thread_key=proposal.proposed_thread_key,
+        pending_reason=proposal.reason,
+        pending_original_message=proposal.held_user_message,
+        match_pattern=proposal.match_pattern,
+        source=proposal.source,
+        proposed_at=proposal.proposed_at,
+    )
 
 
 class PersistenceStore:
@@ -116,7 +152,7 @@ class PersistenceStore:
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             row = conn.execute(
-                "SELECT key, value FROM app_meta WHERE key IN ('active_session_id', 'active_thread_id', 'active_mode', 'previous_thread_id')"
+                "SELECT key, value FROM app_meta WHERE key IN ('active_session_id', 'active_thread_id', 'active_mode', 'previous_thread_id', 'pending_route')"
             ).fetchall()
             values = {str(item["key"]): str(item["value"]) for item in row}
             if "active_session_id" not in values or "active_thread_id" not in values:
@@ -153,6 +189,7 @@ class PersistenceStore:
                 last_turn_id=int(last_turn_id) if last_turn_id is not None else None,
                 previous_thread_id=previous_thread_id,
                 previous_thread_key=previous_thread_key,
+                pending_route=_parse_pending_route(values.get("pending_route")),
             )
 
     def set_active_state(self, session_id: int, thread_id: int, mode: str) -> None:
@@ -186,6 +223,47 @@ class PersistenceStore:
                     ("previous_thread_id", str(previous_thread_id)),
                 )
             conn.commit()
+
+    def set_pending_route(self, proposal: PendingRouteProposal) -> PendingRouteStatusView:
+        pending = _pending_status_from_proposal(proposal)
+        payload = json.dumps(
+            {
+                "pending_action": pending.pending_action,
+                "pending_thread_key": pending.pending_thread_key,
+                "pending_reason": pending.pending_reason,
+                "pending_original_message": pending.pending_original_message,
+                "match_pattern": pending.match_pattern,
+                "source": pending.source,
+                "proposed_at": pending.proposed_at,
+            },
+            sort_keys=True,
+        )
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO app_meta(key, value) VALUES(?, ?)",
+                ("pending_route", payload),
+            )
+            conn.commit()
+        return pending
+
+    def clear_pending_route(self) -> None:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute("DELETE FROM app_meta WHERE key = ?", ("pending_route",))
+            conn.commit()
+
+    def get_session_status_view(self, default_thread_key: str, default_mode: str) -> SessionStatusView:
+        state = self.resolve_or_create_active(default_thread_key=default_thread_key, default_mode=default_mode)
+        return SessionStatusView(
+            session_id=state.session_id,
+            thread_id=state.thread_id,
+            thread_key=state.thread_key,
+            mode=state.mode,
+            turn_count=state.turn_count,
+            last_turn_id=state.last_turn_id,
+            previous_thread_id=state.previous_thread_id,
+            previous_thread_key=state.previous_thread_key,
+            pending_route=state.pending_route,
+        )
 
     def resolve_or_create_active(self, default_thread_key: str, default_mode: str) -> ActiveConversationState:
         active = self.get_active_state()

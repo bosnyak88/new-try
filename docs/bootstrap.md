@@ -39,3 +39,6 @@ On one-shot talk, live loop entry, and status:
 ## Routing bootstrap note
 
 No additional boot-time providers are required for REBUILD-005 routing. The deterministic phrase matcher runs inside orchestration using persisted active state plus known thread list from storage.
+
+
+- `app_meta.pending_route` stores deterministic pending-route proposals (held message + proposed thread + reason + metadata) until confirmation, rejection, or cancellation.

@@ -69,3 +69,31 @@ def test_resolve_route_non_matching_defaults_continue():
     )
     assert decision.action.value == "continue_active"
     assert decision.thread_key == "default"
+
+
+def test_resolve_route_suggestive_named_creates_pending():
+    decision = resolve_route_decision(
+        "folytassuk a worköt",
+        _active(),
+        [
+            ThreadSummaryView(thread_id=1, thread_key="default", turn_count=0, last_turn_id=None, is_active=True),
+            ThreadSummaryView(thread_id=2, thread_key="work", turn_count=0, last_turn_id=None, is_active=False),
+        ],
+    )
+    assert decision.action.value == "propose_switch_existing"
+    assert decision.pending_proposal is not None
+    assert decision.pending_proposal.proposed_thread_key == "work"
+
+
+def test_resolve_route_suggestive_previous_creates_pending():
+    decision = resolve_route_decision(
+        "mi volt az előző témában",
+        _active(previous_thread_key="work"),
+        [
+            ThreadSummaryView(thread_id=1, thread_key="default", turn_count=0, last_turn_id=None, is_active=True),
+            ThreadSummaryView(thread_id=2, thread_key="work", turn_count=0, last_turn_id=None, is_active=False),
+        ],
+    )
+    assert decision.action.value == "propose_switch_previous"
+    assert decision.pending_proposal is not None
+    assert decision.pending_proposal.proposed_thread_key == "work"
