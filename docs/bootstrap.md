@@ -31,6 +31,14 @@ Runtime value precedence:
 
 This preserves the Phase-0.1a rule: no hidden global `.env` side effects in generic runtime builders.
 
+This also means shell env always wins over `.env`, and `.env` fills values when TOML is empty or lower-priority.
+
+## TOML path safety (Windows)
+
+When writing filesystem paths directly into TOML config files, ensure backslashes are escaped (for example `C:\\Users\\you\\llama-server.exe`) or use forward slashes (`C:/Users/you/llama-server.exe`).
+
+Programmatic config generation should use `syntaris.config.toml_strings.toml_path_string()` to safely serialize path values in TOML basic strings.
+
 ## DB bootstrap flow
 
 `init-db` and talk flow call `PersistenceStore.initialize()`:
@@ -39,3 +47,22 @@ This preserves the Phase-0.1a rule: no hidden global `.env` side effects in gene
 2. create/open `db_path`
 3. apply explicit SQLite schema
 4. write schema metadata (`app_meta.schema_version=1`)
+
+## Talk flow bootstrap
+
+For `talk --once`, the bootstrap path is:
+
+1. CLI parses arguments
+2. CLI autoloads repo-root `.env`
+3. `build_runtime()` constructs `RuntimeContext`
+4. persistence layer initializes/opens SQLite storage
+5. reply adapter is selected from config
+6. session/turn/trace records are written
+7. assistant reply is printed
+
+## Operational notes
+
+- Programmatic runtime construction must remain side-effect free unless explicitly requested otherwise.
+- Live backend support is optional and must remain behind the reply adapter boundary.
+- SQLite/bootstrap logic must not be moved into CLI argument parsing or config loader code.
+- If no live backend is available, the system must return a deterministic degraded fallback reply instead of crashing.

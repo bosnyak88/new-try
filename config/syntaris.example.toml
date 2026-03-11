@@ -4,6 +4,9 @@ environment = "development"
 
 [llm]
 # Paths are intentionally external to this repository.
+# Windows example (either escaped backslashes or forward slashes):
+# server_bin_path = "C:/Users/you/AppData/Local/Programs/llama-server.exe"
+# model_path = "D:/models/your-model.gguf"
 server_bin_path = "/absolute/path/to/llama-server"
 model_path = "/absolute/path/to/model.gguf"
 host = "127.0.0.1"
