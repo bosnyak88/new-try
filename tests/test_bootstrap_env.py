@@ -3,24 +3,7 @@ import json
 from syntaris import cli
 from syntaris.bootstrap.env import load_repo_env
 from syntaris.bootstrap.init_app import build_runtime
-from syntaris.config.toml_strings import toml_basic_string
-
-
-def _write_runtime_config(config_path, server_bin_path: str, model_path: str) -> None:
-    config_path.write_text(
-        f"""
-[app]
-name = "syntaris"
-environment = "development"
-
-[llm]
-server_bin_path = {toml_basic_string(server_bin_path)}
-model_path = {toml_basic_string(model_path)}
-host = "127.0.0.1"
-port = 8080
-""".strip(),
-        encoding="utf-8",
-    )
+from tests.helpers import write_runtime_toml_config
 
 
 def test_cli_doctor_autoloads_repo_dotenv_and_reports_healthy(tmp_path, monkeypatch, capsys):
@@ -30,7 +13,7 @@ def test_cli_doctor_autoloads_repo_dotenv_and_reports_healthy(tmp_path, monkeypa
     model.write_text("model")
 
     config = tmp_path / "syntaris.toml"
-    _write_runtime_config(config, server_bin_path="", model_path="")
+    write_runtime_toml_config(config, server_bin_path="", model_path="")
 
     (tmp_path / ".env").write_text(
         f"SYNTARIS_LLM_SERVER_BIN={server}\nSYNTARIS_LLM_MODEL_PATH={model}\n",
@@ -56,7 +39,7 @@ def test_programmatic_runtime_build_does_not_implicitly_load_dotenv(tmp_path, mo
     model.write_text("model")
 
     config = tmp_path / "syntaris.toml"
-    _write_runtime_config(config, server_bin_path="", model_path="")
+    write_runtime_toml_config(config, server_bin_path="", model_path="")
 
     (tmp_path / ".env").write_text(
         f"SYNTARIS_LLM_SERVER_BIN={server}\nSYNTARIS_LLM_MODEL_PATH={model}\n",
@@ -82,7 +65,7 @@ def test_shell_env_overrides_dotenv(tmp_path, monkeypatch):
     model.write_text("model")
 
     config = tmp_path / "syntaris.toml"
-    _write_runtime_config(config, server_bin_path="toml-default", model_path="")
+    write_runtime_toml_config(config, server_bin_path="toml-default", model_path="")
 
     (tmp_path / ".env").write_text(
         f"SYNTARIS_LLM_SERVER_BIN={dotenv_server}\nSYNTARIS_LLM_MODEL_PATH={model}\n",
