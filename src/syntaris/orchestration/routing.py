@@ -19,7 +19,6 @@ _RETURN_NAMED_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 
 _SWITCH_PREVIOUS_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("switch_previous_vissza", re.compile(r"^vissza az\s+előző\s+szálra$", re.IGNORECASE)),
-    ("switch_previous_folytassuk", re.compile(r"^folytassuk az\s+előzőt$", re.IGNORECASE)),
     ("switch_previous_terjunk", re.compile(r"^térjünk vissza az\s+előző\s+témára$", re.IGNORECASE)),
 )
 

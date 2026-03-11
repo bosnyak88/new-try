@@ -33,6 +33,14 @@ _AFFIRMATIVE = {"igen", "oké", "mehet", "arra", "igen arra"}
 _NEGATIVE = {"nem", "mégse", "maradjon", "ne", "nem arra"}
 
 
+@dataclass(frozen=True)
+class _RouteResolution:
+    state_before: ActiveConversationState
+    state_after: ActiveConversationState
+    route: RouteDecision
+    execution_message: str | None
+
+
 def _apply_state_transition(
     store: PersistenceStore,
     state: ActiveConversationState,
@@ -73,7 +81,7 @@ def _resolve_route_and_state(
     context: RuntimeContext,
     request: TalkRequest,
     source: str,
-) -> tuple[ActiveConversationState, ActiveConversationState, RouteDecision, str] | None:
+) -> _RouteResolution:
     state = store.resolve_or_create_active(
         default_thread_key=context.config.conversation.default_thread_key,
         default_mode=context.config.conversation.default_mode,
@@ -88,7 +96,7 @@ def _resolve_route_and_state(
             execution_message=request.message,
         )
         updated, routed = _apply_state_transition(store, state, mode, route)
-        return state, updated, routed, request.message
+        return _RouteResolution(state_before=state, state_after=updated, route=routed, execution_message=request.message)
 
     pending_resolution = PendingResolutionAction.NONE
     pending = state.pending_route
@@ -104,7 +112,12 @@ def _resolve_route_and_state(
             )
             store.clear_pending_route()
             updated, routed = _apply_state_transition(store, state, mode, route)
-            return state, updated, routed, pending.pending_original_message
+            return _RouteResolution(
+                state_before=state,
+                state_after=updated,
+                route=routed,
+                execution_message=pending.pending_original_message,
+            )
         if normalized in _NEGATIVE:
             route = RouteDecision(
                 action=RouteDecisionAction.CONTINUE_ACTIVE,
@@ -115,7 +128,12 @@ def _resolve_route_and_state(
             )
             store.clear_pending_route()
             updated, routed = _apply_state_transition(store, state, mode, route)
-            return state, updated, routed, pending.pending_original_message
+            return _RouteResolution(
+                state_before=state,
+                state_after=updated,
+                route=routed,
+                execution_message=pending.pending_original_message,
+            )
         store.clear_pending_route()
         pending_resolution = PendingResolutionAction.CANCELLED
         state = store.get_active_state() or state
@@ -137,7 +155,16 @@ def _resolve_route_and_state(
             proposed_at=datetime.now(timezone.utc).isoformat(),
         )
         store.set_pending_route(proposal)
-        return None
+        state_after = store.get_active_state() or state
+        proposal_route = RouteDecision(
+            action=route.action,
+            reason="pending_route_proposed",
+            thread_key=state_after.thread_key,
+            match=route.match,
+            pending_proposal=proposal,
+            execution_message=request.message,
+        )
+        return _RouteResolution(state_before=state, state_after=state_after, route=proposal_route, execution_message=None)
 
     route = RouteDecision(
         action=route.action,
@@ -149,7 +176,7 @@ def _resolve_route_and_state(
         execution_message=request.message,
     )
     updated_state, routed = _apply_state_transition(store, state, mode, route)
-    return state, updated_state, routed, request.message
+    return _RouteResolution(state_before=state, state_after=updated_state, route=routed, execution_message=request.message)
 
 
 def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "talk_once") -> TalkRunResult:
@@ -157,44 +184,28 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     store.initialize(data_dir=context.config.paths.data_dir)
 
     resolved = _resolve_route_and_state(store, context, request, source)
-    if resolved is None:
-        active = store.get_active_state()
-        assert active is not None and active.pending_route is not None
-        pending = active.pending_route
+
+    if resolved.execution_message is None:
+        pending = resolved.state_after.pending_route
+        assert pending is not None
         assistant = f"A(z) {pending.pending_thread_key} szálra váltsak? (igen/nem)"
         turn = store.create_turn(
-            session_id=active.session_id,
-            thread_id=active.thread_id,
-            thread_key=active.thread_key,
-            mode=active.mode,
+            session_id=resolved.state_after.session_id,
+            thread_id=resolved.state_after.thread_id,
+            thread_key=resolved.state_after.thread_key,
+            mode=resolved.state_after.mode,
             user_message=request.message,
             assistant_reply=assistant,
             reply_backend="deterministic",
             degraded=True,
         )
-        route = RouteDecision(
-            action=RouteDecisionAction.PROPOSE_SWITCH_EXISTING,
-            reason="pending_route_proposed",
-            thread_key=active.thread_key,
-            pending_proposal=PendingRouteProposal(
-                held_user_message=pending.pending_original_message,
-                proposed_thread_key=pending.pending_thread_key,
-                current_thread_key=active.thread_key,
-                reason=pending.pending_reason,
-                match_pattern=pending.match_pattern,
-                source=pending.source,
-                proposed_at=pending.proposed_at,
-            ),
-            pending_resolution=PendingResolutionAction.NONE,
-            execution_message=request.message,
-        )
         events = build_turn_trace_events(
-            state=active,
+            state=resolved.state_after,
             turn=turn,
             backend="deterministic",
             degraded=True,
             source=source,
-            route=route,
+            route=resolved.route,
         )
         store.create_trace_events(
             session_id=turn.session_id,
@@ -205,36 +216,36 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             degraded=True,
             events=events,
         )
-        return TalkRunResult(turn=turn, state=active, route=route)
+        return TalkRunResult(turn=turn, state=resolved.state_after, route=resolved.route)
 
-    state, updated_state, route, execution_message = resolved
+    execution_message = resolved.execution_message
     reply_adapter = build_reply_adapter(context.config.reply)
     reply: ReplyOutput = reply_adapter.generate(
         TurnInput(
             message=execution_message,
-            session_id=state.session_id,
-            thread_id=updated_state.thread_id,
-            mode=updated_state.mode,
+            session_id=resolved.state_before.session_id,
+            thread_id=resolved.state_after.thread_id,
+            mode=resolved.state_after.mode,
         )
     )
 
     turn = store.create_turn(
-        session_id=state.session_id,
-        thread_id=updated_state.thread_id,
-        thread_key=updated_state.thread_key,
-        mode=updated_state.mode,
+        session_id=resolved.state_before.session_id,
+        thread_id=resolved.state_after.thread_id,
+        thread_key=resolved.state_after.thread_key,
+        mode=resolved.state_after.mode,
         user_message=execution_message,
         assistant_reply=reply.text,
         reply_backend=reply.backend,
         degraded=reply.degraded,
     )
     events = build_turn_trace_events(
-        state=updated_state,
+        state=resolved.state_after,
         turn=turn,
         backend=reply.backend,
         degraded=reply.degraded,
         source=source,
-        route=route,
+        route=resolved.route,
     )
     store.create_trace_events(
         session_id=turn.session_id,
@@ -245,5 +256,5 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         degraded=reply.degraded,
         events=events,
     )
-    latest_state = store.get_active_state() or updated_state
-    return TalkRunResult(turn=turn, state=latest_state, route=route)
+    latest_state = store.get_active_state() or resolved.state_after
+    return TalkRunResult(turn=turn, state=latest_state, route=resolved.route)

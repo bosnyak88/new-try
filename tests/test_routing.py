@@ -40,7 +40,7 @@ def test_resolve_route_return_existing():
 
 def test_resolve_route_previous_thread_phrase():
     decision = resolve_route_decision(
-        "folytassuk az előzőt",
+        "vissza az előző szálra",
         _active(previous_thread_key="work"),
         [
             ThreadSummaryView(thread_id=1, thread_key="default", turn_count=0, last_turn_id=None, is_active=True),
@@ -88,6 +88,20 @@ def test_resolve_route_suggestive_named_creates_pending():
 def test_resolve_route_suggestive_previous_creates_pending():
     decision = resolve_route_decision(
         "mi volt az előző témában",
+        _active(previous_thread_key="work"),
+        [
+            ThreadSummaryView(thread_id=1, thread_key="default", turn_count=0, last_turn_id=None, is_active=True),
+            ThreadSummaryView(thread_id=2, thread_key="work", turn_count=0, last_turn_id=None, is_active=False),
+        ],
+    )
+    assert decision.action.value == "propose_switch_previous"
+    assert decision.pending_proposal is not None
+    assert decision.pending_proposal.proposed_thread_key == "work"
+
+
+def test_resolve_route_suggestive_previous_folytassuk_creates_pending():
+    decision = resolve_route_decision(
+        "folytassuk az előzőt",
         _active(previous_thread_key="work"),
         [
             ThreadSummaryView(thread_id=1, thread_key="default", turn_count=0, last_turn_id=None, is_active=True),

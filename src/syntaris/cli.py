@@ -111,7 +111,7 @@ def main() -> int:
             return 0
 
         if args.script:
-            with open(args.script, "r", encoding="utf-8") as f:
+            with open(args.script, "r", encoding="utf-8-sig") as f:
                 lines = [line.rstrip("\n") for line in f]
             result = run_live_loop(runtime, lines)
             for output in result.outputs:
