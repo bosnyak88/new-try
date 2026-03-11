@@ -26,3 +26,9 @@ For runtime values, precedence is explicit:
 3. TOML defaults from selected config file
 
 This means shell env always wins over `.env`, and `.env` fills values when TOML is empty or lower-priority.
+
+## TOML path safety (Windows)
+
+When writing filesystem paths directly into TOML config files, ensure backslashes are escaped (for example `C:\\Users\\you\\llama-server.exe`) or use forward slashes (`C:/Users/you/llama-server.exe`).
+
+Programmatic config generation should use `syntaris.config.toml_strings.toml_path_string()` to safely serialize path values in TOML basic strings.

@@ -3,6 +3,7 @@ import json
 from syntaris import cli
 from syntaris.bootstrap.env import load_repo_env
 from syntaris.bootstrap.init_app import build_runtime
+from tests.helpers import write_runtime_toml_config
 
 
 def test_cli_doctor_autoloads_repo_dotenv_and_reports_healthy(tmp_path, monkeypatch, capsys):
@@ -12,20 +13,7 @@ def test_cli_doctor_autoloads_repo_dotenv_and_reports_healthy(tmp_path, monkeypa
     model.write_text("model")
 
     config = tmp_path / "syntaris.toml"
-    config.write_text(
-        """
-[app]
-name = "syntaris"
-environment = "development"
-
-[llm]
-server_bin_path = ""
-model_path = ""
-host = "127.0.0.1"
-port = 8080
-""".strip(),
-        encoding="utf-8",
-    )
+    write_runtime_toml_config(config, server_bin_path="", model_path="")
 
     (tmp_path / ".env").write_text(
         f"SYNTARIS_LLM_SERVER_BIN={server}\nSYNTARIS_LLM_MODEL_PATH={model}\n",
@@ -51,20 +39,7 @@ def test_programmatic_runtime_build_does_not_implicitly_load_dotenv(tmp_path, mo
     model.write_text("model")
 
     config = tmp_path / "syntaris.toml"
-    config.write_text(
-        """
-[app]
-name = "syntaris"
-environment = "development"
-
-[llm]
-server_bin_path = ""
-model_path = ""
-host = "127.0.0.1"
-port = 8080
-""".strip(),
-        encoding="utf-8",
-    )
+    write_runtime_toml_config(config, server_bin_path="", model_path="")
 
     (tmp_path / ".env").write_text(
         f"SYNTARIS_LLM_SERVER_BIN={server}\nSYNTARIS_LLM_MODEL_PATH={model}\n",
@@ -90,20 +65,7 @@ def test_shell_env_overrides_dotenv(tmp_path, monkeypatch):
     model.write_text("model")
 
     config = tmp_path / "syntaris.toml"
-    config.write_text(
-        """
-[app]
-name = "syntaris"
-environment = "development"
-
-[llm]
-server_bin_path = "toml-default"
-model_path = ""
-host = "127.0.0.1"
-port = 8080
-""".strip(),
-        encoding="utf-8",
-    )
+    write_runtime_toml_config(config, server_bin_path="toml-default", model_path="")
 
     (tmp_path / ".env").write_text(
         f"SYNTARIS_LLM_SERVER_BIN={dotenv_server}\nSYNTARIS_LLM_MODEL_PATH={model}\n",
