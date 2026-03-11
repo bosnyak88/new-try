@@ -18,7 +18,7 @@ Phase-0 foundation for a modular, contract-first local runtime.
 ## Repository map
 
 - `src/syntaris/contracts` — shared runtime contracts and data structures.
-- `src/syntaris/config` — config loading with env override support.
+- `src/syntaris/config` — config loading with env override support and TOML-safe string/path serialization helpers for generated config.
 - `src/syntaris/bootstrap` — runtime composition and bootstrapping.
 - `src/syntaris/core` — leaf-level reusable domain utilities.
 - `src/syntaris/orchestration` — command orchestration flow.
