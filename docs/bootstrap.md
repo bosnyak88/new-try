@@ -1,28 +1,41 @@
 # Bootstrap and configuration
 
-## External runtime paths
+## Runtime boundary
 
-Syntaris intentionally keeps LLM server binary and model files outside this repository.
+`build_runtime()` only constructs `RuntimeContext` from config sources.
+It does not load `.env` implicitly.
 
-Set either in `.env` or process environment:
+`syntaris.cli` is the CLI boundary that calls `load_repo_env()` before runtime construction.
 
-- `SYNTARIS_LLM_SERVER_BIN`
-- `SYNTARIS_LLM_MODEL_PATH`
-- optional host/port: `SYNTARIS_LLM_HOST`, `SYNTARIS_LLM_PORT`
+## Config keys
 
-The CLI entrypoint loads `.env` from the current working directory (repo root in normal usage) before config resolution.
-Programmatic `build_runtime()` calls do not implicitly load `.env`; call `load_repo_env()` explicitly when needed.
+- `app`: name/environment
+- `llm`: external llama runtime paths and host/port
+- `paths`: `data_dir`, `db_path`
+- `reply`: backend config (`deterministic` or `llama-http`)
+- `trace`: trace flags
 
-## Config precedence
+## Precedence
+
+Config file selection:
 
 1. CLI `--config`
 2. `SYNTARIS_CONFIG_PATH`
-3. default `config/syntaris.example.toml`
+3. `config/syntaris.example.toml`
 
-For runtime values, precedence is explicit:
+Runtime value precedence:
 
-1. Shell environment variables (already present in process environment)
-2. `.env` values loaded by CLI/bootstrap boundary logic
-3. TOML defaults from selected config file
+1. existing shell env
+2. `.env` loaded by CLI boundary
+3. TOML defaults
 
-This means shell env always wins over `.env`, and `.env` fills values when TOML is empty or lower-priority.
+This preserves the Phase-0.1a rule: no hidden global `.env` side effects in generic runtime builders.
+
+## DB bootstrap flow
+
+`init-db` and talk flow call `PersistenceStore.initialize()`:
+
+1. create `data_dir` (if missing)
+2. create/open `db_path`
+3. apply explicit SQLite schema
+4. write schema metadata (`app_meta.schema_version=1`)

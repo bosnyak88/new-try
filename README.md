@@ -1,27 +1,28 @@
 # Syntaris (Greenfield Rebuild)
 
-Phase-0 foundation for a modular, contract-first local runtime.
+Phase-0 runtime foundation with a minimal end-to-end talk vertical slice.
 
 ## Quick start
 
 1. Copy environment template:
    - `cp .env.example .env`
-2. Set external runtime paths:
-   - `SYNTARIS_LLM_SERVER_BIN`
-   - `SYNTARIS_LLM_MODEL_PATH`
-3. Install in editable mode:
+2. Install in editable mode:
    - `python -m pip install -e .[dev]`
-4. Run checks:
-   - `syntaris --config config/syntaris.example.toml doctor`
-   - `syntaris --config config/syntaris.example.toml trace-boot`
+3. Initialize local DB:
+   - `python -m syntaris.cli --config config/syntaris.example.toml init-db`
+4. Run one talk turn:
+   - `python -m syntaris.cli --config config/syntaris.example.toml talk --once "szia"`
+5. Inspect latest persisted trace:
+   - `python -m syntaris.cli --config config/syntaris.example.toml trace-last`
 
 ## Repository map
 
-- `src/syntaris/contracts` — shared runtime contracts and data structures.
-- `src/syntaris/config` — config loading with env override support.
-- `src/syntaris/bootstrap` — runtime composition and bootstrapping.
-- `src/syntaris/core` — leaf-level reusable domain utilities.
-- `src/syntaris/orchestration` — command orchestration flow.
-- `src/syntaris/trace` — trace event shaping.
-- `docs/` — architecture, operations, and propagation reporting.
-- `tests/` — baseline tests for config and doctor flows.
+- `src/syntaris/contracts` — runtime/session/turn/trace contracts.
+- `src/syntaris/config` — TOML + env precedence config loading.
+- `src/syntaris/bootstrap` — side-effect-free runtime composition.
+- `src/syntaris/persistence` — SQLite schema bootstrap and read/write API.
+- `src/syntaris/reply` — reply adapter boundary and fallback backend.
+- `src/syntaris/orchestration` — command orchestration (`doctor`, `init-db`, `talk`, `trace-last`).
+- `src/syntaris/trace` — trace projection for boot + talk flows.
+- `docs/` — architecture, bootstrap, operations, propagation reporting.
+- `tests/` — modular tests for config, bootstrap, persistence, reply, and CLI flows.

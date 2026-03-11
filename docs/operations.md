@@ -1,19 +1,31 @@
 # Operations baseline
 
-## Doctor command
+## Commands
 
-`syntaris doctor` validates:
+### `doctor`
 
-- external LLM server binary path is present and exists,
-- external model path is present and exists,
-- configured LLM port is valid.
+Validates external llama binary/model path presence and port sanity.
 
-Configuration values used by `doctor` follow precedence (shell env > `.env` > TOML).
-For CLI runs, `.env` is auto-loaded from the working directory at startup.
-For direct programmatic runtime construction, `.env` is not auto-loaded unless explicitly requested.
+### `init-db`
 
-Exit code is `0` when healthy, `1` when any check fails.
+Initializes runtime data directory and SQLite schema.
 
-## Trace boot command
+### `talk --once "..."`
 
-`syntaris trace-boot` emits a minimal JSON event for bootstrap observability.
+Runs one turn:
+
+1. open/create DB
+2. create session
+3. generate reply through adapter boundary
+4. persist turn
+5. persist trace events
+
+If no live backend is configured/available, deterministic fallback returns a stable degraded reply.
+
+### `trace-last`
+
+Prints the latest persisted turn plus its trace events from SQLite.
+
+## Runtime artifacts
+
+All runtime artifacts are in configured local data dir / DB path and are intentionally outside git-tracked binaries/models.

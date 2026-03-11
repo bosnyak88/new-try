@@ -9,6 +9,17 @@ model_path = "/absolute/path/to/model.gguf"
 host = "127.0.0.1"
 port = 8080
 
+[paths]
+data_dir = "./.syntaris"
+db_path = "./.syntaris/runtime.db"
+
+[reply]
+# deterministic | llama-http
+backend = "deterministic"
+live_url = "http://127.0.0.1:8080"
+live_model = ""
+timeout_seconds = 10.0
+
 [trace]
 enabled = true
 level = "info"
