@@ -113,3 +113,24 @@ def test_previous_thread_recall_accent_normalized_phrase(tmp_path):
     assert result.turn.degraded is False
     assert result.turn.assistant_reply.strip() != "Rendben."
     assert "Röviden itt tartottunk" in result.turn.assistant_reply
+
+
+def test_previous_thread_recall_mojibake_phrase(tmp_path):
+    runtime = _runtime(tmp_path)
+    talk_once(runtime, TalkRequest(message="új szál: work"))
+    talk_once(runtime, TalkRequest(message="vissza a default szálra"))
+    result = talk_once(runtime, TalkRequest(message="az elÅzÅ szÃ¡lon mi volt?"))
+
+    assert result.turn.assistant_reply.strip() != "Rendben."
+    assert "Röviden itt tartottunk" in result.turn.assistant_reply
+
+
+def test_compare_mojibake_phrase_still_structured(tmp_path):
+    runtime = _runtime(tmp_path)
+    talk_once(runtime, TalkRequest(message="új szál: work"))
+    talk_once(runtime, TalkRequest(message="vissza a default szálra"))
+    result = talk_once(runtime, TalkRequest(message="hasonlÃ­tsd Ã¶ssze a mostanit az elÅzÅ szÃ¡llal"))
+
+    assert result.turn.assistant_reply.strip() != "Rendben."
+    assert "Mostani szál:" in result.turn.assistant_reply
+    assert "Előző szál:" in result.turn.assistant_reply

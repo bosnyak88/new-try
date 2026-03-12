@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import unicodedata
 
 from syntaris.contracts.runtime import (
     ComparisonReason,
@@ -9,6 +8,7 @@ from syntaris.contracts.runtime import (
     RecallResolution,
     TurnInterpretation,
 )
+from syntaris.orchestration.text_normalize import normalize_hungarian_for_match
 
 _CORRECTION_CUES = (
     "nem erre gondoltam",
@@ -28,14 +28,6 @@ def _contains_any(message: str, phrases: tuple[str, ...]) -> bool:
     return any(phrase in normalized for phrase in phrases)
 
 
-def _normalize_hu(text: str) -> str:
-    raw = text.strip().lower()
-    folded = "".join(
-        ch for ch in unicodedata.normalize("NFKD", raw) if not unicodedata.combining(ch)
-    )
-    return " ".join(folded.replace("?", " ").split())
-
-
 def assemble_deliberation_input(
     message: str,
     interpretation: TurnInterpretation,
@@ -45,8 +37,15 @@ def assemble_deliberation_input(
     has_previous_thread: bool,
 ) -> DeliberationInput:
     normalized = message.strip().lower()
-    normalized_hu = _normalize_hu(message)
-    references_previous = "előző szál" in normalized or "előzőre" in normalized
+    raw_lower = normalized
+    normalized_hu = normalize_hungarian_for_match(message)
+    references_previous = (
+        "előző szál" in normalized
+        or "előzőre" in normalized
+        or "elozo szal" in normalized_hu
+        or "elozore" in normalized_hu
+        or ("elå" in raw_lower and "szã" in raw_lower)
+    )
     references_other = "másik" in normalized
     structured_request = (
         (("lényeg" in normalized and "következő" in normalized)
@@ -54,6 +53,8 @@ def assemble_deliberation_input(
          or ("fő probléma" in normalized and "mit kell" in normalized)
          or ("hasonlítsd össze" in normalized)
          or ("hasonlitsd ossze" in normalized_hu)
+         or ("osszehasonlit" in normalized_hu)
+         or ("hasonlã" in raw_lower and ("ã¶ssze" in raw_lower or "ssze" in raw_lower))
          or "mi a lényeg" in normalized
          or "mi legyen a következő" in normalized)
     )

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import unicodedata
 import re
 
 from syntaris.contracts.runtime import RecallRequest, RecallTargetKind, TurnInterpretation, TurnInterpretationKind
+from syntaris.orchestration.text_normalize import normalize_hungarian_for_match
 
 _CURRENT_RECALL_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("recall_current_hol_tartottunk", re.compile(r"^hol\s+tartottunk\??$", re.IGNORECASE)),
@@ -36,23 +36,16 @@ _AMBIGUOUS_RESUME_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 )
 
 
-def _normalize_hu(text: str) -> str:
-    raw = text.strip().lower()
-    folded = "".join(
-        ch for ch in unicodedata.normalize("NFKD", raw) if not unicodedata.combining(ch)
-    )
-    return " ".join(folded.replace("?", " ").split())
-
-
 def interpret_turn(message: str) -> TurnInterpretation:
     text = message.strip()
-    normalized = _normalize_hu(text)
+    raw_lower = text.lower()
+    normalized = normalize_hungarian_for_match(text)
 
-    if normalized in {
-        "az elozo szalon mi volt",
-        "az elozo szalon mi volt ?",
-        "elozo szalon mi volt",
-    }:
+    if (
+        "elozo szalon mi volt" in normalized
+        or normalized in {"az elozo szalon mi volt", "elozo szalon mi volt"}
+        or ("elå" in raw_lower and "szã" in raw_lower and "mi volt" in raw_lower)
+    ):
         return TurnInterpretation(
             kind=TurnInterpretationKind.RECALL_PREVIOUS,
             pattern_name="recall_previous_normalized",

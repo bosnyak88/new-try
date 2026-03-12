@@ -1,4 +1,5 @@
 from __future__ import annotations
+from syntaris.orchestration.text_normalize import normalize_hungarian_for_match
 
 from syntaris.contracts.runtime import AnswerStrategySelection, ObjectiveFrame, ObjectiveKind
 
@@ -16,6 +17,7 @@ _KEYWORD_MAP: list[tuple[tuple[str, ...], ObjectiveKind]] = [
 
 def frame_objective(message: str, strategy: AnswerStrategySelection) -> ObjectiveFrame:
     lowered = message.strip().lower()
+    normalized_hu = normalize_hungarian_for_match(message)
     matched: list[ObjectiveKind] = []
 
     for keywords, kind in _KEYWORD_MAP:
@@ -33,7 +35,13 @@ def frame_objective(message: str, strategy: AnswerStrategySelection) -> Objectiv
             secondary_kinds=[],
         )
 
-    if ("hasonlítsd össze" in lowered or "összehasonl" in lowered) and ("előző" not in lowered and "mostani" not in lowered):
+    compare_like = (
+        "hasonlítsd össze" in lowered
+        or "összehasonl" in lowered
+        or "hasonlitsd ossze" in normalized_hu
+        or ("hasonlã" in lowered and "ssze" in lowered)
+    )
+    if compare_like and ("előző" not in lowered and "mostani" not in lowered and "elozo" not in normalized_hu and "mostani" not in normalized_hu):
         return ObjectiveFrame(
             kind=ObjectiveKind.CLARIFY,
             is_multi_part=False,

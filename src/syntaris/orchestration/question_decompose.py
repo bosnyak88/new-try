@@ -1,4 +1,5 @@
 from __future__ import annotations
+from syntaris.orchestration.text_normalize import normalize_hungarian_for_match
 
 from syntaris.contracts.runtime import DecompositionPlan, ObjectiveFrame, ObjectiveKind, ReasoningUnit
 
@@ -9,6 +10,7 @@ def _unit(unit_id: str, prompt: str, kind: ObjectiveKind, priority: int) -> Reas
 
 def build_decomposition_plan(message: str, objective: ObjectiveFrame) -> DecompositionPlan:
     lowered = message.strip().lower()
+    normalized_hu = normalize_hungarian_for_match(message)
 
     if objective.kind == ObjectiveKind.CLARIFY:
         return DecompositionPlan(units=[_unit("u1", "Pontosítandó cél", ObjectiveKind.CLARIFY, 1)], multi_part=False)
@@ -24,7 +26,12 @@ def build_decomposition_plan(message: str, objective: ObjectiveFrame) -> Decompo
         units.append(_unit(f"u{len(units)+1}", "Mi marad feltételezés vagy nyitott pont?", ObjectiveKind.STATUS_CHECK, len(units) + 1))
     if "fő probléma" in lowered or "mi a probléma" in lowered:
         units.append(_unit(f"u{len(units)+1}", "Mi a fő probléma?", ObjectiveKind.DIAGNOSE, len(units) + 1))
-    if "hasonlítsd össze" in lowered or "össze" in lowered:
+    if (
+        "hasonlítsd össze" in lowered
+        or "össze" in lowered
+        or "hasonlitsd ossze" in normalized_hu
+        or ("hasonlã" in lowered and "ssze" in lowered)
+    ):
         units.append(_unit(f"u{len(units)+1}", "Miben egyezik és tér el a két célzott szál?", ObjectiveKind.COMPARE, len(units) + 1))
 
     if not units:
