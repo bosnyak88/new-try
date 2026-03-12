@@ -335,6 +335,15 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     if previous_view.found and previous_view.snapshot is not None and previous_view.snapshot.snapshot_lines:
         prev_last = previous_view.snapshot.snapshot_lines[-1]
         previous_summary = f"#{prev_last.turn_index}: {prev_last.user_message}"
+    if previous_summary is None and resolved.state_after.previous_thread_id is not None:
+        previous_context = store.build_thread_context_pack(
+            thread_id=resolved.state_after.previous_thread_id,
+            mode=resolved.state_after.mode,
+            turn_window=1,
+        )
+        if previous_context is not None and previous_context.recent_turns:
+            prev_last = previous_context.recent_turns[-1]
+            previous_summary = f"#{prev_last.turn_index}: {prev_last.user_message}"
 
     evidence_pack = build_evidence_pack(
         message=execution_message,
@@ -346,7 +355,16 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         previous_thread_summary=previous_summary,
     )
     max_items = max(1, context.config.conversation.max_evidence_items_per_unit) * max(1, len(decomposition.units))
-    evidence_pack = type(evidence_pack)(items=evidence_pack.items[:max_items])
+    has_compare_unit = any(unit.objective_kind.value == "compare" for unit in decomposition.units)
+    if has_compare_unit:
+        compare_priority = {"current_message": 0, "current_thread": 1, "previous_thread": 2, "support_gap": 3}
+        prioritized = sorted(
+            evidence_pack.items,
+            key=lambda item: (compare_priority.get(item.source, 10), item.unit_id, item.source),
+        )
+        evidence_pack = type(evidence_pack)(items=prioritized[:max_items])
+    else:
+        evidence_pack = type(evidence_pack)(items=evidence_pack.items[:max_items])
     synthesis_plan = build_synthesis_plan(objective, decomposition, evidence_pack)
     response_plan = build_response_plan(
         context,

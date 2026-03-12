@@ -65,6 +65,7 @@ def test_comparison_with_clear_target_is_structured(tmp_path):
     assert "Miben egyezik és tér el a két célzott szál?" in result.turn.assistant_reply
     assert "Mostani szál:" in result.turn.assistant_reply
     assert "Előző szál:" in result.turn.assistant_reply
+    assert "nincs stabil előzmény" not in result.turn.assistant_reply
 
 
 def test_comparison_with_ambiguous_target_clarifies(tmp_path):
@@ -96,3 +97,8 @@ def test_previous_thread_recall_remains_meaningful(tmp_path):
     assert result.turn.assistant_reply.strip() != "Rendben."
     assert "[fallback]" not in result.turn.assistant_reply
     assert "Röviden itt tartottunk" in result.turn.assistant_reply
+
+    trace = trace_last(runtime)
+    events = {event.event_name: event.payload for event in trace.trace_events}
+    assert "response_plan_built" in events
+    assert '"kind": "recall"' in events["response_plan_built"]

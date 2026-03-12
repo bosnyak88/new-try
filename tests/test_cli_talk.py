@@ -801,6 +801,7 @@ def test_cli_rebuild014_runtime_behaviors_no_fallback_and_compare_precedence(tmp
     assert "[fallback]" not in compare["reply"]
     assert "Mostani szál:" in compare["reply"]
     assert "Előző szál:" in compare["reply"]
+    assert "nincs stabil előzmény" not in compare["reply"]
 
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
     cli.main()
@@ -833,3 +834,10 @@ def test_cli_previous_thread_recall_not_generic_ack(tmp_path, monkeypatch, capsy
     assert out["reply"].strip() != "Rendben."
     assert "[fallback]" not in out["reply"]
     assert "Röviden itt tartottunk" in out["reply"]
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
+    cli.main()
+    trace = json.loads(capsys.readouterr().out)
+    payload_by_event = {event["event_name"]: event["payload"] for event in trace["trace_events"]}
+    assert "response_plan_built" in payload_by_event
+    assert '"kind": "recall"' in payload_by_event["response_plan_built"]
