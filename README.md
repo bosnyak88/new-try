@@ -94,3 +94,8 @@ Ordinary `talk` turns now run a shared interpretation -> recall-resolution -> re
 This uses persisted thread snapshots (from `thread-snapshot`) as the recall source, then renders a compact Hungarian response from an explicit `ResponsePlan`.
 
 `trace-last` now includes `turn_interpreted`, `recall_resolved`, and `response_plan_built` events for once/live/script shared execution.
+
+## Active focus / working-memory
+
+Syntaris now maintains a compact per-thread `thread_focus` pack (deterministic, non-vector memory) with active topic and latest answer lines. Use `thread-focus --current|--previous|<thread_key>` to inspect, optionally `--refresh` to rebuild.
+Short follow-up references (for example: `erről beszéljünk tovább`, `és abból mi következik?`) are resolved against active focus only when the target is clear; otherwise Syntaris emits a short clarification.

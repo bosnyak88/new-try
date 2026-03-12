@@ -104,3 +104,11 @@ Operational distinction:
 - `thread-recap`: deterministic recap projection output.
 - `thread-snapshot`: persisted handoff/recall source pack.
 - conversational recall/resume in `talk`: user-facing compact answers built from snapshot-backed `ResponsePlan`.
+
+## Thread focus inspection
+
+Use:
+- `python -m syntaris.cli ... thread-focus --current`
+- `python -m syntaris.cli ... thread-focus --previous`
+- `python -m syntaris.cli ... thread-focus <thread_key>`
+- add `--refresh` to force deterministic rebuild.

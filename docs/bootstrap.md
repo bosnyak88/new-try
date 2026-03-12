@@ -69,3 +69,8 @@ Environment overrides:
 - `SYNTARIS_RECALL_LINE_LIMIT`
 - `SYNTARIS_RECALL_PREFER_SNAPSHOT`
 - `SYNTARIS_RESPONSE_FOLLOWUP_ENABLED`
+
+## Focus bootstrap notes
+
+`init-db` now creates `thread_focus` for deterministic active-focus persistence.
+Focus config knobs are available under `[conversation]`: `focus_turn_window`, `focus_line_limit`, `followup_resolution_enabled`.

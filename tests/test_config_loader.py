@@ -24,3 +24,6 @@ def test_env_overrides_llm_paths(tmp_path, monkeypatch):
     assert config.conversation.recall_line_limit == 3
     assert config.conversation.recall_prefer_snapshot is True
     assert config.conversation.response_followup_enabled is True
+    assert config.conversation.focus_turn_window == 8
+    assert config.conversation.focus_line_limit == 4
+    assert config.conversation.followup_resolution_enabled is True

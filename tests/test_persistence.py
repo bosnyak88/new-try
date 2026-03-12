@@ -11,7 +11,7 @@ def test_initialize_creates_schema(tmp_path):
     result = store.initialize(data_dir=str(tmp_path / "data"))
 
     assert result.schema_initialized is True
-    assert result.schema_version == 3
+    assert result.schema_version == 4
     with sqlite3.connect(db_path) as conn:
         names = {
             row[0]
@@ -19,7 +19,7 @@ def test_initialize_creates_schema(tmp_path):
                 "SELECT name FROM sqlite_master WHERE type='table'"
             ).fetchall()
         }
-    assert {"app_meta", "sessions", "threads", "turns", "trace_events", "thread_snapshots"}.issubset(names)
+    assert {"app_meta", "sessions", "threads", "turns", "trace_events", "thread_snapshots", "thread_focus"}.issubset(names)
 
 
 def test_write_and_read_turn_and_trace(tmp_path):

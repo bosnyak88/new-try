@@ -6,6 +6,7 @@ from syntaris.contracts.runtime import (
     ResponsePlanKind,
     ResponsePlanSection,
     RuntimeContext,
+    ThreadFocusPack,
     TurnInterpretation,
     TurnInterpretationKind,
 )
@@ -15,11 +16,14 @@ def build_response_plan(
     context: RuntimeContext,
     interpretation: TurnInterpretation,
     recall: RecallResolution,
+    focus: ThreadFocusPack | None = None,
+    followup_target: str | None = None,
 ) -> ResponsePlan:
     if interpretation.kind == TurnInterpretationKind.CLARIFICATION_NEEDED or recall.clarification_message is not None:
         return ResponsePlan(
             kind=ResponsePlanKind.CLARIFICATION,
             sections=[ResponsePlanSection(title="clarification", lines=[recall.clarification_message or "Pontosíts kérlek."])],
+            focus_used=focus is not None,
         )
 
     if recall.resolved and recall.snapshot is not None:
@@ -34,9 +38,14 @@ def build_response_plan(
             kind=ResponsePlanKind.RECALL if interpretation.kind.value.startswith("recall") else ResponsePlanKind.RESUME,
             sections=[ResponsePlanSection(title="recall_summary", lines=lines)],
             followup_prompt=followup,
+            focus_used=focus is not None,
         )
 
+    ordinary_lines: list[str] = []
+    if followup_target:
+        ordinary_lines.append(f"Rendben, innen folytatjuk: {followup_target}")
     return ResponsePlan(
         kind=ResponsePlanKind.ORDINARY,
-        sections=[ResponsePlanSection(title="ordinary", lines=[])],
+        sections=[ResponsePlanSection(title="ordinary", lines=ordinary_lines)],
+        focus_used=focus is not None,
     )

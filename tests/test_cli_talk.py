@@ -638,3 +638,71 @@ def test_cli_resume_named_and_ambiguous_clarification(tmp_path, monkeypatch, cap
     assert ambiguous["kind"] == "clarification"
     assert "Nem egyértelmű" in ambiguous["reply"]
 
+
+def test_cli_thread_focus_current_previous_named(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work"])
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "migráció terv"])
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "vissza a default szálra"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-focus", "--current"])
+    assert cli.main() == 0
+    current = json.loads(capsys.readouterr().out)
+    assert current["found"] is True
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-focus", "--previous"])
+    assert cli.main() == 0
+    previous = json.loads(capsys.readouterr().out)
+    assert previous["found"] is True
+    assert previous["focus"]["thread_key"] == "work"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-focus", "work"])
+    assert cli.main() == 0
+    named = json.loads(capsys.readouterr().out)
+    assert named["found"] is True
+    assert named["focus"]["thread_key"] == "work"
+
+
+def test_cli_followup_resolution_and_trace_metadata(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "projektterv"])
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "erről beszéljünk tovább"])
+    cli.main()
+    out = json.loads(capsys.readouterr().out)
+    assert "innen folytatjuk" in out["reply"].lower()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
+    cli.main()
+    trace = json.loads(capsys.readouterr().out)
+    names = [event["event_name"] for event in trace["trace_events"]]
+    assert "thread_focus_loaded" in names
+    assert "followup_reference_resolved" in names
+
+
+def test_cli_followup_ambiguous_without_focus_clarifies(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "és abból mi következik?"])
+    cli.main()
+    out = json.loads(capsys.readouterr().out)
+    assert out["kind"] == "clarification"
+    assert "mire utalsz" in out["reply"].lower()
