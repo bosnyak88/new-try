@@ -1,4 +1,4 @@
-from syntaris.contracts.runtime import ActiveConversationState, AnswerStrategyTrace, ComparisonPackTrace, ContextLoadResult, FollowupTrace, RecapTrace, RecallTrace, ResponsePlanTrace, RouteDecision, RuntimeContext, SnapshotTrace, ThreadFocusTrace, TurnInterpretTrace, TurnResult
+from syntaris.contracts.runtime import ActiveConversationState, AnswerStrategyTrace, ComparisonPackTrace, ContextLoadResult, DecompositionTrace, EvidencePackTrace, FollowupTrace, ObjectiveFrameTrace, RecapTrace, RecallTrace, ResponsePlanTrace, RouteDecision, RuntimeContext, SnapshotTrace, SynthesisTrace, ThreadFocusTrace, TurnInterpretTrace, TurnResult
 
 
 def build_boot_trace(context: RuntimeContext) -> dict[str, str | bool]:
@@ -26,6 +26,10 @@ def build_turn_trace_events(
     followup_trace: FollowupTrace | None = None,
     comparison_trace: ComparisonPackTrace | None = None,
     answer_strategy_trace: AnswerStrategyTrace | None = None,
+    objective_trace: ObjectiveFrameTrace | None = None,
+    decomposition_trace: DecompositionTrace | None = None,
+    evidence_trace: EvidencePackTrace | None = None,
+    synthesis_trace: SynthesisTrace | None = None,
 ) -> list[dict[str, object]]:
     events = [
         {
@@ -211,6 +215,52 @@ def build_turn_trace_events(
                     "confidence": answer_strategy_trace.confidence,
                     "clarification_planned": answer_strategy_trace.clarification_planned,
                     "clarification_cause": answer_strategy_trace.clarification_cause,
+                },
+            }
+        )
+
+    if objective_trace is not None:
+        events.append(
+            {
+                "event_name": "objective_framed",
+                "payload": {
+                    "kind": objective_trace.kind,
+                    "is_multi_part": objective_trace.is_multi_part,
+                    "secondary_kinds": objective_trace.secondary_kinds,
+                },
+            }
+        )
+
+    if decomposition_trace is not None:
+        events.append(
+            {
+                "event_name": "decomposition_built",
+                "payload": {
+                    "unit_count": decomposition_trace.unit_count,
+                    "unit_kinds": decomposition_trace.unit_kinds,
+                },
+            }
+        )
+
+    if evidence_trace is not None:
+        events.append(
+            {
+                "event_name": "evidence_pack_built",
+                "payload": {
+                    "item_count": evidence_trace.item_count,
+                    "support_distribution": evidence_trace.support_distribution,
+                },
+            }
+        )
+
+    if synthesis_trace is not None:
+        events.append(
+            {
+                "event_name": "synthesis_plan_built",
+                "payload": {
+                    "section_count": synthesis_trace.section_count,
+                    "section_keys": synthesis_trace.section_keys,
+                    "partial": synthesis_trace.partial,
                 },
             }
         )

@@ -117,3 +117,15 @@ Use:
 ## Deliberation observability
 
 REBUILD-013 adds shared deterministic comparison-pack and answer-strategy orchestration between interpretation/recall/focus resolution and response-plan rendering. Once/live/script remain on the same execution path. Trace now records `comparison_pack_built` and `answer_strategy_selected` for inspectability without exposing chain-of-thought.
+
+## REBUILD-014 inspectability
+
+Use `trace-last` after `talk` turns to inspect high-level reasoning metadata:
+- `objective_framed`
+- `decomposition_built`
+- `evidence_pack_built`
+- `synthesis_plan_built`
+
+Events intentionally avoid hidden chain-of-thought and expose only safe summary-level structure.
+
+Note: REBUILD-014 recall/compare intent matching is now preprocessing-hardened (diacritic/mojibake repair) in the shared turn path; `trace-last` should align with visible recall/structured compare output for explicit phrases.

@@ -111,3 +111,15 @@ Talk execution now includes a shared deterministic deliberation layer before res
 4. build `ResponsePlan` from selected strategy
 
 This is not hidden chain-of-thought; only safe high-level decision metadata is persisted via trace events (`comparison_pack_built`, `answer_strategy_selected`).
+
+## Objective framing / decomposition / synthesis foundation (REBUILD-014)
+
+Syntaris now runs a shared deterministic reasoning scaffold after answer-strategy selection:
+
+1. `objective_frame.py`: frames the turn objective (`EXPLAIN`, `SUMMARIZE`, `NEXT_STEP`, `COMPARE`, `DIAGNOSE`, `STATUS_CHECK`, `DECIDE`, `CLARIFY`, `MIXED_MULTI_PART`).
+2. `question_decompose.py`: decomposes complex turns into ordered high-level reasoning units.
+3. `evidence_pack.py`: grounds each unit with available local evidence only (current message + recall/focus/follow-up context), with support labels (`SUPPORTED`, `WEAK_SUPPORT`, `UNRESOLVED`).
+4. `answer_synthesis.py`: builds a safe, compact synthesis plan (core point, supported facts, uncertain/unresolved parts, next step).
+
+This is **not** hidden chain-of-thought: only bounded high-level artifacts are produced, then consumed by `response_plan.py` and rendered through the existing plan-render boundary.
+`trace-last` now exposes high-level metadata via: `objective_framed`, `decomposition_built`, `evidence_pack_built`, `synthesis_plan_built`.

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+
 from syntaris.contracts.runtime import (
     ComparisonReason,
     DeliberationInput,
@@ -7,6 +8,7 @@ from syntaris.contracts.runtime import (
     RecallResolution,
     TurnInterpretation,
 )
+from syntaris.orchestration.text_normalize import normalize_hungarian_for_match
 
 _CORRECTION_CUES = (
     "nem erre gondoltam",
@@ -35,9 +37,28 @@ def assemble_deliberation_input(
     has_previous_thread: bool,
 ) -> DeliberationInput:
     normalized = message.strip().lower()
-    references_previous = "előző szál" in normalized or "előzőre" in normalized
+    raw_lower = normalized
+    normalized_hu = normalize_hungarian_for_match(message)
+    references_previous = (
+        "előző szál" in normalized
+        or "előzőre" in normalized
+        or "elozo szal" in normalized_hu
+        or "elozore" in normalized_hu
+        or ("elå" in raw_lower and "szã" in raw_lower)
+    )
     references_other = "másik" in normalized
-    structured_request = "mi a lényeg" in normalized or "mi legyen a következő" in normalized
+    structured_request = (
+        interpretation.kind.value == "compare_previous"
+        or (("lényeg" in normalized and "következő" in normalized)
+         or ("biztos" in normalized and "feltételezés" in normalized)
+         or ("fő probléma" in normalized and "mit kell" in normalized)
+         or ("hasonlítsd össze" in normalized)
+         or ("hasonlitsd ossze" in normalized_hu)
+         or ("osszehasonlit" in normalized_hu)
+         or ("hasonlã" in raw_lower and ("ã¶ssze" in raw_lower or "ssze" in raw_lower))
+         or "mi a lényeg" in normalized
+         or "mi legyen a következő" in normalized)
+    )
 
     return DeliberationInput(
         message=message,

@@ -4,15 +4,36 @@ from syntaris.contracts.runtime import (
     AnswerStrategy,
     AnswerStrategySelection,
     ComparisonPack,
+    DecompositionPlan,
+    EvidencePack,
+    ObjectiveFrame,
     RecallResolution,
     ResponsePlan,
     ResponsePlanKind,
     ResponsePlanSection,
     RuntimeContext,
+    SynthesisPlan,
     ThreadFocusPack,
     TurnInterpretation,
-    TurnInterpretationKind,
 )
+
+
+def _synthesis_sections(synthesis: SynthesisPlan) -> list[ResponsePlanSection]:
+    return [
+        ResponsePlanSection(title=section.key, lines=section.lines)
+        for section in synthesis.sections
+        if section.lines
+    ]
+
+
+def _direct_should_use_synthesis(objective: ObjectiveFrame, decomposition: DecompositionPlan, synthesis: SynthesisPlan) -> bool:
+    _ = synthesis
+    if objective.kind.value in {"mixed_multi_part", "status_check", "diagnose", "compare", "next_step"}:
+        return True
+    if decomposition.multi_part:
+        return True
+    target_kinds = {"status_check", "diagnose", "compare", "next_step"}
+    return any(unit.objective_kind.value in target_kinds for unit in decomposition.units)
 
 
 def build_response_plan(
@@ -21,18 +42,25 @@ def build_response_plan(
     recall: RecallResolution,
     strategy: AnswerStrategySelection,
     comparison_pack: ComparisonPack,
+    objective: ObjectiveFrame,
+    decomposition: DecompositionPlan,
+    evidence_pack: EvidencePack,
+    synthesis: SynthesisPlan,
     focus: ThreadFocusPack | None = None,
     followup_target: str | None = None,
 ) -> ResponsePlan:
     if strategy.strategy == AnswerStrategy.CLARIFICATION:
+        question = strategy.clarification_question.question if strategy.clarification_question else (recall.clarification_message or "Pontosíts kérlek.")
         return ResponsePlan(
             kind=ResponsePlanKind.CLARIFICATION,
-            sections=[
-                ResponsePlanSection(
-                    title="clarification",
-                    lines=[strategy.clarification_question.question if strategy.clarification_question else (recall.clarification_message or "Pontosíts kérlek.")],
-                )
-            ],
+            sections=[ResponsePlanSection(title="clarification", lines=[question])],
+            focus_used=focus is not None,
+        )
+
+    if objective.kind.value == "clarify":
+        return ResponsePlan(
+            kind=ResponsePlanKind.CLARIFICATION,
+            sections=[ResponsePlanSection(title="clarification", lines=["Pontosíts kérlek röviden, mit hasonlítsak vagy melyik szálra gondolsz."])],
             focus_used=focus is not None,
         )
 
@@ -51,16 +79,26 @@ def build_response_plan(
             focus_used=focus is not None,
         )
 
-    if strategy.strategy == AnswerStrategy.STRUCTURED_ANSWER:
-        lines = ["Lényeg röviden:"]
-        if followup_target:
-            lines.append(f"• Aktív téma: {followup_target}")
-        elif focus and focus.focus_lines:
-            lines.append(f"• Aktív téma: {focus.focus_lines[0].text}")
-        lines.append("Következő lépés: haladjunk a kijelölt pont mentén, és pontosíts, ha másik szálat szeretnél.")
+    if strategy.strategy in {AnswerStrategy.STRUCTURED_ANSWER, AnswerStrategy.UNCERTAINTY_LABELED_ANSWER}:
+        sections = _synthesis_sections(synthesis)
+        if not sections:
+            sections = [ResponsePlanSection(title="ordinary", lines=["Rendben."])]
+        kind = ResponsePlanKind.STRUCTURED if strategy.strategy != AnswerStrategy.UNCERTAINTY_LABELED_ANSWER else ResponsePlanKind.UNCERTAINTY_LABELED
+        return ResponsePlan(kind=kind, sections=sections, focus_used=focus is not None)
+
+    if strategy.strategy == AnswerStrategy.DIRECT_ANSWER:
+        if _direct_should_use_synthesis(objective, decomposition, synthesis):
+            sections = _synthesis_sections(synthesis)
+            if sections:
+                return ResponsePlan(
+                    kind=ResponsePlanKind.STRUCTURED,
+                    sections=sections,
+                    focus_used=focus is not None,
+                )
+        lines = [f"Rendben, innen folytatjuk: {followup_target}"] if followup_target else ["Rendben."]
         return ResponsePlan(
-            kind=ResponsePlanKind.STRUCTURED,
-            sections=[ResponsePlanSection(title="structured", lines=lines)],
+            kind=ResponsePlanKind.ORDINARY,
+            sections=[ResponsePlanSection(title="ordinary", lines=lines)],
             focus_used=focus is not None,
         )
 
@@ -71,13 +109,6 @@ def build_response_plan(
         return ResponsePlan(
             kind=ResponsePlanKind.CORRECTION_REDIRECT,
             sections=[ResponsePlanSection(title="correction_redirect", lines=lines)],
-            focus_used=focus is not None,
-        )
-
-    if strategy.strategy == AnswerStrategy.UNCERTAINTY_LABELED_ANSWER:
-        return ResponsePlan(
-            kind=ResponsePlanKind.UNCERTAINTY_LABELED,
-            sections=[ResponsePlanSection(title="uncertainty", lines=["Valószínűleg erre gondolsz, de jelezd kérlek, ha másik irányt szeretnél."])],
             focus_used=focus is not None,
         )
 

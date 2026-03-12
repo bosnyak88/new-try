@@ -84,7 +84,7 @@ def build_comparison_pack(context: RuntimeContext, item: DeliberationInput) -> C
             )
         )
 
-    if item.correction_cue or item.redirect_cue or item.references_previous_thread:
+    if item.correction_cue or item.redirect_cue:
         reasons = []
         if item.correction_cue:
             reasons.append(ComparisonReason.CORRECTION_CUE)

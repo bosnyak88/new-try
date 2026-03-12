@@ -96,3 +96,16 @@ Snapshots are also refreshed automatically when routing switches away from a thr
 ## REBUILD-013 propagation note
 
 REBUILD-013 adds shared deterministic comparison-pack and answer-strategy orchestration between interpretation/recall/focus resolution and response-plan rendering. Once/live/script remain on the same execution path. Trace now records `comparison_pack_built` and `answer_strategy_selected` for inspectability without exposing chain-of-thought.
+
+## REBUILD-014 propagation summary
+
+- Contracts: added objective/decomposition/evidence/synthesis contracts and trace DTOs.
+- Orchestration: added four dedicated reasoning modules and wired shared turn path (`execute_turn`) so once/live/script stay aligned.
+- Response planning: now consumes objective/decomposition/evidence/synthesis artifacts explicitly.
+- Trace: added objective/decomposition/evidence/synthesis events.
+- Config/example + loader: added bounded reasoning/evidence controls.
+- Tests: added deterministic objective/synthesis coverage and trace metadata assertions.
+
+- REBUILD-014 follow-up: added shared preprocessing normalization in turn execution before interpretation/deliberation/objective/decomposition, plus mojibake regression tests at CLI/unit level.
+
+- REBUILD-014 follow-up: explicit current-vs-previous compare phrases now map to `turn_interpreted.kind=compare_previous` (clean + mojibake forms), ensuring intent precedence is preserved through deliberation/strategy/response-plan and trace output matches visible behavior.

@@ -15,11 +15,17 @@ from syntaris.contracts.runtime import (
     ResponsePlanTrace,
     ComparisonPackTrace,
     AnswerStrategyTrace,
+    ObjectiveFrameTrace,
+    DecompositionTrace,
+    EvidencePackTrace,
+    SynthesisTrace,
     ThreadFocusTrace,
     TurnInterpretTrace,
     RouteStateTransition,
     RuntimeContext,
     SnapshotTrace,
+    SnapshotTarget,
+    ThreadSnapshotRequest,
     FocusTarget,
     ThreadFocusRequest,
     TalkRequest,
@@ -31,9 +37,14 @@ from syntaris.orchestration.followup_resolution import resolve_followup_referenc
 from syntaris.orchestration.thread_focus import build_thread_focus_view, refresh_thread_focus
 from syntaris.orchestration.deliberation import assemble_deliberation_input
 from syntaris.orchestration.answer_strategy import build_comparison_pack, select_answer_strategy
-from syntaris.orchestration.thread_snapshot import refresh_snapshot_for_transition
+from syntaris.orchestration.thread_snapshot import build_thread_snapshot_view, refresh_snapshot_for_transition
 from syntaris.orchestration.turn_interpret import interpret_turn
 from syntaris.orchestration.thread_recall import resolve_recall_request
+from syntaris.orchestration.objective_frame import frame_objective
+from syntaris.orchestration.question_decompose import build_decomposition_plan
+from syntaris.orchestration.evidence_pack import build_evidence_pack
+from syntaris.orchestration.answer_synthesis import build_synthesis_plan
+from syntaris.orchestration.text_normalize import preprocess_turn_message
 from syntaris.orchestration.response_plan import build_response_plan
 from syntaris.orchestration.routing import resolve_route_decision
 from syntaris.persistence import PersistenceStore
@@ -279,16 +290,28 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     )
 
     execution_message = resolved.execution_message
-    interpretation = interpret_turn(execution_message)
+    normalized_message = preprocess_turn_message(execution_message)
+    interpretation = interpret_turn(normalized_message)
     recall_resolution = resolve_recall_request(context, interpretation)
     focus_view = build_thread_focus_view(
         context,
         ThreadFocusRequest(target=FocusTarget.CURRENT, source=f"{source}:turn"),
     )
-    followup_resolution = resolve_followup_reference(execution_message, focus_view.focus if focus_view.found else None) if context.config.conversation.followup_resolution_enabled else resolve_followup_reference("", None)
+    if context.config.conversation.followup_resolution_enabled:
+        lower_message = normalized_message.strip().lower()
+        followup_only_cue = any(phrase in lower_message for phrase in {"erről", "ebből", "abból"})
+        structured_cue = any(phrase in lower_message for phrase in {"lényeg", "következő", "biztos", "feltételezés", "fő probléma", "hasonlítsd össze"})
+        if focus_view.found and focus_view.focus is not None and bool(focus_view.focus.focus_lines):
+            followup_resolution = resolve_followup_reference(normalized_message, focus_view.focus)
+        elif followup_only_cue and not structured_cue:
+            followup_resolution = resolve_followup_reference(normalized_message, None)
+        else:
+            followup_resolution = resolve_followup_reference("", None)
+    else:
+        followup_resolution = resolve_followup_reference("", None)
 
     deliberation_input = assemble_deliberation_input(
-        message=execution_message,
+        message=normalized_message,
         interpretation=interpretation,
         recall=recall_resolution,
         followup=followup_resolution,
@@ -297,12 +320,64 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     )
     comparison_pack = build_comparison_pack(context, deliberation_input)
     strategy_selection = select_answer_strategy(context, comparison_pack)
+    objective = frame_objective(normalized_message, strategy_selection)
+    decomposition = build_decomposition_plan(normalized_message, objective)
+    max_units = max(1, context.config.conversation.max_reasoning_units)
+    decomposition = type(decomposition)(units=decomposition.units[:max_units], multi_part=decomposition.multi_part)
+    current_summary: str | None = None
+    if context_load.pack.recent_turns:
+        last = context_load.pack.recent_turns[-1]
+        current_summary = f"#{last.turn_index}: {last.user_message}"
+
+    previous_view = build_thread_snapshot_view(
+        context,
+        ThreadSnapshotRequest(target=SnapshotTarget.PREVIOUS, source=f"{source}:evidence_compare"),
+    )
+    previous_summary: str | None = None
+    if previous_view.found and previous_view.snapshot is not None and previous_view.snapshot.snapshot_lines:
+        prev_last = previous_view.snapshot.snapshot_lines[-1]
+        previous_summary = f"#{prev_last.turn_index}: {prev_last.user_message}"
+    if previous_summary is None and resolved.state_after.previous_thread_id is not None:
+        previous_context = store.build_thread_context_pack(
+            thread_id=resolved.state_after.previous_thread_id,
+            mode=resolved.state_after.mode,
+            turn_window=1,
+        )
+        if previous_context is not None and previous_context.recent_turns:
+            prev_last = previous_context.recent_turns[-1]
+            previous_summary = f"#{prev_last.turn_index}: {prev_last.user_message}"
+
+    evidence_pack = build_evidence_pack(
+        message=normalized_message,
+        decomposition=decomposition,
+        recall=recall_resolution,
+        focus=focus_view.focus if focus_view.found else None,
+        followup=followup_resolution,
+        current_thread_summary=current_summary,
+        previous_thread_summary=previous_summary,
+    )
+    max_items = max(1, context.config.conversation.max_evidence_items_per_unit) * max(1, len(decomposition.units))
+    has_compare_unit = any(unit.objective_kind.value == "compare" for unit in decomposition.units)
+    if has_compare_unit:
+        compare_priority = {"current_message": 0, "current_thread": 1, "previous_thread": 2, "support_gap": 3}
+        prioritized = sorted(
+            evidence_pack.items,
+            key=lambda item: (compare_priority.get(item.source, 10), item.unit_id, item.source),
+        )
+        evidence_pack = type(evidence_pack)(items=prioritized[:max_items])
+    else:
+        evidence_pack = type(evidence_pack)(items=evidence_pack.items[:max_items])
+    synthesis_plan = build_synthesis_plan(objective, decomposition, evidence_pack)
     response_plan = build_response_plan(
         context,
         interpretation,
         recall_resolution,
         strategy=strategy_selection,
         comparison_pack=comparison_pack,
+        objective=objective,
+        decomposition=decomposition,
+        evidence_pack=evidence_pack,
+        synthesis=synthesis_plan,
         focus=focus_view.focus if focus_view.found else None,
         followup_target=followup_resolution.target_line,
     )
@@ -364,6 +439,28 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         clarification_cause=strategy_selection.clarification_need.cause,
     )
 
+    objective_trace = ObjectiveFrameTrace(
+        kind=objective.kind.value,
+        is_multi_part=objective.is_multi_part,
+        secondary_kinds=[item.value for item in objective.secondary_kinds],
+    )
+    decomposition_trace = DecompositionTrace(
+        unit_count=len(decomposition.units),
+        unit_kinds=[unit.objective_kind.value for unit in decomposition.units],
+    )
+    support_distribution: dict[str, int] = {}
+    for item in evidence_pack.items:
+        support_distribution[item.support.value] = support_distribution.get(item.support.value, 0) + 1
+    evidence_trace = EvidencePackTrace(
+        item_count=len(evidence_pack.items),
+        support_distribution=support_distribution,
+    )
+    synthesis_trace = SynthesisTrace(
+        section_count=len(synthesis_plan.sections),
+        section_keys=[section.key for section in synthesis_plan.sections],
+        partial=synthesis_plan.partial,
+    )
+
     if response_plan.kind.value in {"recall", "resume", "clarification"} or any(section.lines for section in response_plan.sections):
         planned_text = render_response_plan(response_plan)
         turn = store.create_turn(
@@ -393,6 +490,10 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             followup_trace=followup_trace,
             comparison_trace=comparison_trace,
             answer_strategy_trace=answer_strategy_trace,
+            objective_trace=objective_trace,
+            decomposition_trace=decomposition_trace,
+            evidence_trace=evidence_trace,
+            synthesis_trace=synthesis_trace,
         )
         store.create_trace_events(
             session_id=turn.session_id,
@@ -419,7 +520,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
                 update_reason=updated_focus.reason,
             )
         latest_state = store.get_active_state() or resolved.state_after
-        return TalkRunResult(turn=turn, state=latest_state, route=resolved.route, output_kind=response_plan.kind.value)
+        output_kind = response_plan.kind.value if response_plan.kind.value in {"recall", "resume", "clarification", "correction_redirect", "structured"} else "turn"
+        return TalkRunResult(turn=turn, state=latest_state, route=resolved.route, output_kind=output_kind)
 
     reply_adapter = build_reply_adapter(context.config.reply)
     reply: ReplyOutput = reply_adapter.generate(

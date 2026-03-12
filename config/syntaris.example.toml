@@ -32,6 +32,10 @@ followup_resolution_enabled = true
 max_comparison_candidates = 6
 clarification_prefer_when_close = true
 uncertainty_labeling_enabled = true
+max_reasoning_units = 4
+max_evidence_items_per_unit = 3
+support_labeling_enabled = true
+synthesis_include_next_step = true
 
 [reply]
 # deterministic | llama-http

@@ -79,3 +79,13 @@ Focus config knobs are available under `[conversation]`: `focus_turn_window`, `f
 ## Deliberation config
 
 REBUILD-013 adds shared deterministic comparison-pack and answer-strategy orchestration between interpretation/recall/focus resolution and response-plan rendering. Once/live/script remain on the same execution path. Trace now records `comparison_pack_built` and `answer_strategy_selected` for inspectability without exposing chain-of-thought.
+
+## REBUILD-014 config knobs
+
+Conversation config now includes optional deterministic reasoning controls:
+- `max_reasoning_units`
+- `max_evidence_items_per_unit`
+- `support_labeling_enabled`
+- `synthesis_include_next_step`
+
+These are loaded at bootstrap and apply uniformly to once/live/script shared execution.

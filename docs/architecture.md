@@ -109,3 +109,17 @@ Persistence is explicit in `thread_focus` table, separate from snapshots.
 ## Deliberation layer
 
 REBUILD-013 adds shared deterministic comparison-pack and answer-strategy orchestration between interpretation/recall/focus resolution and response-plan rendering. Once/live/script remain on the same execution path. Trace now records `comparison_pack_built` and `answer_strategy_selected` for inspectability without exposing chain-of-thought.
+
+## REBUILD-014 reasoning scaffold
+
+Turn orchestration now contains explicit modules between answer-strategy and response planning:
+
+- `objective_frame`: classify objective kind and detect multi-part intent.
+- `question_decompose`: produce deterministic ordered reasoning units.
+- `evidence_pack`: assign grounded evidence to units and support labels.
+- `answer_synthesis`: compile a sectioned synthesis plan.
+
+`response_plan` remains a consumer of these artifacts; it does not recompute decomposition/synthesis decisions.
+This preserves contract boundaries and avoids a monolithic central turn-brain file.
+
+REBUILD-014 normalization hardening now preprocesses turn text early in shared turn orchestration before interpretation/deliberation/objective framing so explicit recall/compare intents remain deterministic even under diacritic/mojibake degradation.
