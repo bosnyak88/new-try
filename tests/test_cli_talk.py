@@ -897,3 +897,62 @@ def test_cli_previous_recall_and_compare_mojibake_forms(tmp_path, monkeypatch, c
     assert compare["kind"] == "structured"
     assert "Mostani szál:" in compare["reply"]
     assert "Előző szál:" in compare["reply"]
+
+
+def test_cli_explicit_previous_recall_and_compare_clean_forms_trace_path(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work"])
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "vissza a default szálra"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "az előző szálon mi volt?"])
+    cli.main()
+    recall = json.loads(capsys.readouterr().out)
+    assert recall["kind"] == "recall"
+    assert recall["reply"].strip() != "Rendben."
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
+    cli.main()
+    recall_trace = json.loads(capsys.readouterr().out)
+    recall_payload = {event["event_name"]: event["payload"] for event in recall_trace["trace_events"]}
+    assert '"kind": "recall_previous"' in recall_payload["turn_interpreted"]
+    assert '"requested": true' in recall_payload["recall_resolved"]
+    assert '"kind": "recall"' in recall_payload["response_plan_built"]
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "hasonlítsd össze a mostanit az előző szállal"])
+    cli.main()
+    compare = json.loads(capsys.readouterr().out)
+    assert compare["kind"] == "structured"
+    assert compare["reply"].strip() != "Rendben."
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
+    cli.main()
+    compare_trace = json.loads(capsys.readouterr().out)
+    compare_payload = {event["event_name"]: event["payload"] for event in compare_trace["trace_events"]}
+    assert '"selected_strategy": "structured_answer"' in compare_payload["answer_strategy_selected"]
+    assert '"kind": "structured"' in compare_payload["response_plan_built"]
+
+
+def test_cli_hol_tartottunk_remains_meaningful_recall(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "szia"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "hol tartottunk?"])
+    cli.main()
+    recall = json.loads(capsys.readouterr().out)
+    assert recall["kind"] == "recall"
+    assert recall["reply"].strip() != "Rendben."
+    assert "Röviden itt tartottunk" in recall["reply"]
