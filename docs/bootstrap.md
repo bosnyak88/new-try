@@ -42,3 +42,8 @@ No additional boot-time providers are required for REBUILD-005 routing. The dete
 
 
 - `app_meta.pending_route` stores deterministic pending-route proposals (held message + proposed thread + reason + metadata) until confirmation, rejection, or cancellation.
+
+
+## Recap bootstrap note
+
+No new providers or schema migrations are required for REBUILD-009 recap foundation. Recap views are projected from existing persisted thread turns through the context-pack loader, with the same bounded turn window (`conversation.context_turn_window` or explicit `--limit`).

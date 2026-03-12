@@ -6,7 +6,7 @@ from syntaris.bootstrap.init_app import build_runtime
 from syntaris.contracts.runtime import TalkRequest
 from syntaris.orchestration.doctor import run_doctor
 from syntaris.orchestration.live_loop import run_live_loop, run_live_loop_interactive
-from syntaris.orchestration.talk import init_db, list_threads, session_status, talk_once, thread_view_current, thread_view_named, thread_view_previous, trace_last
+from syntaris.orchestration.talk import init_db, list_threads, session_status, talk_once, thread_recap_current, thread_recap_named, thread_recap_previous, thread_view_current, thread_view_named, thread_view_previous, trace_last
 from syntaris.trace.events import build_boot_trace
 
 
@@ -36,6 +36,12 @@ def build_parser() -> argparse.ArgumentParser:
     scope.add_argument("--previous", action="store_true", help="View previous thread context")
     thread_view_parser.add_argument("thread_key", nargs="?", default=None, help="Named thread key")
     thread_view_parser.add_argument("--limit", type=int, default=None, help="Override context turn window")
+    thread_recap_parser = sub.add_parser("thread-recap", help="Inspect deterministic thread recap view")
+    recap_scope = thread_recap_parser.add_mutually_exclusive_group(required=False)
+    recap_scope.add_argument("--current", action="store_true", help="Recap active thread")
+    recap_scope.add_argument("--previous", action="store_true", help="Recap previous thread")
+    thread_recap_parser.add_argument("thread_key", nargs="?", default=None, help="Named thread key")
+    thread_recap_parser.add_argument("--limit", type=int, default=None, help="Override recap turn window")
     return parser
 
 
@@ -43,6 +49,7 @@ def _print_turn_result(result) -> None:
     print(
         json.dumps(
             {
+                "kind": result.output_kind,
                 "reply": result.turn.assistant_reply,
                 "session_id": result.turn.session_id,
                 "thread_id": result.turn.thread_id,
@@ -115,6 +122,36 @@ def _thread_context_payload(view) -> dict[str, object]:
             ],
         },
     }
+
+
+def _thread_recap_payload(view) -> dict[str, object]:
+    payload = {
+        "request": {
+            "target": view.request.target.value,
+            "thread_key": view.request.thread_key,
+            "limit": view.request.limit,
+        },
+        "found": view.found,
+        "session_id": view.session_id,
+        "thread_id": view.thread_id,
+        "thread_key": view.thread_key,
+        "turn_count": view.turn_count,
+        "last_turn_id": view.last_turn_id,
+        "mode": view.mode,
+        "previous_thread_id": view.previous_thread_id,
+        "previous_thread_key": view.previous_thread_key,
+        "recap_text": view.recap_text,
+        "recap_lines": [
+            {
+                "turn_id": line.turn_id,
+                "turn_index": line.turn_index,
+                "user_message": line.user_message,
+                "assistant_reply": line.assistant_reply,
+            }
+            for line in view.recap_lines
+        ],
+    }
+    return payload
 
 
 def main() -> int:
@@ -246,6 +283,18 @@ def main() -> int:
         else:
             view = thread_view_current(runtime, limit=args.limit)
         print(json.dumps(_thread_context_payload(view), indent=2))
+        return 0
+
+    if args.command == "thread-recap":
+        if args.current:
+            view = thread_recap_current(runtime, limit=args.limit)
+        elif args.previous:
+            view = thread_recap_previous(runtime, limit=args.limit)
+        elif args.thread_key:
+            view = thread_recap_named(runtime, thread_key=args.thread_key, limit=args.limit)
+        else:
+            view = thread_recap_current(runtime, limit=args.limit)
+        print(json.dumps(_thread_recap_payload(view), indent=2))
         return 0
 
     if args.command == "trace-last":

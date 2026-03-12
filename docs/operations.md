@@ -60,3 +60,22 @@ Includes session/thread metadata, bounded recent turns, and previous-thread poin
 
 - `session-status` now surfaces `pending_route` metadata when clarification is waiting.
 - `trace-last` includes proposal/resolution metadata (`pending_route_proposed`, `pending_route_confirmed`, `pending_route_rejected`, `pending_route_cancelled`).
+
+
+### `thread-recap [--current|--previous|<thread_key>] [--limit <N>]`
+
+Builds and prints a compact deterministic recap view for the selected thread target.
+
+- `--current`: active thread recap
+- `--previous`: previous-thread recap (returns `found=false` when missing)
+- `<thread_key>`: named-thread recap
+
+### Recap queries in talk flows
+
+The same recap builder is used in once/live/script execution when deterministic recap phrases are matched:
+
+- current: `hol tartunk?`, `hol tartunk most?`, `mutasd a mostani szálat`, `foglald össze ezt a szálat`
+- previous: `mutasd az előző szálat`, `foglald össze az előző szálat`, `hol tartunk az előző szálon?`
+- named: `mutasd a <thread_key> szálat`, `foglald össze a <thread_key> szálat`, `hol tartunk a <thread_key> szálon?`
+
+Recap queries do not implicitly switch active thread and produce trace metadata for recap handling.

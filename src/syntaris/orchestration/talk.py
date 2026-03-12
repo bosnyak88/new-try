@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from syntaris.contracts.runtime import ActiveConversationState, ContextSource, LastTurnTraceView, RuntimeContext, SessionStatusView, TalkRequest, ThreadContextRequest, ThreadContextView, ThreadListView
+from syntaris.contracts.runtime import ActiveConversationState, ContextSource, LastTurnTraceView, RecapRequest, RecapTarget, RuntimeContext, SessionStatusView, TalkRequest, ThreadContextRequest, ThreadContextView, ThreadListView, ThreadRecapView
 from syntaris.orchestration.context_pack import build_thread_context_view
+from syntaris.orchestration.recap import build_thread_recap_view
 from syntaris.orchestration.turns import TalkRunResult, execute_turn
 from syntaris.persistence import PersistenceStore
 
@@ -73,3 +74,15 @@ def thread_view_named(context: RuntimeContext, thread_key: str, limit: int | Non
         context,
         ThreadContextRequest(source=ContextSource.NAMED.value, thread_key=thread_key, limit=limit),
     )
+
+
+def thread_recap_current(context: RuntimeContext, limit: int | None = None) -> ThreadRecapView:
+    return build_thread_recap_view(context, RecapRequest(target=RecapTarget.CURRENT, limit=limit))
+
+
+def thread_recap_previous(context: RuntimeContext, limit: int | None = None) -> ThreadRecapView:
+    return build_thread_recap_view(context, RecapRequest(target=RecapTarget.PREVIOUS, limit=limit))
+
+
+def thread_recap_named(context: RuntimeContext, thread_key: str, limit: int | None = None) -> ThreadRecapView:
+    return build_thread_recap_view(context, RecapRequest(target=RecapTarget.NAMED, thread_key=thread_key, limit=limit))

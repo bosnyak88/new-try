@@ -1,4 +1,4 @@
-from syntaris.contracts.runtime import ActiveConversationState, ContextLoadResult, RouteDecision, RuntimeContext, TurnResult
+from syntaris.contracts.runtime import ActiveConversationState, ContextLoadResult, RecapTrace, RouteDecision, RuntimeContext, TurnResult
 
 
 def build_boot_trace(context: RuntimeContext) -> dict[str, str | bool]:
@@ -17,6 +17,7 @@ def build_turn_trace_events(
     source: str,
     route: RouteDecision,
     context_load: ContextLoadResult,
+    recap_trace: RecapTrace | None = None,
 ) -> list[dict[str, object]]:
     events = [
         {
@@ -78,6 +79,27 @@ def build_turn_trace_events(
             "payload": {"source": source},
         },
     ]
+
+
+    if recap_trace is not None and recap_trace.recognized:
+        events.append(
+            {
+                "event_name": "recap_query_recognized",
+                "payload": {
+                    "source": recap_trace.source,
+                    "target_thread_key": recap_trace.target_thread_key,
+                },
+            }
+        )
+        events.append(
+            {
+                "event_name": "thread_recap_built",
+                "payload": {
+                    "context_turn_count": recap_trace.context_turn_count,
+                    "bypassed_reply_adapter": recap_trace.bypassed_reply_adapter,
+                },
+            }
+        )
 
     if route.action.value.startswith("propose_switch"):
         events.append(
