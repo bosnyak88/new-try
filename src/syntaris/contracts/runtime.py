@@ -42,6 +42,9 @@ class ConversationConfig:
     recall_line_limit: int = 3
     recall_prefer_snapshot: bool = True
     response_followup_enabled: bool = True
+    focus_turn_window: int = 8
+    focus_line_limit: int = 4
+    followup_resolution_enabled: bool = True
 
 
 @dataclass(frozen=True)
@@ -360,6 +363,79 @@ class RecallResolution:
     clarification_message: str | None = None
 
 
+@dataclass(frozen=True)
+class FocusLine:
+    key: str
+    text: str
+
+
+@dataclass(frozen=True)
+class FocusSourceMetadata:
+    source_turn_count: int
+    included_turn_count: int
+    filtered_recap_turn_count: int
+    filtered_pending_turn_count: int
+    filtered_control_turn_count: int
+
+
+@dataclass(frozen=True)
+class ThreadFocusPack:
+    session_id: int
+    thread_id: int
+    thread_key: str
+    last_turn_id: int | None
+    focus_updated_at: datetime
+    focus_source_turn_count: int
+    focus_lines: list[FocusLine]
+    source_metadata: FocusSourceMetadata
+
+
+@dataclass(frozen=True)
+class FocusUpdateResult:
+    focus: ThreadFocusPack
+    refreshed: bool
+    reason: str
+
+
+class FocusTarget(str, Enum):
+    CURRENT = "current"
+    PREVIOUS = "previous"
+    NAMED = "named"
+
+
+@dataclass(frozen=True)
+class ThreadFocusRequest:
+    target: FocusTarget
+    thread_key: str | None = None
+    limit: int | None = None
+    refresh: bool = False
+    source: str = "unspecified"
+
+
+@dataclass(frozen=True)
+class ThreadFocusView:
+    request: ThreadFocusRequest
+    found: bool
+    focus: ThreadFocusPack | None
+    loaded_from_persistence: bool = False
+
+
+@dataclass(frozen=True)
+class FollowupReference:
+    detected: bool
+    phrase: str | None = None
+
+
+@dataclass(frozen=True)
+class FollowupResolution:
+    detected: bool
+    resolved: bool
+    ambiguous: bool
+    phrase: str | None = None
+    target_line: str | None = None
+    clarification_message: str | None = None
+
+
 class ResponsePlanKind(str, Enum):
     ORDINARY = "ordinary"
     RECALL = "recall"
@@ -378,6 +454,7 @@ class ResponsePlan:
     kind: ResponsePlanKind
     sections: list[ResponsePlanSection]
     followup_prompt: str | None = None
+    focus_used: bool = False
 
 
 @dataclass(frozen=True)
@@ -405,6 +482,32 @@ class ResponsePlanTrace:
     kind: str
     section_count: int
     clarification_emitted: bool
+    focus_used: bool = False
+
+
+@dataclass(frozen=True)
+class ThreadFocusTrace:
+    loaded: bool
+    loaded_from_persistence: bool
+    thread_id: int | None
+    thread_key: str | None
+    source_turn_count: int
+    included_turn_count: int
+    filtered_recap_turn_count: int
+    filtered_pending_turn_count: int
+    filtered_control_turn_count: int
+    updated: bool = False
+    update_reason: str | None = None
+
+
+@dataclass(frozen=True)
+class FollowupTrace:
+    detected: bool
+    resolved: bool
+    ambiguous: bool
+    phrase: str | None = None
+    target_line: str | None = None
+    clarification_emitted: bool = False
 
 
 class ContextSource(str, Enum):

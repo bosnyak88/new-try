@@ -15,11 +15,14 @@ from syntaris.contracts.runtime import (
     SessionStatusView,
     ThreadContextPack,
     ThreadContextTurn,
+    ThreadFocusPack,
     ThreadListView,
     ThreadRecord,
     ThreadSnapshotLine,
     ThreadSnapshotPack,
     SnapshotSourceMetadata,
+    FocusLine,
+    FocusSourceMetadata,
     ThreadSummaryView,
     TraceEventRecord,
     TurnResult,
@@ -148,6 +151,30 @@ class PersistenceStore:
         }
         if snapshot_cols and "thread_key" not in snapshot_cols:
             conn.execute("ALTER TABLE thread_snapshots ADD COLUMN thread_key TEXT")
+
+        focus_exists = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='thread_focus'").fetchone()
+        if focus_exists is None:
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS thread_focus (
+                    focus_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_id INTEGER NOT NULL,
+                    thread_id INTEGER NOT NULL UNIQUE,
+                    thread_key TEXT NOT NULL,
+                    last_turn_id INTEGER,
+                    focus_updated_at TEXT NOT NULL,
+                    focus_source_turn_count INTEGER NOT NULL,
+                    source_turn_count INTEGER NOT NULL,
+                    included_turn_count INTEGER NOT NULL,
+                    filtered_recap_turn_count INTEGER NOT NULL,
+                    filtered_pending_turn_count INTEGER NOT NULL,
+                    filtered_control_turn_count INTEGER NOT NULL,
+                    focus_lines_json TEXT NOT NULL,
+                    FOREIGN KEY(session_id) REFERENCES sessions(session_id),
+                    FOREIGN KEY(thread_id) REFERENCES threads(thread_id)
+                )
+                """
+            )
 
     def create_session(self) -> SessionRecord:
         created_at = utc_now()
@@ -526,6 +553,74 @@ class PersistenceStore:
                 previous_thread_id=int(row["previous_thread_id"]) if row["previous_thread_id"] is not None else None,
                 previous_thread_key=str(row["previous_thread_key"]) if row["previous_thread_key"] is not None else None,
             )
+
+    def upsert_thread_focus(self, focus: ThreadFocusPack) -> None:
+        lines_json = json.dumps([{"key": line.key, "text": line.text} for line in focus.focus_lines], ensure_ascii=False, sort_keys=True)
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                """
+                INSERT INTO thread_focus(
+                    session_id, thread_id, thread_key, last_turn_id, focus_updated_at,
+                    focus_source_turn_count, source_turn_count, included_turn_count,
+                    filtered_recap_turn_count, filtered_pending_turn_count, filtered_control_turn_count,
+                    focus_lines_json
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(thread_id) DO UPDATE SET
+                    session_id=excluded.session_id,
+                    thread_key=excluded.thread_key,
+                    last_turn_id=excluded.last_turn_id,
+                    focus_updated_at=excluded.focus_updated_at,
+                    focus_source_turn_count=excluded.focus_source_turn_count,
+                    source_turn_count=excluded.source_turn_count,
+                    included_turn_count=excluded.included_turn_count,
+                    filtered_recap_turn_count=excluded.filtered_recap_turn_count,
+                    filtered_pending_turn_count=excluded.filtered_pending_turn_count,
+                    filtered_control_turn_count=excluded.filtered_control_turn_count,
+                    focus_lines_json=excluded.focus_lines_json
+                """,
+                (
+                    focus.session_id,
+                    focus.thread_id,
+                    focus.thread_key,
+                    focus.last_turn_id,
+                    focus.focus_updated_at.isoformat(),
+                    focus.focus_source_turn_count,
+                    focus.source_metadata.source_turn_count,
+                    focus.source_metadata.included_turn_count,
+                    focus.source_metadata.filtered_recap_turn_count,
+                    focus.source_metadata.filtered_pending_turn_count,
+                    focus.source_metadata.filtered_control_turn_count,
+                    lines_json,
+                ),
+            )
+            conn.commit()
+
+    def read_thread_focus(self, thread_id: int) -> ThreadFocusPack | None:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            row = conn.execute("SELECT * FROM thread_focus WHERE thread_id = ?", (thread_id,)).fetchone()
+            if row is None:
+                return None
+            line_data = json.loads(str(row["focus_lines_json"]))
+            lines = [FocusLine(key=str(item["key"]), text=str(item["text"])) for item in line_data]
+            return ThreadFocusPack(
+                session_id=int(row["session_id"]),
+                thread_id=int(row["thread_id"]),
+                thread_key=str(row["thread_key"]),
+                last_turn_id=int(row["last_turn_id"]) if row["last_turn_id"] is not None else None,
+                focus_updated_at=datetime.fromisoformat(str(row["focus_updated_at"])),
+                focus_source_turn_count=int(row["focus_source_turn_count"]),
+                focus_lines=lines,
+                source_metadata=FocusSourceMetadata(
+                    source_turn_count=int(row["source_turn_count"]),
+                    included_turn_count=int(row["included_turn_count"]),
+                    filtered_recap_turn_count=int(row["filtered_recap_turn_count"]),
+                    filtered_pending_turn_count=int(row["filtered_pending_turn_count"]),
+                    filtered_control_turn_count=int(row["filtered_control_turn_count"]),
+                ),
+            )
+
 
     def list_threads_view(self, session_id: int, active_thread_id: int) -> ThreadListView:
         with sqlite3.connect(self.db_path) as conn:

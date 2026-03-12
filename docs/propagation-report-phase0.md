@@ -82,3 +82,12 @@ Snapshots are compact handoff packs built from the thread context window, exclud
 
 CLI inspection uses `thread-snapshot --current`, `thread-snapshot --previous`, or `thread-snapshot <thread_key>` with optional `--refresh` and `--limit`.
 Snapshots are also refreshed automatically when routing switches away from a thread so handoff state remains stable for later resume/recall work.
+
+## REBUILD-012 propagation summary
+
+- Contracts: introduced first-class focus/follow-up contracts (`ThreadFocusPack`, `FocusLine`, `FollowupResolution`, related trace structs).
+- Orchestration: added shared focus build/load/update path and shared follow-up resolver.
+- Persistence: added `thread_focus` table + migration-safe upsert/read.
+- Reply/plan: response planning now marks and uses focus context.
+- CLI: added `thread-focus` for current/previous/named inspection.
+- Trace: added `thread_focus_loaded` and `followup_reference_resolved` events.

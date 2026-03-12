@@ -9,18 +9,24 @@ from syntaris.contracts.runtime import (
     PendingRouteProposal,
     RouteDecision,
     RouteDecisionAction,
+    FollowupTrace,
     RecapTrace,
     RecallTrace,
     ResponsePlanTrace,
+    ThreadFocusTrace,
     TurnInterpretTrace,
     RouteStateTransition,
     RuntimeContext,
     SnapshotTrace,
+    FocusTarget,
+    ThreadFocusRequest,
     TalkRequest,
     TurnInput,
     TurnResult,
 )
 from syntaris.orchestration.context_pack import load_execution_context_pack
+from syntaris.orchestration.followup_resolution import resolve_followup_reference
+from syntaris.orchestration.thread_focus import build_thread_focus_view, refresh_thread_focus
 from syntaris.orchestration.thread_snapshot import refresh_snapshot_for_transition
 from syntaris.orchestration.turn_interpret import interpret_turn
 from syntaris.orchestration.thread_recall import resolve_recall_request
@@ -271,7 +277,26 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     execution_message = resolved.execution_message
     interpretation = interpret_turn(execution_message)
     recall_resolution = resolve_recall_request(context, interpretation)
-    response_plan = build_response_plan(context, interpretation, recall_resolution)
+    focus_view = build_thread_focus_view(
+        context,
+        ThreadFocusRequest(target=FocusTarget.CURRENT, source=f"{source}:turn"),
+    )
+    followup_resolution = resolve_followup_reference(execution_message, focus_view.focus if focus_view.found else None) if context.config.conversation.followup_resolution_enabled else resolve_followup_reference("", None)
+    if followup_resolution.ambiguous and followup_resolution.clarification_message:
+        response_plan = build_response_plan(
+            context,
+            interpretation,
+            recall_resolution.__class__(**{**recall_resolution.__dict__, "clarification_message": followup_resolution.clarification_message}),
+            focus=focus_view.focus if focus_view.found else None,
+        )
+    else:
+        response_plan = build_response_plan(
+            context,
+            interpretation,
+            recall_resolution,
+            focus=focus_view.focus if focus_view.found else None,
+            followup_target=followup_resolution.target_line,
+        )
 
     recap_trace = RecapTrace(recognized=False)
     interpret_trace = TurnInterpretTrace(
@@ -294,9 +319,29 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         kind=response_plan.kind.value,
         section_count=len(response_plan.sections),
         clarification_emitted=response_plan.kind.value == "clarification",
+        focus_used=response_plan.focus_used,
+    )
+    focus_trace = ThreadFocusTrace(
+        loaded=focus_view.found and focus_view.focus is not None,
+        loaded_from_persistence=focus_view.loaded_from_persistence,
+        thread_id=focus_view.focus.thread_id if focus_view.focus is not None else None,
+        thread_key=focus_view.focus.thread_key if focus_view.focus is not None else None,
+        source_turn_count=focus_view.focus.source_metadata.source_turn_count if focus_view.focus is not None else 0,
+        included_turn_count=focus_view.focus.source_metadata.included_turn_count if focus_view.focus is not None else 0,
+        filtered_recap_turn_count=focus_view.focus.source_metadata.filtered_recap_turn_count if focus_view.focus is not None else 0,
+        filtered_pending_turn_count=focus_view.focus.source_metadata.filtered_pending_turn_count if focus_view.focus is not None else 0,
+        filtered_control_turn_count=focus_view.focus.source_metadata.filtered_control_turn_count if focus_view.focus is not None else 0,
+    )
+    followup_trace = FollowupTrace(
+        detected=followup_resolution.detected,
+        resolved=followup_resolution.resolved,
+        ambiguous=followup_resolution.ambiguous,
+        phrase=followup_resolution.phrase,
+        target_line=followup_resolution.target_line,
+        clarification_emitted=followup_resolution.ambiguous,
     )
 
-    if response_plan.kind.value in {"recall", "resume", "clarification"}:
+    if response_plan.kind.value in {"recall", "resume", "clarification"} or any(section.lines for section in response_plan.sections):
         planned_text = render_response_plan(response_plan)
         turn = store.create_turn(
             session_id=resolved.state_before.session_id,
@@ -321,6 +366,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             interpret_trace=interpret_trace,
             recall_trace=recall_trace,
             response_plan_trace=plan_trace,
+            focus_trace=focus_trace,
+            followup_trace=followup_trace,
         )
         store.create_trace_events(
             session_id=turn.session_id,
@@ -331,6 +378,21 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             degraded=False,
             events=events,
         )
+        updated_focus = refresh_thread_focus(context, thread_id=turn.thread_id, mode=turn.mode, reason=f"{source}:post_turn")
+        if updated_focus is not None:
+            focus_trace = ThreadFocusTrace(
+                loaded=focus_trace.loaded,
+                loaded_from_persistence=focus_trace.loaded_from_persistence,
+                thread_id=focus_trace.thread_id,
+                thread_key=focus_trace.thread_key,
+                source_turn_count=focus_trace.source_turn_count,
+                included_turn_count=focus_trace.included_turn_count,
+                filtered_recap_turn_count=focus_trace.filtered_recap_turn_count,
+                filtered_pending_turn_count=focus_trace.filtered_pending_turn_count,
+                filtered_control_turn_count=focus_trace.filtered_control_turn_count,
+                updated=True,
+                update_reason=updated_focus.reason,
+            )
         latest_state = store.get_active_state() or resolved.state_after
         return TalkRunResult(turn=turn, state=latest_state, route=resolved.route, output_kind=response_plan.kind.value)
 
@@ -367,6 +429,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         interpret_trace=interpret_trace,
         recall_trace=recall_trace,
         response_plan_trace=plan_trace,
+        focus_trace=focus_trace,
+        followup_trace=followup_trace,
     )
     store.create_trace_events(
         session_id=turn.session_id,
@@ -377,5 +441,6 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         degraded=reply.degraded,
         events=events,
     )
+    refresh_thread_focus(context, thread_id=turn.thread_id, mode=turn.mode, reason=f"{source}:post_turn")
     latest_state = store.get_active_state() or resolved.state_after
     return TalkRunResult(turn=turn, state=latest_state, route=resolved.route)

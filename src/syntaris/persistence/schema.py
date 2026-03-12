@@ -1,4 +1,4 @@
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS app_meta (
@@ -55,6 +55,25 @@ CREATE TABLE IF NOT EXISTS thread_snapshots (
     snapshot_text TEXT NOT NULL,
     previous_thread_id INTEGER,
     previous_thread_key TEXT,
+    FOREIGN KEY(session_id) REFERENCES sessions(session_id),
+    FOREIGN KEY(thread_id) REFERENCES threads(thread_id)
+);
+
+
+CREATE TABLE IF NOT EXISTS thread_focus (
+    focus_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id INTEGER NOT NULL,
+    thread_id INTEGER NOT NULL UNIQUE,
+    thread_key TEXT NOT NULL,
+    last_turn_id INTEGER,
+    focus_updated_at TEXT NOT NULL,
+    focus_source_turn_count INTEGER NOT NULL,
+    source_turn_count INTEGER NOT NULL,
+    included_turn_count INTEGER NOT NULL,
+    filtered_recap_turn_count INTEGER NOT NULL,
+    filtered_pending_turn_count INTEGER NOT NULL,
+    filtered_control_turn_count INTEGER NOT NULL,
+    focus_lines_json TEXT NOT NULL,
     FOREIGN KEY(session_id) REFERENCES sessions(session_id),
     FOREIGN KEY(thread_id) REFERENCES threads(thread_id)
 );

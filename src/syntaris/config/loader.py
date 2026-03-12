@@ -87,6 +87,18 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
             os.getenv("SYNTARIS_RESPONSE_FOLLOWUP_ENABLED", str(conversation.get("response_followup_enabled", True))).lower()
             in {"1", "true", "yes", "on"}
         ),
+        focus_turn_window=_pick_int(
+            os.getenv("SYNTARIS_FOCUS_TURN_WINDOW"),
+            conversation.get("focus_turn_window", 8),
+        ),
+        focus_line_limit=_pick_int(
+            os.getenv("SYNTARIS_FOCUS_LINE_LIMIT"),
+            conversation.get("focus_line_limit", 4),
+        ),
+        followup_resolution_enabled=(
+            os.getenv("SYNTARIS_FOLLOWUP_RESOLUTION_ENABLED", str(conversation.get("followup_resolution_enabled", True))).lower()
+            in {"1", "true", "yes", "on"}
+        ),
     )
 
     return AppConfig(

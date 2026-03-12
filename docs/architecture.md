@@ -98,3 +98,9 @@ Added three dedicated orchestration boundaries:
 route/pending -> interpretation -> recall resolution -> response plan -> rendering (`reply/plan_renderer.py`) -> persistence -> trace.
 
 This keeps reply generation modular: plan construction is orchestration logic; textual rendering is a reply-boundary concern.
+
+## REBUILD-012 active-focus foundation
+
+A dedicated `orchestration.thread_focus` module builds/loads/updates compact `ThreadFocusPack` state, and `orchestration.followup_resolution` resolves shorthand follow-up phrases deterministically.
+Response planning consumes focus state via contract fields (`focus_used`, follow-up target) instead of hidden prompt logic.
+Persistence is explicit in `thread_focus` table, separate from snapshots.

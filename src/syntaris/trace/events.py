@@ -1,4 +1,4 @@
-from syntaris.contracts.runtime import ActiveConversationState, ContextLoadResult, RecapTrace, RecallTrace, ResponsePlanTrace, RouteDecision, RuntimeContext, SnapshotTrace, TurnInterpretTrace, TurnResult
+from syntaris.contracts.runtime import ActiveConversationState, ContextLoadResult, FollowupTrace, RecapTrace, RecallTrace, ResponsePlanTrace, RouteDecision, RuntimeContext, SnapshotTrace, ThreadFocusTrace, TurnInterpretTrace, TurnResult
 
 
 def build_boot_trace(context: RuntimeContext) -> dict[str, str | bool]:
@@ -22,6 +22,8 @@ def build_turn_trace_events(
     interpret_trace: TurnInterpretTrace | None = None,
     recall_trace: RecallTrace | None = None,
     response_plan_trace: ResponsePlanTrace | None = None,
+    focus_trace: ThreadFocusTrace | None = None,
+    followup_trace: FollowupTrace | None = None,
 ) -> list[dict[str, object]]:
     events = [
         {
@@ -125,6 +127,42 @@ def build_turn_trace_events(
                     "kind": response_plan_trace.kind,
                     "section_count": response_plan_trace.section_count,
                     "clarification_emitted": response_plan_trace.clarification_emitted,
+                    "focus_used": response_plan_trace.focus_used,
+                },
+            }
+        )
+
+    if focus_trace is not None:
+        events.append(
+            {
+                "event_name": "thread_focus_loaded",
+                "payload": {
+                    "loaded": focus_trace.loaded,
+                    "loaded_from_persistence": focus_trace.loaded_from_persistence,
+                    "thread_id": focus_trace.thread_id,
+                    "thread_key": focus_trace.thread_key,
+                    "source_turn_count": focus_trace.source_turn_count,
+                    "included_turn_count": focus_trace.included_turn_count,
+                    "filtered_recap_turn_count": focus_trace.filtered_recap_turn_count,
+                    "filtered_pending_turn_count": focus_trace.filtered_pending_turn_count,
+                    "filtered_control_turn_count": focus_trace.filtered_control_turn_count,
+                    "updated": focus_trace.updated,
+                    "update_reason": focus_trace.update_reason,
+                },
+            }
+        )
+
+    if followup_trace is not None and followup_trace.detected:
+        events.append(
+            {
+                "event_name": "followup_reference_resolved",
+                "payload": {
+                    "detected": followup_trace.detected,
+                    "resolved": followup_trace.resolved,
+                    "ambiguous": followup_trace.ambiguous,
+                    "phrase": followup_trace.phrase,
+                    "target_line": followup_trace.target_line,
+                    "clarification_emitted": followup_trace.clarification_emitted,
                 },
             }
         )

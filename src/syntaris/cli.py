@@ -6,7 +6,7 @@ from syntaris.bootstrap.init_app import build_runtime
 from syntaris.contracts.runtime import TalkRequest
 from syntaris.orchestration.doctor import run_doctor
 from syntaris.orchestration.live_loop import run_live_loop, run_live_loop_interactive
-from syntaris.orchestration.talk import init_db, list_threads, session_status, talk_once, thread_recap_current, thread_recap_named, thread_recap_previous, thread_snapshot_current, thread_snapshot_named, thread_snapshot_previous, thread_view_current, thread_view_named, thread_view_previous, trace_last
+from syntaris.orchestration.talk import init_db, list_threads, session_status, talk_once, thread_focus_current, thread_focus_named, thread_focus_previous, thread_recap_current, thread_recap_named, thread_recap_previous, thread_snapshot_current, thread_snapshot_named, thread_snapshot_previous, thread_view_current, thread_view_named, thread_view_previous, trace_last
 from syntaris.trace.events import build_boot_trace
 
 
@@ -42,6 +42,13 @@ def build_parser() -> argparse.ArgumentParser:
     recap_scope.add_argument("--previous", action="store_true", help="Recap previous thread")
     thread_recap_parser.add_argument("thread_key", nargs="?", default=None, help="Named thread key")
     thread_recap_parser.add_argument("--limit", type=int, default=None, help="Override recap turn window")
+    thread_focus_parser = sub.add_parser("thread-focus", help="Inspect deterministic thread active-focus pack")
+    focus_scope = thread_focus_parser.add_mutually_exclusive_group(required=False)
+    focus_scope.add_argument("--current", action="store_true", help="Focus for active thread")
+    focus_scope.add_argument("--previous", action="store_true", help="Focus for previous thread")
+    thread_focus_parser.add_argument("thread_key", nargs="?", default=None, help="Named thread key")
+    thread_focus_parser.add_argument("--limit", type=int, default=None, help="Override focus turn window")
+    thread_focus_parser.add_argument("--refresh", action="store_true", help="Rebuild and persist focus before returning it")
     thread_snapshot_parser = sub.add_parser("thread-snapshot", help="Inspect deterministic persisted thread snapshot handoff pack")
     snapshot_scope = thread_snapshot_parser.add_mutually_exclusive_group(required=False)
     snapshot_scope.add_argument("--current", action="store_true", help="Snapshot active thread")
@@ -348,6 +355,18 @@ def main() -> int:
         print(json.dumps(_thread_context_payload(view), indent=2))
         return 0
 
+    if args.command == "thread-focus":
+        if args.current:
+            view = thread_focus_current(runtime, limit=args.limit, refresh=args.refresh)
+        elif args.previous:
+            view = thread_focus_previous(runtime, limit=args.limit, refresh=args.refresh)
+        elif args.thread_key:
+            view = thread_focus_named(runtime, thread_key=args.thread_key, limit=args.limit, refresh=args.refresh)
+        else:
+            view = thread_focus_current(runtime, limit=args.limit, refresh=args.refresh)
+        print(json.dumps(_thread_focus_payload(view), indent=2))
+        return 0
+
     if args.command == "thread-snapshot":
         if args.current:
             view = thread_snapshot_current(runtime, limit=args.limit, refresh=args.refresh)
@@ -413,6 +432,41 @@ def main() -> int:
 
     parser.error("Unsupported command")
     return 2
+
+
+def _thread_focus_payload(view):
+    payload = {
+        "request": {
+            "target": view.request.target.value,
+            "thread_key": view.request.thread_key,
+            "limit": view.request.limit,
+            "refresh": view.request.refresh,
+            "source": view.request.source,
+        },
+        "found": view.found,
+        "loaded_from_persistence": view.loaded_from_persistence,
+        "focus": None,
+    }
+    if view.focus is None:
+        return payload
+    payload["focus"] = {
+        "session_id": view.focus.session_id,
+        "thread_id": view.focus.thread_id,
+        "thread_key": view.focus.thread_key,
+        "last_turn_id": view.focus.last_turn_id,
+        "focus_updated_at": view.focus.focus_updated_at.isoformat(),
+        "focus_source_turn_count": view.focus.focus_source_turn_count,
+        "source_metadata": {
+            "source_turn_count": view.focus.source_metadata.source_turn_count,
+            "included_turn_count": view.focus.source_metadata.included_turn_count,
+            "filtered_recap_turn_count": view.focus.source_metadata.filtered_recap_turn_count,
+            "filtered_pending_turn_count": view.focus.source_metadata.filtered_pending_turn_count,
+            "filtered_control_turn_count": view.focus.source_metadata.filtered_control_turn_count,
+        },
+        "focus_lines": [{"key": line.key, "text": line.text} for line in view.focus.focus_lines],
+    }
+    return payload
+
 
 
 if __name__ == "__main__":

@@ -26,6 +26,9 @@ snapshot_include_pending_turns = false
 recall_line_limit = 3
 recall_prefer_snapshot = true
 response_followup_enabled = true
+focus_turn_window = 8
+focus_line_limit = 4
+followup_resolution_enabled = true
 
 [reply]
 # deterministic | llama-http

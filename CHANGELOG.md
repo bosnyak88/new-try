@@ -106,3 +106,9 @@
 - Added config and env templates with external llama server/model path support.
 - Added CLI with `doctor` and `trace-boot` commands.
 - Added baseline docs and tests for bootstrap behavior.
+
+## Unreleased
+
+- Added deterministic active-focus foundation (`thread_focus` persistence + orchestration) and new `thread-focus` CLI command.
+- Added shared deterministic follow-up reference resolution on top of active focus with clarification fallback.
+- Propagated focus metadata into response planning and trace events.
