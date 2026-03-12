@@ -37,7 +37,14 @@ def assemble_deliberation_input(
     normalized = message.strip().lower()
     references_previous = "előző szál" in normalized or "előzőre" in normalized
     references_other = "másik" in normalized
-    structured_request = "mi a lényeg" in normalized or "mi legyen a következő" in normalized
+    structured_request = (
+        (("lényeg" in normalized and "következő" in normalized)
+         or ("biztos" in normalized and "feltételezés" in normalized)
+         or ("fő probléma" in normalized and "mit kell" in normalized)
+         or ("hasonlítsd össze" in normalized)
+         or "mi a lényeg" in normalized
+         or "mi legyen a következő" in normalized)
+    )
 
     return DeliberationInput(
         message=message,

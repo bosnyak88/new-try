@@ -48,6 +48,10 @@ class ConversationConfig:
     max_comparison_candidates: int = 6
     clarification_prefer_when_close: bool = True
     uncertainty_labeling_enabled: bool = True
+    max_reasoning_units: int = 4
+    max_evidence_items_per_unit: int = 3
+    support_labeling_enabled: bool = True
+    synthesis_include_next_step: bool = True
 
 
 @dataclass(frozen=True)
@@ -490,6 +494,72 @@ class AnswerStrategy(str, Enum):
     UNCERTAINTY_LABELED_ANSWER = "uncertainty_labeled_answer"
 
 
+class ObjectiveKind(str, Enum):
+    EXPLAIN = "explain"
+    SUMMARIZE = "summarize"
+    NEXT_STEP = "next_step"
+    COMPARE = "compare"
+    DIAGNOSE = "diagnose"
+    STATUS_CHECK = "status_check"
+    DECIDE = "decide"
+    CLARIFY = "clarify"
+    MIXED_MULTI_PART = "mixed_multi_part"
+
+
+@dataclass(frozen=True)
+class ObjectiveFrame:
+    kind: ObjectiveKind
+    is_multi_part: bool
+    objective_text: str
+    secondary_kinds: list[ObjectiveKind]
+
+
+@dataclass(frozen=True)
+class ReasoningUnit:
+    unit_id: str
+    prompt: str
+    objective_kind: ObjectiveKind
+    priority: int
+
+
+@dataclass(frozen=True)
+class DecompositionPlan:
+    units: list[ReasoningUnit]
+    multi_part: bool
+
+
+class SupportLabel(str, Enum):
+    SUPPORTED = "supported"
+    WEAK_SUPPORT = "weak_support"
+    UNRESOLVED = "unresolved"
+
+
+@dataclass(frozen=True)
+class EvidenceItem:
+    unit_id: str
+    source: str
+    detail: str
+    support: SupportLabel
+
+
+@dataclass(frozen=True)
+class EvidencePack:
+    items: list[EvidenceItem]
+
+
+@dataclass(frozen=True)
+class SynthesisSection:
+    key: str
+    lines: list[str]
+
+
+@dataclass(frozen=True)
+class SynthesisPlan:
+    sections: list[SynthesisSection]
+    partial: bool
+    support_distribution: dict[str, int]
+
+
 @dataclass(frozen=True)
 class ClarificationNeed:
     needed: bool
@@ -563,6 +633,32 @@ class ResponsePlan:
     sections: list[ResponsePlanSection]
     followup_prompt: str | None = None
     focus_used: bool = False
+
+
+@dataclass(frozen=True)
+class ObjectiveFrameTrace:
+    kind: str
+    is_multi_part: bool
+    secondary_kinds: list[str]
+
+
+@dataclass(frozen=True)
+class DecompositionTrace:
+    unit_count: int
+    unit_kinds: list[str]
+
+
+@dataclass(frozen=True)
+class EvidencePackTrace:
+    item_count: int
+    support_distribution: dict[str, int]
+
+
+@dataclass(frozen=True)
+class SynthesisTrace:
+    section_count: int
+    section_keys: list[str]
+    partial: bool
 
 
 @dataclass(frozen=True)

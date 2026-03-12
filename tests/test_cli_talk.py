@@ -760,3 +760,50 @@ def test_cli_deliberation_comparison_and_strategy_trace(tmp_path, monkeypatch, c
     names = [event["event_name"] for event in trace_output["trace_events"]]
     assert "comparison_pack_built" in names
     assert "answer_strategy_selected" in names
+
+def test_cli_rebuild014_runtime_behaviors_no_fallback_and_compare_precedence(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work"])
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "vissza a default szálra"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "mi biztos ebben és mi csak feltételezés?"])
+    cli.main()
+    support = json.loads(capsys.readouterr().out)
+    assert support["degraded"] is False
+    assert "[fallback]" not in support["reply"]
+    assert "Ami biztos" in support["reply"]
+    assert "Ami nyitott" in support["reply"]
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "mi a fő probléma és mit kell most tenni?"])
+    cli.main()
+    diagnose = json.loads(capsys.readouterr().out)
+    assert diagnose["degraded"] is False
+    assert "[fallback]" not in diagnose["reply"]
+    assert "Mi a fő probléma?" in diagnose["reply"]
+    assert "Következő lépés" in diagnose["reply"]
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "hasonlítsd össze a mostanit az előző szállal"])
+    cli.main()
+    compare = json.loads(capsys.readouterr().out)
+    assert compare["kind"] != "correction_redirect"
+    assert compare["degraded"] is False
+    assert "[fallback]" not in compare["reply"]
+    assert "Mostani szál:" in compare["reply"]
+    assert "Előző szál:" in compare["reply"]
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
+    cli.main()
+    trace = json.loads(capsys.readouterr().out)
+    names = [event["event_name"] for event in trace["trace_events"]]
+    assert "objective_framed" in names
+    assert "decomposition_built" in names
+    assert "evidence_pack_built" in names
+    assert "synthesis_plan_built" in names

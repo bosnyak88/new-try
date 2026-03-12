@@ -111,6 +111,22 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
             os.getenv("SYNTARIS_UNCERTAINTY_LABELING_ENABLED", str(conversation.get("uncertainty_labeling_enabled", True))).lower()
             in {"1", "true", "yes", "on"}
         ),
+        max_reasoning_units=_pick_int(
+            os.getenv("SYNTARIS_MAX_REASONING_UNITS"),
+            conversation.get("max_reasoning_units", 4),
+        ),
+        max_evidence_items_per_unit=_pick_int(
+            os.getenv("SYNTARIS_MAX_EVIDENCE_ITEMS_PER_UNIT"),
+            conversation.get("max_evidence_items_per_unit", 3),
+        ),
+        support_labeling_enabled=(
+            os.getenv("SYNTARIS_SUPPORT_LABELING_ENABLED", str(conversation.get("support_labeling_enabled", True))).lower()
+            in {"1", "true", "yes", "on"}
+        ),
+        synthesis_include_next_step=(
+            os.getenv("SYNTARIS_SYNTHESIS_INCLUDE_NEXT_STEP", str(conversation.get("synthesis_include_next_step", True))).lower()
+            in {"1", "true", "yes", "on"}
+        ),
     )
 
     return AppConfig(
