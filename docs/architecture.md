@@ -131,3 +131,5 @@ The architecture now separates **raw text preservation** from **canonical/displa
 REBUILD-015 follow-up: persisted derived artifacts are read without pre-clean masking so hygiene checks can trigger real snapshot/focus rebuild+writeback (not detect-only), including previous-thread retrieval paths.
 
 Snapshot/focus retrieval now applies two gates before returning persisted artifacts: (1) dirty-text hygiene gate and (2) stale-head freshness gate, both feeding deterministic rebuild/writeback from canonical turn sources.
+
+Line-level snapshot hygiene is enforced during artifact retrieval/build: a single dirty line is sufficient to trigger rebuild/writeback from canonicalized turn sources.

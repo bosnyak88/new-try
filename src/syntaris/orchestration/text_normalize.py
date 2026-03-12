@@ -40,7 +40,37 @@ _DIRECT_MOJIBAKE_MAP = {
     "Ã\xb6": "ö",
     "Ã\xba": "ú",
     "Ã\xbc": "ü",
+    "ĂĄ": "á",
+    "ĂŠ": "é",
+    "Ă­": "í",
+    "Ăł": "ó",
+    "Ă¶": "ö",
+    "Ăş": "ú",
+    "ĂĽ": "ü",
+    "Ă": "Á",
+    "Ă‰": "É",
+    "Ă": "Í",
+    "Ă“": "Ó",
+    "Ă–": "Ö",
+    "Ăš": "Ú",
+    "Ăś": "Ü",
+    "ĺ‘": "ő",
+    "ĺ’": "ő",
+    "Ĺ": "ő",
+    "Ĺ±": "ű",
+    "\u0102\u00a9": "é",
+    "\u0102\u00ad": "í",
+    "\u0102\u00b3": "ó",
+    "\u0102\u00b6": "ö",
+    "\u0102\u00ba": "ú",
+    "\u0102\u00bc": "ü",
 }
+
+_DEGRADED_MARKERS = ("Ã", "Å", "Ă", "ĺ", "Ĺ", "�")
+
+
+def contains_degraded_text(text: str) -> bool:
+    return any(marker in text for marker in _DEGRADED_MARKERS)
 
 
 def _repair_common_mojibake(text: str) -> str:

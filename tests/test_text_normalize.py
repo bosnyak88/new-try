@@ -1,4 +1,4 @@
-from syntaris.orchestration.text_normalize import normalize_hungarian_for_match, normalize_text
+from syntaris.orchestration.text_normalize import contains_degraded_text, normalize_hungarian_for_match, normalize_text
 
 
 def test_normalize_text_repairs_mojibake_and_marks_repaired():
@@ -11,3 +11,18 @@ def test_normalize_text_repairs_mojibake_and_marks_repaired():
 def test_normalize_hungarian_for_match_keeps_clean_hungarian_stable():
     assert normalize_hungarian_for_match("hasonlítsd össze") == "hasonlitsd ossze"
     assert normalize_hungarian_for_match("hasonlÃ­tsd Ã¶ssze") == "hasonlitsd ossze"
+
+
+def test_normalize_text_repairs_observed_runtime_degraded_patterns():
+    assert normalize_text("errĺ‘l").canonical_text == "erről"
+    assert normalize_text("beszĂ©ljĂĽnk").canonical_text == "beszéljünk"
+    assert normalize_text("elĺ‘zĺ‘").canonical_text == "előző"
+    assert normalize_text("hasonlĂ­tsd").canonical_text == "hasonlítsd"
+
+
+def test_contains_degraded_text_detects_observed_runtime_markers():
+    assert contains_degraded_text("errĺ‘l") is True
+    assert contains_degraded_text("beszĂ©ljĂĽnk") is True
+    assert contains_degraded_text("elĺ‘zĺ‘") is True
+    assert contains_degraded_text("hasonlĂ­tsd") is True
+    assert contains_degraded_text("hasonlítsd") is False

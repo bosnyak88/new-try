@@ -137,3 +137,5 @@ Syntaris now applies one shared normalization policy for Hungarian-first text ha
 - persisted snapshot/focus artifacts are now loaded raw for hygiene inspection and automatically rebuilt+written back when dirty (including previous-thread paths)
 
 - snapshot/focus persistence is freshness-checked against thread turn head (`turn_count`/`last_turn_id`); stale persisted artifacts are rebuilt and written back before being served
+
+- snapshot cleanliness is enforced line-by-line; any dirty snapshot line triggers canonical rebuild/writeback so transitive historical pollution does not persist in snapshot artifacts

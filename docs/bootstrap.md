@@ -97,3 +97,5 @@ These are loaded at bootstrap and apply uniformly to once/live/script shared exe
 Migration/backfill remains schema-safe; legacy artifact cleanup happens through deterministic runtime rebuild/writeback on access (not destructive migration).
 
 Operationally, no destructive migration is required for legacy snapshot/focus staleness; runtime freshness checks rebuild stale packs from canonical turn sources on first access.
+
+Runtime artifact hygiene now validates both freshness and line-level cleanliness, then rebuilds from canonicalized turn sources when either gate fails.

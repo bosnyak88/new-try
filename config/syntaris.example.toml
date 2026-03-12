@@ -53,3 +53,5 @@ level = "info"
 # Legacy derived artifacts (snapshot/focus) are runtime-refreshed and persisted cleanly when dirty text is detected.
 
 # Runtime enforces derived artifact freshness (stale `last_turn_id`/`turn_count` triggers rebuild+writeback).
+
+# Snapshot hygiene is line-level: any degraded line triggers deterministic rebuild/writeback from canonical turn text.

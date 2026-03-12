@@ -14,7 +14,7 @@ from syntaris.contracts.runtime import (
 )
 from syntaris.orchestration.recap import match_recap_query
 from syntaris.persistence import PersistenceStore
-from syntaris.orchestration.text_normalize import clean_display_text
+from syntaris.orchestration.text_normalize import clean_display_text, contains_degraded_text
 
 _CONTROL_PREFIXES = ("/",)
 _AFFIRMATIVE = {"igen", "oké", "mehet", "arra", "igen arra"}
@@ -119,16 +119,16 @@ def build_thread_snapshot_pack(context: RuntimeContext, thread_id: int, mode: st
 def _snapshot_has_dirty_text(snapshot: ThreadSnapshotPack) -> bool:
     if clean_display_text(snapshot.snapshot_text) != snapshot.snapshot_text:
         return True
-    if any(marker in snapshot.snapshot_text for marker in ("Ã", "Å", "�")):
+    if contains_degraded_text(snapshot.snapshot_text):
         return True
     for line in snapshot.snapshot_lines:
         if clean_display_text(line.user_message) != line.user_message:
             return True
         if clean_display_text(line.assistant_reply) != line.assistant_reply:
             return True
-        if any(marker in line.user_message for marker in ("Ã", "Å", "�")):
+        if contains_degraded_text(line.user_message):
             return True
-        if any(marker in line.assistant_reply for marker in ("Ã", "Å", "�")):
+        if contains_degraded_text(line.assistant_reply):
             return True
     return False
 

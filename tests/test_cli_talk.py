@@ -715,6 +715,94 @@ def test_cli_current_recall_ignores_dirty_snapshot_blob_via_rebuild(tmp_path, mo
     assert "Å" not in recall["reply"]
 
 
+def test_cli_current_snapshot_rebuild_cleans_transitive_historical_assistant_pollution(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "első tiszta üzenet"])
+    cli.main()
+    capsys.readouterr()
+
+    with sqlite3.connect(db_path) as conn:
+        active_id = int(conn.execute("SELECT value FROM app_meta WHERE key = 'active_thread_id'").fetchone()[0])
+        conn.execute(
+            """
+            UPDATE turns
+            SET assistant_reply = ?, assistant_reply_raw = ?
+            WHERE thread_id = ? AND turn_index = 1
+            """,
+            (
+                "Részlet: errĺ‘l beszĂ©ljĂĽnk és hasonlĂ­tsd az elĺ‘zĺ‘ verziót.",
+                "Részlet: errĺ‘l beszĂ©ljĂĽnk és hasonlĂ­tsd az elĺ‘zĺ‘ verziót.",
+                active_id,
+            ),
+        )
+        conn.commit()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-snapshot", "--current", "--refresh"])
+    cli.main()
+    snapshot = json.loads(capsys.readouterr().out)
+
+    assert snapshot["found"] is True
+    snap_text = snapshot["snapshot"]["snapshot_text"]
+    assert "errĺ‘l" not in snap_text
+    assert "beszĂ©ljĂĽnk" not in snap_text
+    assert "hasonlĂ­tsd" not in snap_text
+    assert "elĺ‘zĺ‘" not in snap_text
+    assert "erről" in snap_text
+    assert "beszéljünk" in snap_text
+    assert "hasonlítsd" in snap_text
+    assert "előző" in snap_text
+
+
+def test_cli_previous_snapshot_detects_observed_runtime_dirty_patterns_and_rewrites(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "első tiszta üzenet"])
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work"])
+    cli.main()
+    capsys.readouterr()
+
+    with sqlite3.connect(db_path) as conn:
+        previous_id = int(conn.execute("SELECT value FROM app_meta WHERE key = 'previous_thread_id'").fetchone()[0])
+        conn.execute(
+            """
+            UPDATE thread_snapshots
+            SET snapshot_text = ?, snapshot_lines_json = ?
+            WHERE thread_id = ?
+            """,
+            (
+                "Thread snapshot: default\n- #1 user=errĺ‘l | assistant=beszĂ©ljĂĽnk az elĺ‘zĺ‘ témáról",
+                '[{"assistant_reply":"beszĂ©ljĂĽnk az elĺ‘zĺ‘ témáról","turn_id":1,"turn_index":1,"user_message":"errĺ‘l"}]',
+                previous_id,
+            ),
+        )
+        conn.commit()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-snapshot", "--previous"])
+    cli.main()
+    previous = json.loads(capsys.readouterr().out)
+    assert previous["found"] is True
+    assert previous["loaded_from_persistence"] is False
+    text = previous["snapshot"]["snapshot_text"]
+    assert "errĺ‘l" not in text
+    assert "beszĂ©ljĂĽnk" not in text
+    assert "elĺ‘zĺ‘" not in text
+
+    with sqlite3.connect(db_path) as conn:
+        repaired = conn.execute("SELECT snapshot_text FROM thread_snapshots WHERE thread_id = ?", (previous_id,)).fetchone()[0]
+    assert "errĺ‘l" not in repaired
+    assert "beszĂ©ljĂĽnk" not in repaired
+    assert "elĺ‘zĺ‘" not in repaired
+
+
 def test_cli_thread_snapshot_missing_targets_and_trace_metadata(tmp_path, monkeypatch, capsys):
     config = tmp_path / "syntaris.toml"
     data_dir = tmp_path / "data"

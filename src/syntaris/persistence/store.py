@@ -32,7 +32,8 @@ from syntaris.orchestration.text_normalize import clean_display_text, normalize_
 
 
 def _dirty_marker_count(text: str) -> int:
-    return text.count("Ã") + text.count("Å") + text.count("�")
+    markers = ("Ã", "Å", "Ă", "ĺ", "Ĺ", "�")
+    return sum(text.count(marker) for marker in markers)
 
 
 def _best_canonical_text(stored_text: str, raw_text: str | None) -> str:

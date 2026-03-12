@@ -137,3 +137,5 @@ If old persisted snapshot/focus artifacts contain degraded text, `thread-snapsho
 Legacy previous-thread snapshot/focus payloads are no longer only cleaned in-memory: dirty detection now triggers real rebuild + persistence writeback from canonical turn sources.
 
 Snapshot/focus views now enforce freshness: if persisted `last_turn_id`/`turn_count` is behind the live thread head, runtime performs deterministic rebuild+writeback before returning the artifact.
+
+Operationally, snapshot hygiene is line-level (not only blob-level): dirty/degraded text inside any snapshot line forces rebuild/writeback.

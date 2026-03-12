@@ -14,7 +14,7 @@ from syntaris.contracts.runtime import (
 )
 from syntaris.orchestration.thread_snapshot import _is_control_turn, _is_pending_turn, _is_recap_turn
 from syntaris.persistence import PersistenceStore
-from syntaris.orchestration.text_normalize import clean_display_text
+from syntaris.orchestration.text_normalize import clean_display_text, contains_degraded_text
 
 
 def _resolve_limit(context: RuntimeContext, limit: int | None) -> int:
@@ -93,7 +93,7 @@ def _focus_has_dirty_text(focus: ThreadFocusPack) -> bool:
     for line in focus.focus_lines:
         if clean_display_text(line.text) != line.text:
             return True
-        if any(marker in line.text for marker in ("Ã", "Å", "�")):
+        if contains_degraded_text(line.text):
             return True
     return False
 
