@@ -13,6 +13,8 @@ from syntaris.contracts.runtime import (
     RecapTrace,
     RecallTrace,
     ResponsePlanTrace,
+    ComparisonPackTrace,
+    AnswerStrategyTrace,
     ThreadFocusTrace,
     TurnInterpretTrace,
     RouteStateTransition,
@@ -27,6 +29,8 @@ from syntaris.contracts.runtime import (
 from syntaris.orchestration.context_pack import load_execution_context_pack
 from syntaris.orchestration.followup_resolution import resolve_followup_reference
 from syntaris.orchestration.thread_focus import build_thread_focus_view, refresh_thread_focus
+from syntaris.orchestration.deliberation import assemble_deliberation_input
+from syntaris.orchestration.answer_strategy import build_comparison_pack, select_answer_strategy
 from syntaris.orchestration.thread_snapshot import refresh_snapshot_for_transition
 from syntaris.orchestration.turn_interpret import interpret_turn
 from syntaris.orchestration.thread_recall import resolve_recall_request
@@ -282,21 +286,26 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         ThreadFocusRequest(target=FocusTarget.CURRENT, source=f"{source}:turn"),
     )
     followup_resolution = resolve_followup_reference(execution_message, focus_view.focus if focus_view.found else None) if context.config.conversation.followup_resolution_enabled else resolve_followup_reference("", None)
-    if followup_resolution.ambiguous and followup_resolution.clarification_message:
-        response_plan = build_response_plan(
-            context,
-            interpretation,
-            recall_resolution.__class__(**{**recall_resolution.__dict__, "clarification_message": followup_resolution.clarification_message}),
-            focus=focus_view.focus if focus_view.found else None,
-        )
-    else:
-        response_plan = build_response_plan(
-            context,
-            interpretation,
-            recall_resolution,
-            focus=focus_view.focus if focus_view.found else None,
-            followup_target=followup_resolution.target_line,
-        )
+
+    deliberation_input = assemble_deliberation_input(
+        message=execution_message,
+        interpretation=interpretation,
+        recall=recall_resolution,
+        followup=followup_resolution,
+        has_focus=focus_view.found and focus_view.focus is not None,
+        has_previous_thread=resolved.state_after.previous_thread_id is not None,
+    )
+    comparison_pack = build_comparison_pack(context, deliberation_input)
+    strategy_selection = select_answer_strategy(context, comparison_pack)
+    response_plan = build_response_plan(
+        context,
+        interpretation,
+        recall_resolution,
+        strategy=strategy_selection,
+        comparison_pack=comparison_pack,
+        focus=focus_view.focus if focus_view.found else None,
+        followup_target=followup_resolution.target_line,
+    )
 
     recap_trace = RecapTrace(recognized=False)
     interpret_trace = TurnInterpretTrace(
@@ -340,6 +349,20 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         target_line=followup_resolution.target_line,
         clarification_emitted=followup_resolution.ambiguous,
     )
+    comparison_trace = ComparisonPackTrace(
+        built=comparison_pack.built,
+        candidate_count=len(comparison_pack.candidates),
+        candidate_kinds=[candidate.kind.value for candidate in comparison_pack.candidates],
+        winner_kind=comparison_pack.winner_kind.value,
+        winner_score=comparison_pack.winner_score,
+    )
+    answer_strategy_trace = AnswerStrategyTrace(
+        selected_strategy=strategy_selection.strategy.value,
+        selected_candidate_kind=strategy_selection.selected_candidate_kind.value,
+        confidence=strategy_selection.confidence.value,
+        clarification_planned=strategy_selection.clarification_need.needed,
+        clarification_cause=strategy_selection.clarification_need.cause,
+    )
 
     if response_plan.kind.value in {"recall", "resume", "clarification"} or any(section.lines for section in response_plan.sections):
         planned_text = render_response_plan(response_plan)
@@ -368,6 +391,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             response_plan_trace=plan_trace,
             focus_trace=focus_trace,
             followup_trace=followup_trace,
+            comparison_trace=comparison_trace,
+            answer_strategy_trace=answer_strategy_trace,
         )
         store.create_trace_events(
             session_id=turn.session_id,
@@ -431,6 +456,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         response_plan_trace=plan_trace,
         focus_trace=focus_trace,
         followup_trace=followup_trace,
+        comparison_trace=comparison_trace,
+        answer_strategy_trace=answer_strategy_trace,
     )
     store.create_trace_events(
         session_id=turn.session_id,

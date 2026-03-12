@@ -74,3 +74,8 @@ Environment overrides:
 
 `init-db` now creates `thread_focus` for deterministic active-focus persistence.
 Focus config knobs are available under `[conversation]`: `focus_turn_window`, `focus_line_limit`, `followup_resolution_enabled`.
+
+
+## Deliberation config
+
+REBUILD-013 adds shared deterministic comparison-pack and answer-strategy orchestration between interpretation/recall/focus resolution and response-plan rendering. Once/live/script remain on the same execution path. Trace now records `comparison_pack_built` and `answer_strategy_selected` for inspectability without exposing chain-of-thought.

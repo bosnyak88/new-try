@@ -29,6 +29,9 @@ response_followup_enabled = true
 focus_turn_window = 8
 focus_line_limit = 4
 followup_resolution_enabled = true
+max_comparison_candidates = 6
+clarification_prefer_when_close = true
+uncertainty_labeling_enabled = true
 
 [reply]
 # deterministic | llama-http
