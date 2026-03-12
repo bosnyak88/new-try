@@ -138,3 +138,9 @@
 - Added deterministic active-focus foundation (`thread_focus` persistence + orchestration) and new `thread-focus` CLI command.
 - Added shared deterministic follow-up reference resolution on top of active focus with clarification fallback.
 - Propagated focus metadata into response planning and trace events.
+
+## Unreleased
+
+- REBUILD-015: introduced shared canonical text normalization + mojibake repair policy and propagated it across talk/reasoning/persistence/derived artifacts/trace rendering.
+- Added migration-safe raw text preservation columns in `turns` while persisting canonical text for runtime use.
+- Added hygiene refresh behavior and regression tests for snapshot/focus/recall/compare quality.

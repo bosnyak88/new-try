@@ -123,3 +123,13 @@ Syntaris now runs a shared deterministic reasoning scaffold after answer-strateg
 
 This is **not** hidden chain-of-thought: only bounded high-level artifacts are produced, then consumed by `response_plan.py` and rendered through the existing plan-render boundary.
 `trace-last` now exposes high-level metadata via: `objective_framed`, `decomposition_built`, `evidence_pack_built`, `synthesis_plan_built`.
+
+## Canonical text hygiene policy (REBUILD-015)
+
+Syntaris now applies one shared normalization policy for Hungarian-first text handling across talk/runtime/persistence/rendering.
+
+- raw text is preserved in persistence (`turns.user_message_raw`, `turns.assistant_reply_raw`) for audit/debug
+- canonical text is persisted/consumed for orchestration and derived artifacts
+- shared mojibake repair + Unicode NFC normalization runs through `orchestration/text_normalize.py`
+- snapshot/focus read paths auto-refresh persisted artifacts when stored display text is dirty
+- recall/compare/structured outputs now render cleaned display text consistently

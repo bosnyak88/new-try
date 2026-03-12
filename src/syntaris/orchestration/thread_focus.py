@@ -14,6 +14,7 @@ from syntaris.contracts.runtime import (
 )
 from syntaris.orchestration.thread_snapshot import _is_control_turn, _is_pending_turn, _is_recap_turn
 from syntaris.persistence import PersistenceStore
+from syntaris.orchestration.text_normalize import clean_display_text
 
 
 def _resolve_limit(context: RuntimeContext, limit: int | None) -> int:
@@ -22,8 +23,8 @@ def _resolve_limit(context: RuntimeContext, limit: int | None) -> int:
 
 def _to_focus_lines(user_message: str, assistant_reply: str, max_lines: int) -> list[FocusLine]:
     lines = [
-        FocusLine(key="active_topic_line", text=user_message.strip()),
-        FocusLine(key="latest_answer_line", text=assistant_reply.strip()),
+        FocusLine(key="active_topic_line", text=clean_display_text(user_message).strip()),
+        FocusLine(key="latest_answer_line", text=clean_display_text(assistant_reply).strip()),
     ]
     result: list[FocusLine] = []
     for line in lines:
@@ -86,6 +87,14 @@ def build_thread_focus_pack(context: RuntimeContext, thread_id: int, mode: str, 
     )
 
 
+
+
+def _focus_has_dirty_text(focus: ThreadFocusPack) -> bool:
+    for line in focus.focus_lines:
+        if clean_display_text(line.text) != line.text:
+            return True
+    return False
+
 def refresh_thread_focus(context: RuntimeContext, thread_id: int, mode: str, limit: int | None = None, reason: str = "manual_refresh") -> FocusUpdateResult | None:
     focus = build_thread_focus_pack(context, thread_id=thread_id, mode=mode, limit=limit)
     if focus is None:
@@ -131,6 +140,16 @@ def build_thread_focus_view(context: RuntimeContext, request: ThreadFocusRequest
 
     existing = store.read_thread_focus(thread_id)
     if existing is not None:
+        if _focus_has_dirty_text(existing):
+            built = refresh_thread_focus(
+                context,
+                thread_id=thread_id,
+                mode=mode,
+                limit=request.limit,
+                reason=f"{request.source}:hygiene_refresh",
+            )
+            assert built is not None
+            return ThreadFocusView(request=request, found=True, focus=built.focus, loaded_from_persistence=False)
         return ThreadFocusView(request=request, found=True, focus=existing, loaded_from_persistence=True)
 
     built = refresh_thread_focus(

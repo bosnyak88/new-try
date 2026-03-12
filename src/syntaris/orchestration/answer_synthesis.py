@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 
+from syntaris.orchestration.text_normalize import clean_display_text
 from syntaris.contracts.runtime import (
     DecompositionPlan,
     EvidencePack,
@@ -42,9 +43,9 @@ def build_synthesis_plan(
         )
     ]
 
-    supported = _unique([i.detail for i in evidence.items if i.support == SupportLabel.SUPPORTED])
-    weak = _unique([i.detail for i in evidence.items if i.support == SupportLabel.WEAK_SUPPORT])
-    unresolved = _unique([i.detail for i in evidence.items if i.support == SupportLabel.UNRESOLVED])
+    supported = _unique([clean_display_text(i.detail) for i in evidence.items if i.support == SupportLabel.SUPPORTED])
+    weak = _unique([clean_display_text(i.detail) for i in evidence.items if i.support == SupportLabel.WEAK_SUPPORT])
+    unresolved = _unique([clean_display_text(i.detail) for i in evidence.items if i.support == SupportLabel.UNRESOLVED])
 
     if supported:
         sections.append(SynthesisSection(key="supported_facts", lines=["Ami biztos:", *[f"• {item}" for item in supported[:3]]]))
@@ -54,8 +55,9 @@ def build_synthesis_plan(
         sections.append(SynthesisSection(key="unresolved_parts", lines=["Ami nyitott:", *[f"• {item}" for item in unresolved[:2]]]))
 
     if any(unit.objective_kind.value == "compare" for unit in decomposition.units):
-        current = next((item.detail for item in evidence.items if item.source == "current_thread"), "Mostani szál: nincs stabil előzmény")
-        previous = next((item.detail for item in evidence.items if item.source == "previous_thread"), "Előző szál: nincs stabil előzmény")
+        current = clean_display_text(next((item.detail for item in evidence.items if item.source == "current_thread"), "Mostani szál: nincs stabil előzmény"))
+        previous = clean_display_text(next((item.detail for item in evidence.items if item.source == "previous_thread"), "Előző szál: nincs stabil előzmény"))
+        diff_line = "• Különbség: a mostani szál az aktuális irányt, az előző szál a korábbi fókuszt mutatja."
         sections.append(
             SynthesisSection(
                 key="comparison_result",
@@ -63,6 +65,7 @@ def build_synthesis_plan(
                     "Összevetés:",
                     f"• {current}",
                     f"• {previous}",
+                    diff_line,
                 ],
             )
         )

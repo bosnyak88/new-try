@@ -28,6 +28,7 @@ from syntaris.contracts.runtime import (
     TurnResult,
 )
 from syntaris.persistence.schema import SCHEMA_SQL, SCHEMA_VERSION
+from syntaris.orchestration.text_normalize import clean_display_text, normalize_text
 
 
 def utc_now() -> datetime:
@@ -124,6 +125,18 @@ class PersistenceStore:
                         "UPDATE turns SET thread_id = ?, mode = ?, turn_index = ? WHERE turn_id = ?",
                         (thread_id, "chat", idx, int(turn_id)),
                     )
+
+        turn_cols = {row[1] for row in conn.execute("PRAGMA table_info(turns)").fetchall()}
+        if turn_cols and "user_message_raw" not in turn_cols:
+            conn.execute("ALTER TABLE turns ADD COLUMN user_message_raw TEXT")
+        if turn_cols and "assistant_reply_raw" not in turn_cols:
+            conn.execute("ALTER TABLE turns ADD COLUMN assistant_reply_raw TEXT")
+
+        turn_cols = {row[1] for row in conn.execute("PRAGMA table_info(turns)").fetchall()}
+        if "user_message_raw" in turn_cols:
+            conn.execute("UPDATE turns SET user_message_raw = user_message WHERE user_message_raw IS NULL")
+        if "assistant_reply_raw" in turn_cols:
+            conn.execute("UPDATE turns SET assistant_reply_raw = assistant_reply WHERE assistant_reply_raw IS NULL")
 
         trace_cols = {
             row[1]
@@ -407,7 +420,7 @@ class PersistenceStore:
 
             rows = conn.execute(
                 """
-                SELECT turn_id, turn_index, user_message, assistant_reply, reply_backend, degraded
+                SELECT turn_id, turn_index, user_message, assistant_reply, user_message_raw, assistant_reply_raw, reply_backend, degraded
                 FROM turns
                 WHERE thread_id = ?
                 ORDER BY turn_id DESC
@@ -420,8 +433,8 @@ class PersistenceStore:
                 ThreadContextTurn(
                     turn_id=int(row["turn_id"]),
                     turn_index=int(row["turn_index"]),
-                    user_message=str(row["user_message"]),
-                    assistant_reply=str(row["assistant_reply"]),
+                    user_message=clean_display_text(str(row["user_message"])),
+                    assistant_reply=clean_display_text(str(row["assistant_reply"])),
                     backend=str(row["reply_backend"]),
                     degraded=bool(row["degraded"]),
                 )
@@ -461,8 +474,8 @@ class PersistenceStore:
                 {
                     "turn_id": line.turn_id,
                     "turn_index": line.turn_index,
-                    "user_message": line.user_message,
-                    "assistant_reply": line.assistant_reply,
+                    "user_message": clean_display_text(line.user_message),
+                    "assistant_reply": clean_display_text(line.assistant_reply),
                 }
                 for line in snapshot.snapshot_lines
             ],
@@ -510,7 +523,7 @@ class PersistenceStore:
                     snapshot.source_metadata.filtered_pending_turn_count,
                     snapshot.source_metadata.filtered_control_turn_count,
                     lines_json,
-                    snapshot.snapshot_text,
+                    clean_display_text(snapshot.snapshot_text),
                     snapshot.previous_thread_id,
                     snapshot.previous_thread_key,
                 ),
@@ -528,8 +541,8 @@ class PersistenceStore:
                 ThreadSnapshotLine(
                     turn_id=int(item["turn_id"]),
                     turn_index=int(item["turn_index"]),
-                    user_message=str(item["user_message"]),
-                    assistant_reply=str(item["assistant_reply"]),
+                    user_message=clean_display_text(str(item["user_message"])),
+                    assistant_reply=clean_display_text(str(item["assistant_reply"])),
                 )
                 for item in line_data
             ]
@@ -549,13 +562,13 @@ class PersistenceStore:
                     filtered_control_turn_count=int(row["filtered_control_turn_count"]),
                 ),
                 snapshot_lines=lines,
-                snapshot_text=str(row["snapshot_text"]),
+                snapshot_text=clean_display_text(str(row["snapshot_text"])),
                 previous_thread_id=int(row["previous_thread_id"]) if row["previous_thread_id"] is not None else None,
                 previous_thread_key=str(row["previous_thread_key"]) if row["previous_thread_key"] is not None else None,
             )
 
     def upsert_thread_focus(self, focus: ThreadFocusPack) -> None:
-        lines_json = json.dumps([{"key": line.key, "text": line.text} for line in focus.focus_lines], ensure_ascii=False, sort_keys=True)
+        lines_json = json.dumps([{"key": line.key, "text": clean_display_text(line.text)} for line in focus.focus_lines], ensure_ascii=False, sort_keys=True)
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(
                 """
@@ -603,7 +616,7 @@ class PersistenceStore:
             if row is None:
                 return None
             line_data = json.loads(str(row["focus_lines_json"]))
-            lines = [FocusLine(key=str(item["key"]), text=str(item["text"])) for item in line_data]
+            lines = [FocusLine(key=str(item["key"]), text=clean_display_text(str(item["text"]))) for item in line_data]
             return ThreadFocusPack(
                 session_id=int(row["session_id"]),
                 thread_id=int(row["thread_id"]),
@@ -694,15 +707,17 @@ class PersistenceStore:
             turn_index = turn_count + 1
             cur = conn.execute(
                 """
-                INSERT INTO turns(session_id, thread_id, mode, turn_index, user_message, assistant_reply, reply_backend, degraded, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO turns(session_id, thread_id, mode, turn_index, user_message, user_message_raw, assistant_reply, assistant_reply_raw, reply_backend, degraded, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     session_id,
                     thread_id,
                     mode,
                     turn_index,
+                    normalize_text(user_message).canonical_text,
                     user_message,
+                    normalize_text(assistant_reply).canonical_text,
                     assistant_reply,
                     reply_backend,
                     int(degraded),
@@ -718,8 +733,8 @@ class PersistenceStore:
             thread_key=thread_key,
             mode=mode,
             turn_index=turn_index,
-            user_message=user_message,
-            assistant_reply=assistant_reply,
+            user_message=normalize_text(user_message).canonical_text,
+            assistant_reply=normalize_text(assistant_reply).canonical_text,
             reply_backend=reply_backend,
             degraded=degraded,
             created_at=created_at,
@@ -796,8 +811,8 @@ class PersistenceStore:
                 thread_key=str(turn_row["thread_key"]),
                 mode=str(turn_row["mode"]),
                 turn_index=int(turn_row["turn_index"]),
-                user_message=str(turn_row["user_message"]),
-                assistant_reply=str(turn_row["assistant_reply"]),
+                user_message=clean_display_text(str(turn_row["user_message"])),
+                assistant_reply=clean_display_text(str(turn_row["assistant_reply"])),
                 reply_backend=str(turn_row["reply_backend"]),
                 degraded=bool(turn_row["degraded"]),
                 created_at=datetime.fromisoformat(str(turn_row["created_at"])),

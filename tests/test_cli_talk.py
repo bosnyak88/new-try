@@ -900,6 +900,32 @@ def test_cli_previous_recall_and_compare_mojibake_forms(tmp_path, monkeypatch, c
     assert "Előző szál:" in compare["reply"]
 
 
+
+def test_cli_snapshot_and_focus_hygiene_refreshes_mojibake(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "hasonlÃ­tsd Ã¶ssze a mostanit az elÅzÅ szÃ¡llal"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-snapshot", "--current", "--refresh"])
+    cli.main()
+    snap = json.loads(capsys.readouterr().out)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-focus", "--current", "--refresh"])
+    cli.main()
+    focus = json.loads(capsys.readouterr().out)
+
+    assert "Ã" not in snap["snapshot"]["snapshot_text"]
+    assert "Å" not in snap["snapshot"]["snapshot_text"]
+    assert all("Ã" not in line["user_message"] for line in snap["snapshot"]["snapshot_lines"])
+    assert all("Å" not in line["user_message"] for line in snap["snapshot"]["snapshot_lines"])
+    assert all("Ã" not in line["text"] for line in focus["focus"]["focus_lines"])
+    assert all("Å" not in line["text"] for line in focus["focus"]["focus_lines"])
+
 def test_cli_explicit_previous_recall_and_compare_clean_forms_trace_path(tmp_path, monkeypatch, capsys):
     config = tmp_path / "syntaris.toml"
     data_dir = tmp_path / "data"

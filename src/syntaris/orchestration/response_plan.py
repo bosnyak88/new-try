@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from syntaris.orchestration.text_normalize import clean_display_text
 from syntaris.contracts.runtime import (
     AnswerStrategy,
     AnswerStrategySelection,
@@ -70,7 +71,7 @@ def build_response_plan(
         lead = "Röviden itt tartottunk:" if interpretation.kind.value.startswith("recall") else f"Visszahoztam a(z) {recall.snapshot.thread_key} szálat."
         lines = [lead]
         for line in selected:
-            lines.append(f"• #{line.turn_index}: {line.user_message} → {line.assistant_reply}")
+            lines.append(f"• #{line.turn_index}: {clean_display_text(line.user_message)} → {clean_display_text(line.assistant_reply)}")
         followup = "Innen menjünk tovább?" if context.config.conversation.response_followup_enabled else None
         return ResponsePlan(
             kind=ResponsePlanKind.RECALL if interpretation.kind.value.startswith("recall") else ResponsePlanKind.RESUME,
@@ -95,7 +96,7 @@ def build_response_plan(
                     sections=sections,
                     focus_used=focus is not None,
                 )
-        lines = [f"Rendben, innen folytatjuk: {followup_target}"] if followup_target else ["Rendben."]
+        lines = [f"Rendben, innen folytatjuk: {clean_display_text(followup_target)}"] if followup_target else ["Rendben."]
         return ResponsePlan(
             kind=ResponsePlanKind.ORDINARY,
             sections=[ResponsePlanSection(title="ordinary", lines=lines)],
@@ -114,7 +115,7 @@ def build_response_plan(
 
     ordinary_lines: list[str] = []
     if followup_target:
-        ordinary_lines.append(f"Rendben, innen folytatjuk: {followup_target}")
+        ordinary_lines.append(f"Rendben, innen folytatjuk: {clean_display_text(followup_target)}")
     return ResponsePlan(
         kind=ResponsePlanKind.ORDINARY,
         sections=[ResponsePlanSection(title="ordinary", lines=ordinary_lines)],

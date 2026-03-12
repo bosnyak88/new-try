@@ -15,6 +15,7 @@ from syntaris.contracts.runtime import (
     ThreadRecapView,
 )
 from syntaris.orchestration.context_pack import build_thread_context_view
+from syntaris.orchestration.text_normalize import clean_display_text, normalize_text
 
 _CURRENT_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("recap_current_hol_tartunk", re.compile(r"^hol\s+tartunk\??$", re.IGNORECASE)),
@@ -37,7 +38,7 @@ _NAMED_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 
 
 def match_recap_query(message: str) -> RecapQueryMatch:
-    text = message.strip()
+    text = normalize_text(message).canonical_text.strip()
     for pattern_name, pattern in _CURRENT_PATTERNS:
         if pattern.match(text):
             return RecapQueryMatch(action=RecapQueryAction.CURRENT, pattern_name=pattern_name)
@@ -108,8 +109,8 @@ def build_thread_recap_view(context: RuntimeContext, request: RecapRequest) -> T
         ThreadRecapLine(
             turn_id=turn.turn_id,
             turn_index=turn.turn_index,
-            user_message=turn.user_message,
-            assistant_reply=turn.assistant_reply,
+            user_message=clean_display_text(turn.user_message),
+            assistant_reply=clean_display_text(turn.assistant_reply),
         )
         for turn in pack.recent_turns
     ]

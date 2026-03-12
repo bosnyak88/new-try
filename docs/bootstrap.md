@@ -89,3 +89,7 @@ Conversation config now includes optional deterministic reasoning controls:
 - `synthesis_include_next_step`
 
 These are loaded at bootstrap and apply uniformly to once/live/script shared execution.
+
+## Text normalization bootstrap note
+
+`init-db` now migrates `turns` with raw-text columns (`user_message_raw`, `assistant_reply_raw`) and backfills them from legacy rows to keep migration-safe auditability while enabling canonical persistence/display paths.
