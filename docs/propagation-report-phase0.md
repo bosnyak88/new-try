@@ -91,3 +91,8 @@ Snapshots are also refreshed automatically when routing switches away from a thr
 - Reply/plan: response planning now marks and uses focus context.
 - CLI: added `thread-focus` for current/previous/named inspection.
 - Trace: added `thread_focus_loaded` and `followup_reference_resolved` events.
+
+
+## REBUILD-013 propagation note
+
+REBUILD-013 adds shared deterministic comparison-pack and answer-strategy orchestration between interpretation/recall/focus resolution and response-plan rendering. Once/live/script remain on the same execution path. Trace now records `comparison_pack_built` and `answer_strategy_selected` for inspectability without exposing chain-of-thought.

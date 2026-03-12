@@ -1,4 +1,4 @@
-from syntaris.contracts.runtime import ActiveConversationState, ContextLoadResult, FollowupTrace, RecapTrace, RecallTrace, ResponsePlanTrace, RouteDecision, RuntimeContext, SnapshotTrace, ThreadFocusTrace, TurnInterpretTrace, TurnResult
+from syntaris.contracts.runtime import ActiveConversationState, AnswerStrategyTrace, ComparisonPackTrace, ContextLoadResult, FollowupTrace, RecapTrace, RecallTrace, ResponsePlanTrace, RouteDecision, RuntimeContext, SnapshotTrace, ThreadFocusTrace, TurnInterpretTrace, TurnResult
 
 
 def build_boot_trace(context: RuntimeContext) -> dict[str, str | bool]:
@@ -24,6 +24,8 @@ def build_turn_trace_events(
     response_plan_trace: ResponsePlanTrace | None = None,
     focus_trace: ThreadFocusTrace | None = None,
     followup_trace: FollowupTrace | None = None,
+    comparison_trace: ComparisonPackTrace | None = None,
+    answer_strategy_trace: AnswerStrategyTrace | None = None,
 ) -> list[dict[str, object]]:
     events = [
         {
@@ -181,6 +183,34 @@ def build_turn_trace_events(
                     "filtered_recap_turn_count": snapshot_trace.filtered_recap_turn_count,
                     "filtered_pending_turn_count": snapshot_trace.filtered_pending_turn_count,
                     "filtered_control_turn_count": snapshot_trace.filtered_control_turn_count,
+                },
+            }
+        )
+
+
+    if comparison_trace is not None and comparison_trace.built:
+        events.append(
+            {
+                "event_name": "comparison_pack_built",
+                "payload": {
+                    "candidate_count": comparison_trace.candidate_count,
+                    "candidate_kinds": comparison_trace.candidate_kinds,
+                    "winner_kind": comparison_trace.winner_kind,
+                    "winner_score": comparison_trace.winner_score,
+                },
+            }
+        )
+
+    if answer_strategy_trace is not None:
+        events.append(
+            {
+                "event_name": "answer_strategy_selected",
+                "payload": {
+                    "selected_strategy": answer_strategy_trace.selected_strategy,
+                    "selected_candidate_kind": answer_strategy_trace.selected_candidate_kind,
+                    "confidence": answer_strategy_trace.confidence,
+                    "clarification_planned": answer_strategy_trace.clarification_planned,
+                    "clarification_cause": answer_strategy_trace.clarification_cause,
                 },
             }
         )

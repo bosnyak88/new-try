@@ -706,3 +706,57 @@ def test_cli_followup_ambiguous_without_focus_clarifies(tmp_path, monkeypatch, c
     out = json.loads(capsys.readouterr().out)
     assert out["kind"] == "clarification"
     assert "mire utalsz" in out["reply"].lower()
+
+def test_cli_deliberation_comparison_and_strategy_trace(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "szia"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: munka"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "vissza a default szálra"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr(
+        "sys.argv",
+        ["syntaris", "--config", str(config), "talk", "--once", "nem erre gondoltam, hanem az előző szálra"],
+    )
+    cli.main()
+    correction = json.loads(capsys.readouterr().out)
+    assert correction["kind"] == "correction_redirect"
+
+    monkeypatch.setattr(
+        "sys.argv",
+        ["syntaris", "--config", str(config), "talk", "--once", "várj, a másik részre térjünk vissza"],
+    )
+    cli.main()
+    clarify = json.loads(capsys.readouterr().out)
+    assert clarify["kind"] == "clarification"
+
+    monkeypatch.setattr(
+        "sys.argv",
+        ["syntaris", "--config", str(config), "talk", "--once", "mi a lényeg és mi legyen a következő?"],
+    )
+    cli.main()
+    structured = json.loads(capsys.readouterr().out)
+    assert structured["kind"] == "structured"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "nem ezt kérdeztem"])
+    cli.main()
+    redirect = json.loads(capsys.readouterr().out)
+    assert redirect["kind"] in {"correction_redirect", "clarification"}
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
+    cli.main()
+    trace_output = json.loads(capsys.readouterr().out)
+    names = [event["event_name"] for event in trace_output["trace_events"]]
+    assert "comparison_pack_built" in names
+    assert "answer_strategy_selected" in names

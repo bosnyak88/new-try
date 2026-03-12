@@ -99,3 +99,15 @@ This uses persisted thread snapshots (from `thread-snapshot`) as the recall sour
 
 Syntaris now maintains a compact per-thread `thread_focus` pack (deterministic, non-vector memory) with active topic and latest answer lines. Use `thread-focus --current|--previous|<thread_key>` to inspect, optionally `--refresh` to rebuild.
 Short follow-up references (for example: `erről beszéljünk tovább`, `és abból mi következik?`) are resolved against active focus only when the target is clear; otherwise Syntaris emits a short clarification.
+
+
+## Deliberation / comparison-pack foundation (REBUILD-013)
+
+Talk execution now includes a shared deterministic deliberation layer before response planning:
+
+1. assemble `DeliberationInput` from interpretation + recall + focus/follow-up + routing context
+2. build `ComparisonPack` with explicit candidate kinds/reason codes/scores
+3. select `AnswerStrategy` deterministically (with clarification when close/ambiguous)
+4. build `ResponsePlan` from selected strategy
+
+This is not hidden chain-of-thought; only safe high-level decision metadata is persisted via trace events (`comparison_pack_built`, `answer_strategy_selected`).

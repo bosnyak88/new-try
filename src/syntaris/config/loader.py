@@ -99,6 +99,18 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
             os.getenv("SYNTARIS_FOLLOWUP_RESOLUTION_ENABLED", str(conversation.get("followup_resolution_enabled", True))).lower()
             in {"1", "true", "yes", "on"}
         ),
+        max_comparison_candidates=_pick_int(
+            os.getenv("SYNTARIS_MAX_COMPARISON_CANDIDATES"),
+            conversation.get("max_comparison_candidates", 6),
+        ),
+        clarification_prefer_when_close=(
+            os.getenv("SYNTARIS_CLARIFICATION_PREFER_WHEN_CLOSE", str(conversation.get("clarification_prefer_when_close", True))).lower()
+            in {"1", "true", "yes", "on"}
+        ),
+        uncertainty_labeling_enabled=(
+            os.getenv("SYNTARIS_UNCERTAINTY_LABELING_ENABLED", str(conversation.get("uncertainty_labeling_enabled", True))).lower()
+            in {"1", "true", "yes", "on"}
+        ),
     )
 
     return AppConfig(

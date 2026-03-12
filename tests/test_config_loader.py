@@ -27,3 +27,16 @@ def test_env_overrides_llm_paths(tmp_path, monkeypatch):
     assert config.conversation.focus_turn_window == 8
     assert config.conversation.focus_line_limit == 4
     assert config.conversation.followup_resolution_enabled is True
+
+
+
+def test_env_overrides_deliberation_flags(monkeypatch):
+    monkeypatch.setenv("SYNTARIS_MAX_COMPARISON_CANDIDATES", "4")
+    monkeypatch.setenv("SYNTARIS_CLARIFICATION_PREFER_WHEN_CLOSE", "false")
+    monkeypatch.setenv("SYNTARIS_UNCERTAINTY_LABELING_ENABLED", "true")
+
+    config = load_app_config("config/syntaris.example.toml")
+
+    assert config.conversation.max_comparison_candidates == 4
+    assert config.conversation.clarification_prefer_when_close is False
+    assert config.conversation.uncertainty_labeling_enabled is True

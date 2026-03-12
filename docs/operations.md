@@ -112,3 +112,8 @@ Use:
 - `python -m syntaris.cli ... thread-focus --previous`
 - `python -m syntaris.cli ... thread-focus <thread_key>`
 - add `--refresh` to force deterministic rebuild.
+
+
+## Deliberation observability
+
+REBUILD-013 adds shared deterministic comparison-pack and answer-strategy orchestration between interpretation/recall/focus resolution and response-plan rendering. Once/live/script remain on the same execution path. Trace now records `comparison_pack_built` and `answer_strategy_selected` for inspectability without exposing chain-of-thought.

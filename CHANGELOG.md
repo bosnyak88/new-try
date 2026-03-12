@@ -11,6 +11,13 @@
 
 ## Unreleased
 
+- REBUILD-013: Added deterministic deliberation input assembly, comparison-pack candidates, and answer-strategy selection as shared orchestration layers.
+- Added first-class deliberation contracts (`DeliberationInput`, `DeliberationCandidate`, `ComparisonPack`, `AnswerStrategySelection`, clarification contracts).
+- Extended response planning to consume selected answer strategy explicitly (direct/structured/recall/resume/correction/clarification/uncertainty-labeled).
+- Extended trace metadata with `comparison_pack_built` and `answer_strategy_selected`.
+- Added conversation config controls: `max_comparison_candidates`, `clarification_prefer_when_close`, `uncertainty_labeling_enabled`.
+- Added deterministic tests for comparison close-call clarification vs clear winner behavior and CLI-level strategy/trace propagation.
+
 - Added deterministic thread snapshot/handoff foundation with persisted `thread_snapshots` records and shared orchestration snapshot builder.
 - Added `thread-snapshot` CLI command supporting `--current`, `--previous`, named thread keys, `--refresh`, and `--limit`.
 - Added automatic snapshot refresh on deterministic thread transitions plus trace metadata (`thread_snapshot_refreshed`).

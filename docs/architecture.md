@@ -104,3 +104,8 @@ This keeps reply generation modular: plan construction is orchestration logic; t
 A dedicated `orchestration.thread_focus` module builds/loads/updates compact `ThreadFocusPack` state, and `orchestration.followup_resolution` resolves shorthand follow-up phrases deterministically.
 Response planning consumes focus state via contract fields (`focus_used`, follow-up target) instead of hidden prompt logic.
 Persistence is explicit in `thread_focus` table, separate from snapshots.
+
+
+## Deliberation layer
+
+REBUILD-013 adds shared deterministic comparison-pack and answer-strategy orchestration between interpretation/recall/focus resolution and response-plan rendering. Once/live/script remain on the same execution path. Trace now records `comparison_pack_built` and `answer_strategy_selected` for inspectability without exposing chain-of-thought.

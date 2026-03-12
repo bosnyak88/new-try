@@ -45,6 +45,9 @@ class ConversationConfig:
     focus_turn_window: int = 8
     focus_line_limit: int = 4
     followup_resolution_enabled: bool = True
+    max_comparison_candidates: int = 6
+    clarification_prefer_when_close: bool = True
+    uncertainty_labeling_enabled: bool = True
 
 
 @dataclass(frozen=True)
@@ -441,6 +444,111 @@ class ResponsePlanKind(str, Enum):
     RECALL = "recall"
     RESUME = "resume"
     CLARIFICATION = "clarification"
+    STRUCTURED = "structured"
+    CORRECTION_REDIRECT = "correction_redirect"
+    UNCERTAINTY_LABELED = "uncertainty_labeled"
+
+
+class ConfidenceBand(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+
+class ComparisonReason(str, Enum):
+    INTERPRETATION_RECALL = "interpretation_recall"
+    INTERPRETATION_RESUME = "interpretation_resume"
+    CORRECTION_CUE = "correction_cue"
+    REDIRECT_CUE = "redirect_cue"
+    STRUCTURED_REQUEST = "structured_request"
+    FOLLOWUP_TARGET_RESOLVED = "followup_target_resolved"
+    FOLLOWUP_AMBIGUOUS = "followup_ambiguous"
+    RECALL_CLARIFICATION = "recall_clarification"
+    PREVIOUS_THREAD_AVAILABLE = "previous_thread_available"
+    CLOSE_CANDIDATES = "close_candidates"
+    DEFAULT_FALLBACK = "default_fallback"
+
+
+class CandidateKind(str, Enum):
+    DIRECT = "direct"
+    RECALL = "recall"
+    RESUME = "resume"
+    FOCUS_FOLLOWUP = "focus_followup"
+    CORRECTION_REDIRECT = "correction_redirect"
+    STRUCTURED = "structured"
+    CLARIFICATION = "clarification"
+    UNCERTAINTY = "uncertainty"
+
+
+class AnswerStrategy(str, Enum):
+    DIRECT_ANSWER = "direct_answer"
+    STRUCTURED_ANSWER = "structured_answer"
+    RECALL_ANSWER = "recall_answer"
+    RESUME_ANSWER = "resume_answer"
+    CORRECTION_REDIRECT = "correction_redirect"
+    CLARIFICATION = "clarification"
+    UNCERTAINTY_LABELED_ANSWER = "uncertainty_labeled_answer"
+
+
+@dataclass(frozen=True)
+class ClarificationNeed:
+    needed: bool
+    cause: str | None = None
+
+
+@dataclass(frozen=True)
+class ClarificationQuestionSpec:
+    question: str
+    cause: str
+
+
+@dataclass(frozen=True)
+class DeliberationInput:
+    message: str
+    interpretation_kind: str
+    recall_resolved: bool
+    recall_target: str
+    recall_clarification: str | None
+    has_focus: bool
+    followup_detected: bool
+    followup_resolved: bool
+    followup_ambiguous: bool
+    followup_target: str | None
+    followup_clarification: str | None
+    has_previous_thread: bool
+    correction_cue: bool
+    redirect_cue: bool
+    references_previous_thread: bool
+    references_other_target: bool
+    structured_request: bool
+
+
+@dataclass(frozen=True)
+class DeliberationCandidate:
+    kind: CandidateKind
+    strategy: AnswerStrategy
+    score: int
+    confidence: ConfidenceBand
+    reasons: list[ComparisonReason]
+    clarification: ClarificationQuestionSpec | None = None
+
+
+@dataclass(frozen=True)
+class ComparisonPack:
+    built: bool
+    candidates: list[DeliberationCandidate]
+    winner_kind: CandidateKind
+    winner_score: int
+
+
+@dataclass(frozen=True)
+class AnswerStrategySelection:
+    strategy: AnswerStrategy
+    selected_candidate_kind: CandidateKind
+    confidence: ConfidenceBand
+    reasons: list[ComparisonReason]
+    clarification_need: ClarificationNeed
+    clarification_question: ClarificationQuestionSpec | None = None
 
 
 @dataclass(frozen=True)
@@ -476,6 +584,23 @@ class RecallTrace:
     refreshed_snapshot: bool = False
     clarification_emitted: bool = False
 
+
+@dataclass(frozen=True)
+class ComparisonPackTrace:
+    built: bool
+    candidate_count: int
+    candidate_kinds: list[str]
+    winner_kind: str
+    winner_score: int
+
+
+@dataclass(frozen=True)
+class AnswerStrategyTrace:
+    selected_strategy: str
+    selected_candidate_kind: str
+    confidence: str
+    clarification_planned: bool
+    clarification_cause: str | None = None
 
 @dataclass(frozen=True)
 class ResponsePlanTrace:
