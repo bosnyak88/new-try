@@ -88,3 +88,19 @@ Snapshots are compact handoff packs built from the thread context window, exclud
 
 CLI inspection uses `thread-snapshot --current`, `thread-snapshot --previous`, or `thread-snapshot <thread_key>` with optional `--refresh` and `--limit`.
 Snapshots are also refreshed automatically when routing switches away from a thread so handoff state remains stable for later resume/recall work.
+
+## Conversational recall/resume operations (REBUILD-011)
+
+Use ordinary talk commands for recall/resume checks:
+
+- `talk --once "hol tartottunk?"` (current thread)
+- `talk --once "az előző szálon mi volt?"` (previous thread)
+- `talk --once "a work szálat hozd vissza"` (named resume)
+- `talk --once "folytassuk onnan"` (ambiguous -> clarification)
+
+Operational distinction:
+
+- `thread-view`: raw bounded context projection.
+- `thread-recap`: deterministic recap projection output.
+- `thread-snapshot`: persisted handoff/recall source pack.
+- conversational recall/resume in `talk`: user-facing compact answers built from snapshot-backed `ResponsePlan`.

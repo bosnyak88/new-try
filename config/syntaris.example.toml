@@ -23,6 +23,9 @@ context_turn_window = 5
 snapshot_turn_window = 8
 snapshot_include_recap_turns = false
 snapshot_include_pending_turns = false
+recall_line_limit = 3
+recall_prefer_snapshot = true
+response_followup_enabled = true
 
 [reply]
 # deterministic | llama-http

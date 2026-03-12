@@ -39,6 +39,9 @@ class ConversationConfig:
     snapshot_turn_window: int = 8
     snapshot_include_recap_turns: bool = False
     snapshot_include_pending_turns: bool = False
+    recall_line_limit: int = 3
+    recall_prefer_snapshot: bool = True
+    response_followup_enabled: bool = True
 
 
 @dataclass(frozen=True)
@@ -310,6 +313,98 @@ class SnapshotTrace:
     filtered_recap_turn_count: int
     filtered_pending_turn_count: int
     filtered_control_turn_count: int
+
+
+class TurnInterpretationKind(str, Enum):
+    ORDINARY = "ordinary"
+    RECALL_CURRENT = "recall_current"
+    RECALL_PREVIOUS = "recall_previous"
+    RECALL_NAMED = "recall_named"
+    RESUME_PREVIOUS = "resume_previous"
+    RESUME_NAMED = "resume_named"
+    CLARIFICATION_NEEDED = "clarification_needed"
+
+
+class RecallTargetKind(str, Enum):
+    NONE = "none"
+    CURRENT = "current"
+    PREVIOUS = "previous"
+    NAMED = "named"
+    AMBIGUOUS = "ambiguous"
+
+
+@dataclass(frozen=True)
+class RecallRequest:
+    target: RecallTargetKind
+    thread_key: str | None = None
+
+
+@dataclass(frozen=True)
+class TurnInterpretation:
+    kind: TurnInterpretationKind
+    pattern_name: str | None = None
+    recall_request: RecallRequest | None = None
+    clarification_reason: str | None = None
+
+
+@dataclass(frozen=True)
+class RecallResolution:
+    target: RecallTargetKind
+    resolved: bool
+    thread_id: int | None = None
+    thread_key: str | None = None
+    snapshot: ThreadSnapshotPack | None = None
+    used_snapshot: bool = False
+    loaded_from_persistence: bool = False
+    refreshed_snapshot: bool = False
+    clarification_message: str | None = None
+
+
+class ResponsePlanKind(str, Enum):
+    ORDINARY = "ordinary"
+    RECALL = "recall"
+    RESUME = "resume"
+    CLARIFICATION = "clarification"
+
+
+@dataclass(frozen=True)
+class ResponsePlanSection:
+    title: str
+    lines: list[str]
+
+
+@dataclass(frozen=True)
+class ResponsePlan:
+    kind: ResponsePlanKind
+    sections: list[ResponsePlanSection]
+    followup_prompt: str | None = None
+
+
+@dataclass(frozen=True)
+class TurnInterpretTrace:
+    kind: str
+    pattern_name: str | None = None
+    clarification_reason: str | None = None
+
+
+@dataclass(frozen=True)
+class RecallTrace:
+    requested: bool
+    request_target: str | None = None
+    resolved_target: str | None = None
+    thread_id: int | None = None
+    thread_key: str | None = None
+    used_snapshot: bool = False
+    loaded_from_persistence: bool = False
+    refreshed_snapshot: bool = False
+    clarification_emitted: bool = False
+
+
+@dataclass(frozen=True)
+class ResponsePlanTrace:
+    kind: str
+    section_count: int
+    clarification_emitted: bool
 
 
 class ContextSource(str, Enum):

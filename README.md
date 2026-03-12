@@ -81,3 +81,16 @@ Snapshots are compact handoff packs built from the thread context window, exclud
 
 CLI inspection uses `thread-snapshot --current`, `thread-snapshot --previous`, or `thread-snapshot <thread_key>` with optional `--refresh` and `--limit`.
 Snapshots are also refreshed automatically when routing switches away from a thread so handoff state remains stable for later resume/recall work.
+
+## Conversational recall/resume foundation (REBUILD-011)
+
+Ordinary `talk` turns now run a shared interpretation -> recall-resolution -> response-plan pipeline before final rendering.
+
+- Current recall: `hol tartottunk?`
+- Previous-thread recall: `az előző szálon mi volt?`
+- Named recall/resume: `a <thread_key> szálon mi volt?`, `a <thread_key> szálat hozd vissza`
+- Ambiguous resume (`folytassuk onnan`) returns a short clarification instead of guessing.
+
+This uses persisted thread snapshots (from `thread-snapshot`) as the recall source, then renders a compact Hungarian response from an explicit `ResponsePlan`.
+
+`trace-last` now includes `turn_interpreted`, `recall_resolved`, and `response_plan_built` events for once/live/script shared execution.

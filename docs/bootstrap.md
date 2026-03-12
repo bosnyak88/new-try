@@ -56,3 +56,16 @@ Snapshots are compact handoff packs built from the thread context window, exclud
 
 CLI inspection uses `thread-snapshot --current`, `thread-snapshot --previous`, or `thread-snapshot <thread_key>` with optional `--refresh` and `--limit`.
 Snapshots are also refreshed automatically when routing switches away from a thread so handoff state remains stable for later resume/recall work.
+
+## Conversation config additions (REBUILD-011)
+
+`[conversation]` now also supports:
+
+- `recall_line_limit` (default `3`): max snapshot lines rendered in recall/resume responses.
+- `recall_prefer_snapshot` (default `true`): keeps recall resolution snapshot-backed.
+- `response_followup_enabled` (default `true`): appends a short continuation question for recall/resume replies.
+
+Environment overrides:
+- `SYNTARIS_RECALL_LINE_LIMIT`
+- `SYNTARIS_RECALL_PREFER_SNAPSHOT`
+- `SYNTARIS_RESPONSE_FOLLOWUP_ENABLED`

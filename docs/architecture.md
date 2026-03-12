@@ -82,3 +82,19 @@ Snapshots are compact handoff packs built from the thread context window, exclud
 
 CLI inspection uses `thread-snapshot --current`, `thread-snapshot --previous`, or `thread-snapshot <thread_key>` with optional `--refresh` and `--limit`.
 Snapshots are also refreshed automatically when routing switches away from a thread so handoff state remains stable for later resume/recall work.
+
+## REBUILD-011 shared conversational cognition layer
+
+Added three dedicated orchestration boundaries:
+
+1. `orchestration/turn_interpret.py`
+   - deterministic Hungarian-first interpretation (`ordinary`, recall current/previous/named, resume previous/named, clarification-needed).
+2. `orchestration/thread_recall.py`
+   - deterministic recall target resolution with precedence from interpretation request (`named > previous > current`) and snapshot-backed loading.
+3. `orchestration/response_plan.py`
+   - explicit plan building (`ordinary`, `recall`, `resume`, `clarification`) before final verbalization.
+
+`execute_turn()` now uses one shared path for once/live/script:
+route/pending -> interpretation -> recall resolution -> response plan -> rendering (`reply/plan_renderer.py`) -> persistence -> trace.
+
+This keeps reply generation modular: plan construction is orchestration logic; textual rendering is a reply-boundary concern.

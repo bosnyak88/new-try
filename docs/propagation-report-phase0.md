@@ -1,3 +1,14 @@
+
+## 0.11.0 - REBUILD-011 snapshot-backed conversational recall/resume + response-plan foundation
+
+- Added first-class contracts for turn interpretation, recall requests/resolution, response-plan structure, and corresponding trace metadata payloads.
+- Added dedicated orchestration modules: `turn_interpret`, `thread_recall`, and `response_plan`; integrated them into shared turn execution used by once/live/script.
+- Added snapshot-backed deterministic recall/resume handling for current/previous/named thread targets, with explicit clarification on ambiguous unresolved requests.
+- Added reply-plan rendering boundary (`reply/plan_renderer.py`) so response planning stays separate from final textual rendering.
+- Extended trace with `turn_interpreted`, `recall_resolved`, `response_plan_built` while preserving route/context/snapshot events.
+- Extended conversation config and example config with recall/response-plan knobs.
+- Updated docs and deterministic test coverage for recall/resume behavior and trace propagation.
+
 ## REBUILD-009 deterministic thread recap / resume foundation
 
 - Added recap contracts (`RecapTarget`, `RecapRequest`, `ThreadRecapLine`, `ThreadRecapView`, recap query/trace contracts).
