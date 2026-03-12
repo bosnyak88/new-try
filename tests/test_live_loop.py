@@ -98,15 +98,15 @@ def test_live_loop_pending_resolution(tmp_path):
     assert turns[3].state.thread_key == "work"
 
 
-def test_live_loop_recap_kind_uses_shared_turn_path(tmp_path):
+def test_live_loop_recall_kind_uses_shared_turn_path(tmp_path):
     config = tmp_path / "syntaris.toml"
     data_dir = tmp_path / "data"
     db_path = data_dir / "runtime.db"
     _write_config(config, db_path, data_dir)
     runtime = build_runtime(config_path=str(config))
 
-    result = run_live_loop(runtime, ["szia", "hol tartunk?", "/kilep"])
-    turns = [item for item in result.outputs if item.kind in {"turn", "recap"}]
+    result = run_live_loop(runtime, ["szia", "hol tartottunk?", "/kilep"])
+    turns = [item for item in result.outputs if item.kind in {"turn", "recall"}]
     assert turns[0].kind == "turn"
-    assert turns[1].kind == "recap"
-    assert "Szál recap:" in turns[1].message
+    assert turns[1].kind == "recall"
+    assert "Röviden itt tartottunk:" in turns[1].message

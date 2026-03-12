@@ -1,3 +1,14 @@
+## 0.11.0 - REBUILD-011 snapshot-backed conversational recall/resume + response-plan foundation
+
+- Introduced first-class contracts: `TurnInterpretation`, `RecallRequest`, `RecallResolution`, `ResponsePlan`, `ResponsePlanSection`, and trace metadata contracts for interpretation/recall/plan.
+- Added shared orchestration layers (`turn_interpret.py`, `thread_recall.py`, `response_plan.py`) and removed recap-query branching from turn execution path.
+- Added deterministic snapshot-backed conversational recall/resume responses in ordinary talk flows for current/previous/named thread requests.
+- Added deterministic ambiguity clarification for unresolved resume-style phrasing (`folytassuk onnan`).
+- Added plan rendering boundary (`reply/plan_renderer.py`) so response planning is separated from final rendering.
+- Extended turn trace events with `turn_interpreted`, `recall_resolved`, and `response_plan_built`.
+- Extended conversation config with recall/response-plan controls (`recall_line_limit`, `recall_prefer_snapshot`, `response_followup_enabled`).
+- Updated README + architecture/bootstrap/operations/propagation docs and expanded deterministic tests across once/live/script + trace coverage.
+
 ## Unreleased
 
 - Added deterministic thread snapshot/handoff foundation with persisted `thread_snapshots` records and shared orchestration snapshot builder.
@@ -39,7 +50,6 @@
 - Exposed pending state via `session-status` and propagated pending metadata to trace events and payloads.
 - Added deterministic tests for suggestive pending proposals, confirmation/rejection/cancellation behavior, and live loop alignment.
 
-# Changelog
 
 ## 0.6.0 - REBUILD-006 deterministic topic-shift + previous-thread foundation
 

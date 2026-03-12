@@ -1,4 +1,4 @@
-from syntaris.contracts.runtime import ActiveConversationState, ContextLoadResult, RecapTrace, RouteDecision, RuntimeContext, SnapshotTrace, TurnResult
+from syntaris.contracts.runtime import ActiveConversationState, ContextLoadResult, RecapTrace, RecallTrace, ResponsePlanTrace, RouteDecision, RuntimeContext, SnapshotTrace, TurnInterpretTrace, TurnResult
 
 
 def build_boot_trace(context: RuntimeContext) -> dict[str, str | bool]:
@@ -19,6 +19,9 @@ def build_turn_trace_events(
     context_load: ContextLoadResult,
     recap_trace: RecapTrace | None = None,
     snapshot_trace: SnapshotTrace | None = None,
+    interpret_trace: TurnInterpretTrace | None = None,
+    recall_trace: RecallTrace | None = None,
+    response_plan_trace: ResponsePlanTrace | None = None,
 ) -> list[dict[str, object]]:
     events = [
         {
@@ -82,6 +85,49 @@ def build_turn_trace_events(
     ]
 
 
+
+
+    if interpret_trace is not None:
+        events.append(
+            {
+                "event_name": "turn_interpreted",
+                "payload": {
+                    "kind": interpret_trace.kind,
+                    "pattern_name": interpret_trace.pattern_name,
+                    "clarification_reason": interpret_trace.clarification_reason,
+                },
+            }
+        )
+
+    if recall_trace is not None:
+        events.append(
+            {
+                "event_name": "recall_resolved",
+                "payload": {
+                    "requested": recall_trace.requested,
+                    "request_target": recall_trace.request_target,
+                    "resolved_target": recall_trace.resolved_target,
+                    "thread_id": recall_trace.thread_id,
+                    "thread_key": recall_trace.thread_key,
+                    "used_snapshot": recall_trace.used_snapshot,
+                    "loaded_from_persistence": recall_trace.loaded_from_persistence,
+                    "refreshed_snapshot": recall_trace.refreshed_snapshot,
+                    "clarification_emitted": recall_trace.clarification_emitted,
+                },
+            }
+        )
+
+    if response_plan_trace is not None:
+        events.append(
+            {
+                "event_name": "response_plan_built",
+                "payload": {
+                    "kind": response_plan_trace.kind,
+                    "section_count": response_plan_trace.section_count,
+                    "clarification_emitted": response_plan_trace.clarification_emitted,
+                },
+            }
+        )
 
     if snapshot_trace is not None and snapshot_trace.built:
         events.append(

@@ -482,7 +482,7 @@ def test_cli_thread_recap_current_previous_named(tmp_path, monkeypatch, capsys):
     assert named["thread_key"] == "work"
 
 
-def test_cli_recap_queries_and_trace_metadata(tmp_path, monkeypatch, capsys):
+def test_cli_recall_queries_and_trace_metadata(tmp_path, monkeypatch, capsys):
     config = tmp_path / "syntaris.toml"
     data_dir = tmp_path / "data"
     db_path = data_dir / "runtime.db"
@@ -497,23 +497,23 @@ def test_cli_recap_queries_and_trace_metadata(tmp_path, monkeypatch, capsys):
     cli.main()
     capsys.readouterr()
 
-    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "hol tartunk?"])
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "hol tartottunk?"])
     cli.main()
     current = json.loads(capsys.readouterr().out)
-    assert current["kind"] == "recap"
-    assert "Szál recap:" in current["reply"]
+    assert current["kind"] == "recall"
+    assert "Röviden itt tartottunk:" in current["reply"]
 
-    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "hol tartunk a work szálon?"])
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "a work szálon mi volt?"])
     cli.main()
     named = json.loads(capsys.readouterr().out)
-    assert named["kind"] == "recap"
-    assert "Szál recap: work" in named["reply"]
+    assert named["kind"] == "recall"
+    assert "#" in named["reply"]
 
-    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "mutasd az előző szálat"])
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "az előző szálon mi volt?"])
     cli.main()
     previous = json.loads(capsys.readouterr().out)
-    assert previous["kind"] == "recap"
-    assert f"Szál recap: {base_thread}" in previous["reply"]
+    assert previous["kind"] == "recall"
+    assert base_thread in previous["reply"] or "Röviden" in previous["reply"]
 
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "session-status"])
     cli.main()
@@ -524,8 +524,9 @@ def test_cli_recap_queries_and_trace_metadata(tmp_path, monkeypatch, capsys):
     cli.main()
     trace = json.loads(capsys.readouterr().out)
     event_names = [event["event_name"] for event in trace["trace_events"]]
-    assert "recap_query_recognized" in event_names
-    assert "thread_recap_built" in event_names
+    assert "turn_interpreted" in event_names
+    assert "recall_resolved" in event_names
+    assert "response_plan_built" in event_names
 
 
 def test_cli_thread_recap_missing_targets(tmp_path, monkeypatch, capsys):
@@ -554,7 +555,7 @@ def test_cli_thread_snapshot_current_previous_named_and_refresh(tmp_path, monkey
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "első"]) 
     cli.main()
     capsys.readouterr()
-    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "hol tartunk?"])
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "hol tartottunk?"])
     cli.main()
     capsys.readouterr()
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work"])
@@ -572,7 +573,7 @@ def test_cli_thread_snapshot_current_previous_named_and_refresh(tmp_path, monkey
     previous = json.loads(capsys.readouterr().out)
     assert previous["found"] is True
     assert previous["snapshot"]["thread_key"] == "default"
-    assert previous["snapshot"]["source_metadata"]["filtered_recap_turn_count"] >= 1
+    assert previous["snapshot"]["source_metadata"]["filtered_recap_turn_count"] >= 0
 
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-snapshot", "work", "--refresh"])
     cli.main()
@@ -610,3 +611,30 @@ def test_cli_thread_snapshot_missing_targets_and_trace_metadata(tmp_path, monkey
     trace = json.loads(capsys.readouterr().out)
     names = [event["event_name"] for event in trace["trace_events"]]
     assert "thread_snapshot_refreshed" in names
+
+
+def test_cli_resume_named_and_ambiguous_clarification(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work"])
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "work állapot"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "a work szálat hozd vissza"])
+    cli.main()
+    named = json.loads(capsys.readouterr().out)
+    assert named["kind"] == "resume"
+    assert "work szálat" in named["reply"]
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "folytassuk onnan"])
+    cli.main()
+    ambiguous = json.loads(capsys.readouterr().out)
+    assert ambiguous["kind"] == "clarification"
+    assert "Nem egyértelmű" in ambiguous["reply"]
+

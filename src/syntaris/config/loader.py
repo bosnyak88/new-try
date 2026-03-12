@@ -75,6 +75,18 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
             os.getenv("SYNTARIS_SNAPSHOT_INCLUDE_PENDING_TURNS", str(conversation.get("snapshot_include_pending_turns", False))).lower()
             in {"1", "true", "yes", "on"}
         ),
+        recall_line_limit=_pick_int(
+            os.getenv("SYNTARIS_RECALL_LINE_LIMIT"),
+            conversation.get("recall_line_limit", 3),
+        ),
+        recall_prefer_snapshot=(
+            os.getenv("SYNTARIS_RECALL_PREFER_SNAPSHOT", str(conversation.get("recall_prefer_snapshot", True))).lower()
+            in {"1", "true", "yes", "on"}
+        ),
+        response_followup_enabled=(
+            os.getenv("SYNTARIS_RESPONSE_FOLLOWUP_ENABLED", str(conversation.get("response_followup_enabled", True))).lower()
+            in {"1", "true", "yes", "on"}
+        ),
     )
 
     return AppConfig(
