@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import unicodedata
 import re
 
 from syntaris.contracts.runtime import RecallRequest, RecallTargetKind, TurnInterpretation, TurnInterpretationKind
@@ -35,8 +36,28 @@ _AMBIGUOUS_RESUME_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 )
 
 
+def _normalize_hu(text: str) -> str:
+    raw = text.strip().lower()
+    folded = "".join(
+        ch for ch in unicodedata.normalize("NFKD", raw) if not unicodedata.combining(ch)
+    )
+    return " ".join(folded.replace("?", " ").split())
+
+
 def interpret_turn(message: str) -> TurnInterpretation:
     text = message.strip()
+    normalized = _normalize_hu(text)
+
+    if normalized in {
+        "az elozo szalon mi volt",
+        "az elozo szalon mi volt ?",
+        "elozo szalon mi volt",
+    }:
+        return TurnInterpretation(
+            kind=TurnInterpretationKind.RECALL_PREVIOUS,
+            pattern_name="recall_previous_normalized",
+            recall_request=RecallRequest(target=RecallTargetKind.PREVIOUS),
+        )
 
     for pattern_name, pattern, kind in _NAMED_PATTERNS:
         match = pattern.match(text)

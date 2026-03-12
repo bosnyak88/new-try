@@ -102,3 +102,14 @@ def test_previous_thread_recall_remains_meaningful(tmp_path):
     events = {event.event_name: event.payload for event in trace.trace_events}
     assert "response_plan_built" in events
     assert '"kind": "recall"' in events["response_plan_built"]
+
+
+def test_previous_thread_recall_accent_normalized_phrase(tmp_path):
+    runtime = _runtime(tmp_path)
+    talk_once(runtime, TalkRequest(message="új szál: work"))
+    talk_once(runtime, TalkRequest(message="vissza a default szálra"))
+    result = talk_once(runtime, TalkRequest(message="az elozo szalon mi volt?"))
+
+    assert result.turn.degraded is False
+    assert result.turn.assistant_reply.strip() != "Rendben."
+    assert "Röviden itt tartottunk" in result.turn.assistant_reply

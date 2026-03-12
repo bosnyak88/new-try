@@ -11,6 +11,7 @@
 
 ## Unreleased
 
+- REBUILD-014 fix: hardened Hungarian normalization/phrase coverage for explicit previous-thread recall and explicit compare phrasing so these intents no longer fall through to ordinary direct answers.
 - REBUILD-014 fix: response-plan now consumes synthesis sections for target direct-strategy intents (support-check/diagnose+next-step/compare), preventing generic `Rendben.` replies and preserving meaningful previous-thread recall behavior.
 - REBUILD-014 fix: explicit support-check / diagnose+next-step / compare intent now deterministically triggers structured synthesis output instead of falling through to direct fallback or correction redirect in clear compare cases.
 - REBUILD-014: Added shared deterministic objective framing, question decomposition, evidence-pack assembly, and answer synthesis layers.
@@ -125,6 +126,7 @@
 
 ## Unreleased
 
+- REBUILD-014 fix: hardened Hungarian normalization/phrase coverage for explicit previous-thread recall and explicit compare phrasing so these intents no longer fall through to ordinary direct answers.
 - REBUILD-014 fix: response-plan now consumes synthesis sections for target direct-strategy intents (support-check/diagnose+next-step/compare), preventing generic `Rendben.` replies and preserving meaningful previous-thread recall behavior.
 - REBUILD-014 fix: explicit support-check / diagnose+next-step / compare intent now deterministically triggers structured synthesis output instead of falling through to direct fallback or correction redirect in clear compare cases.
 - Added deterministic active-focus foundation (`thread_focus` persistence + orchestration) and new `thread-focus` CLI command.

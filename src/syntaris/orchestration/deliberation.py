@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import unicodedata
+
 from syntaris.contracts.runtime import (
     ComparisonReason,
     DeliberationInput,
@@ -26,6 +28,14 @@ def _contains_any(message: str, phrases: tuple[str, ...]) -> bool:
     return any(phrase in normalized for phrase in phrases)
 
 
+def _normalize_hu(text: str) -> str:
+    raw = text.strip().lower()
+    folded = "".join(
+        ch for ch in unicodedata.normalize("NFKD", raw) if not unicodedata.combining(ch)
+    )
+    return " ".join(folded.replace("?", " ").split())
+
+
 def assemble_deliberation_input(
     message: str,
     interpretation: TurnInterpretation,
@@ -35,6 +45,7 @@ def assemble_deliberation_input(
     has_previous_thread: bool,
 ) -> DeliberationInput:
     normalized = message.strip().lower()
+    normalized_hu = _normalize_hu(message)
     references_previous = "előző szál" in normalized or "előzőre" in normalized
     references_other = "másik" in normalized
     structured_request = (
@@ -42,6 +53,7 @@ def assemble_deliberation_input(
          or ("biztos" in normalized and "feltételezés" in normalized)
          or ("fő probléma" in normalized and "mit kell" in normalized)
          or ("hasonlítsd össze" in normalized)
+         or ("hasonlitsd ossze" in normalized_hu)
          or "mi a lényeg" in normalized
          or "mi legyen a következő" in normalized)
     )

@@ -839,5 +839,33 @@ def test_cli_previous_thread_recall_not_generic_ack(tmp_path, monkeypatch, capsy
     cli.main()
     trace = json.loads(capsys.readouterr().out)
     payload_by_event = {event["event_name"]: event["payload"] for event in trace["trace_events"]}
+    assert "turn_interpreted" in payload_by_event
+    assert '"kind": "recall_previous"' in payload_by_event["turn_interpreted"]
     assert "response_plan_built" in payload_by_event
     assert '"kind": "recall"' in payload_by_event["response_plan_built"]
+
+
+def test_cli_compare_trace_is_not_direct_fallback(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work"])
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "vissza a default szálra"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "hasonlítsd össze a mostanit az előző szállal"])
+    cli.main()
+    out = json.loads(capsys.readouterr().out)
+    assert out["reply"].strip() != "Rendben."
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
+    cli.main()
+    trace = json.loads(capsys.readouterr().out)
+    payload_by_event = {event["event_name"]: event["payload"] for event in trace["trace_events"]}
+    assert '"selected_strategy": "structured_answer"' in payload_by_event["answer_strategy_selected"]
+    assert '"kind": "structured"' in payload_by_event["response_plan_built"]
