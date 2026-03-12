@@ -35,6 +35,7 @@ def test_support_labeling_surfaces_uncertainty(tmp_path):
     result = talk_once(runtime, TalkRequest(message="mi biztos ebben és mi csak feltételezés?"))
 
     assert result.turn.degraded is False
+    assert result.turn.assistant_reply.strip() != "Rendben."
     assert "[fallback]" not in result.turn.assistant_reply
     assert "Ami biztos" in result.turn.assistant_reply
     assert "Ami nyitott" in result.turn.assistant_reply
@@ -45,6 +46,7 @@ def test_diagnose_and_next_step_decomposition(tmp_path):
     result = talk_once(runtime, TalkRequest(message="mi a fő probléma és mit kell most tenni?"))
 
     assert result.turn.degraded is False
+    assert result.turn.assistant_reply.strip() != "Rendben."
     assert "[fallback]" not in result.turn.assistant_reply
     assert "Mi a fő probléma?" in result.turn.assistant_reply
     assert "Következő lépés" in result.turn.assistant_reply
@@ -58,6 +60,7 @@ def test_comparison_with_clear_target_is_structured(tmp_path):
 
     assert result.output_kind != "correction_redirect"
     assert result.turn.degraded is False
+    assert result.turn.assistant_reply.strip() != "Rendben."
     assert "[fallback]" not in result.turn.assistant_reply
     assert "Miben egyezik és tér el a két célzott szál?" in result.turn.assistant_reply
     assert "Mostani szál:" in result.turn.assistant_reply
@@ -81,3 +84,15 @@ def test_trace_exposes_objective_decomposition_evidence_synthesis(tmp_path):
     assert "decomposition_built" in names
     assert "evidence_pack_built" in names
     assert "synthesis_plan_built" in names
+
+
+def test_previous_thread_recall_remains_meaningful(tmp_path):
+    runtime = _runtime(tmp_path)
+    talk_once(runtime, TalkRequest(message="új szál: work"))
+    talk_once(runtime, TalkRequest(message="vissza a default szálra"))
+    result = talk_once(runtime, TalkRequest(message="az előző szálon mi volt?"))
+
+    assert result.turn.degraded is False
+    assert result.turn.assistant_reply.strip() != "Rendben."
+    assert "[fallback]" not in result.turn.assistant_reply
+    assert "Röviden itt tartottunk" in result.turn.assistant_reply

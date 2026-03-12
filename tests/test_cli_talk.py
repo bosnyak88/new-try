@@ -778,6 +778,7 @@ def test_cli_rebuild014_runtime_behaviors_no_fallback_and_compare_precedence(tmp
     cli.main()
     support = json.loads(capsys.readouterr().out)
     assert support["degraded"] is False
+    assert support["reply"].strip() != "Rendben."
     assert "[fallback]" not in support["reply"]
     assert "Ami biztos" in support["reply"]
     assert "Ami nyitott" in support["reply"]
@@ -786,6 +787,7 @@ def test_cli_rebuild014_runtime_behaviors_no_fallback_and_compare_precedence(tmp
     cli.main()
     diagnose = json.loads(capsys.readouterr().out)
     assert diagnose["degraded"] is False
+    assert diagnose["reply"].strip() != "Rendben."
     assert "[fallback]" not in diagnose["reply"]
     assert "Mi a fő probléma?" in diagnose["reply"]
     assert "Következő lépés" in diagnose["reply"]
@@ -795,6 +797,7 @@ def test_cli_rebuild014_runtime_behaviors_no_fallback_and_compare_precedence(tmp
     compare = json.loads(capsys.readouterr().out)
     assert compare["kind"] != "correction_redirect"
     assert compare["degraded"] is False
+    assert compare["reply"].strip() != "Rendben."
     assert "[fallback]" not in compare["reply"]
     assert "Mostani szál:" in compare["reply"]
     assert "Előző szál:" in compare["reply"]
@@ -807,3 +810,26 @@ def test_cli_rebuild014_runtime_behaviors_no_fallback_and_compare_precedence(tmp
     assert "decomposition_built" in names
     assert "evidence_pack_built" in names
     assert "synthesis_plan_built" in names
+
+
+def test_cli_previous_thread_recall_not_generic_ack(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work"])
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "vissza a default szálra"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "az előző szálon mi volt?"])
+    cli.main()
+    out = json.loads(capsys.readouterr().out)
+
+    assert out["degraded"] is False
+    assert out["reply"].strip() != "Rendben."
+    assert "[fallback]" not in out["reply"]
+    assert "Röviden itt tartottunk" in out["reply"]

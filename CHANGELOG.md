@@ -11,6 +11,7 @@
 
 ## Unreleased
 
+- REBUILD-014 fix: response-plan now consumes synthesis sections for target direct-strategy intents (support-check/diagnose+next-step/compare), preventing generic `Rendben.` replies and preserving meaningful previous-thread recall behavior.
 - REBUILD-014 fix: explicit support-check / diagnose+next-step / compare intent now deterministically triggers structured synthesis output instead of falling through to direct fallback or correction redirect in clear compare cases.
 - REBUILD-014: Added shared deterministic objective framing, question decomposition, evidence-pack assembly, and answer synthesis layers.
 - Introduced first-class contracts: `ObjectiveFrame`, `ObjectiveKind`, `ReasoningUnit`, `DecompositionPlan`, `EvidenceItem`, `EvidencePack`, `SupportLabel`, `SynthesisPlan`, and related trace contracts.
@@ -124,6 +125,7 @@
 
 ## Unreleased
 
+- REBUILD-014 fix: response-plan now consumes synthesis sections for target direct-strategy intents (support-check/diagnose+next-step/compare), preventing generic `Rendben.` replies and preserving meaningful previous-thread recall behavior.
 - REBUILD-014 fix: explicit support-check / diagnose+next-step / compare intent now deterministically triggers structured synthesis output instead of falling through to direct fallback or correction redirect in clear compare cases.
 - Added deterministic active-focus foundation (`thread_focus` persistence + orchestration) and new `thread-focus` CLI command.
 - Added shared deterministic follow-up reference resolution on top of active focus with clarification fallback.

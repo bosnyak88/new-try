@@ -18,6 +18,24 @@ from syntaris.contracts.runtime import (
 )
 
 
+def _synthesis_sections(synthesis: SynthesisPlan) -> list[ResponsePlanSection]:
+    return [
+        ResponsePlanSection(title=section.key, lines=section.lines)
+        for section in synthesis.sections
+        if section.lines
+    ]
+
+
+def _direct_should_use_synthesis(objective: ObjectiveFrame, decomposition: DecompositionPlan, synthesis: SynthesisPlan) -> bool:
+    _ = synthesis
+    if objective.kind.value in {"mixed_multi_part", "status_check", "diagnose", "compare", "next_step"}:
+        return True
+    if decomposition.multi_part:
+        return True
+    target_kinds = {"status_check", "diagnose", "compare", "next_step"}
+    return any(unit.objective_kind.value in target_kinds for unit in decomposition.units)
+
+
 def build_response_plan(
     context: RuntimeContext,
     interpretation: TurnInterpretation,
@@ -62,17 +80,21 @@ def build_response_plan(
         )
 
     if strategy.strategy in {AnswerStrategy.STRUCTURED_ANSWER, AnswerStrategy.UNCERTAINTY_LABELED_ANSWER}:
-        sections = [
-            ResponsePlanSection(title=section.key, lines=section.lines)
-            for section in synthesis.sections
-            if section.lines
-        ]
+        sections = _synthesis_sections(synthesis)
         if not sections:
             sections = [ResponsePlanSection(title="ordinary", lines=["Rendben."])]
         kind = ResponsePlanKind.STRUCTURED if strategy.strategy != AnswerStrategy.UNCERTAINTY_LABELED_ANSWER else ResponsePlanKind.UNCERTAINTY_LABELED
         return ResponsePlan(kind=kind, sections=sections, focus_used=focus is not None)
 
     if strategy.strategy == AnswerStrategy.DIRECT_ANSWER:
+        if _direct_should_use_synthesis(objective, decomposition, synthesis):
+            sections = _synthesis_sections(synthesis)
+            if sections:
+                return ResponsePlan(
+                    kind=ResponsePlanKind.STRUCTURED,
+                    sections=sections,
+                    focus_used=focus is not None,
+                )
         lines = [f"Rendben, innen folytatjuk: {followup_target}"] if followup_target else ["Rendben."]
         return ResponsePlan(
             kind=ResponsePlanKind.ORDINARY,
