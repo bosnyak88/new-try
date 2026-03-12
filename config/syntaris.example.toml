@@ -47,3 +47,13 @@ timeout_seconds = 10.0
 [trace]
 enabled = true
 level = "info"
+
+# Text hygiene: runtime stores canonical text for orchestration/display while preserving raw turn text for audit in DB raw columns.
+
+# Legacy derived artifacts (snapshot/focus) are runtime-refreshed and persisted cleanly when dirty text is detected.
+
+# Runtime enforces derived artifact freshness (stale `last_turn_id`/`turn_count` triggers rebuild+writeback).
+
+# Snapshot hygiene is line-level: any degraded line triggers deterministic rebuild/writeback from canonical turn text.
+
+# Snapshot recall quality includes anti-recursion flattening for recap-like assistant lines.

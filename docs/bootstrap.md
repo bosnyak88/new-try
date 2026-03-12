@@ -89,3 +89,18 @@ Conversation config now includes optional deterministic reasoning controls:
 - `synthesis_include_next_step`
 
 These are loaded at bootstrap and apply uniformly to once/live/script shared execution.
+
+## Text normalization bootstrap note
+
+`init-db` now migrates `turns` with raw-text columns (`user_message_raw`, `assistant_reply_raw`) and backfills them from legacy rows to keep migration-safe auditability while enabling canonical persistence/display paths.
+
+Migration/backfill remains schema-safe; legacy artifact cleanup happens through deterministic runtime rebuild/writeback on access (not destructive migration).
+
+Operationally, no destructive migration is required for legacy snapshot/focus staleness; runtime freshness checks rebuild stale packs from canonical turn sources on first access.
+
+Runtime artifact hygiene now validates both freshness and line-level cleanliness, then rebuilds from canonicalized turn sources when either gate fails.
+
+Packaging acceptance note: editable install without build isolation is validated against the declared setuptools+wheel build requirements in `pyproject.toml`.
+
+Packaging smoke check:
+- `python -m pip install -e . --no-build-isolation`

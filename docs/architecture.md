@@ -123,3 +123,15 @@ Turn orchestration now contains explicit modules between answer-strategy and res
 This preserves contract boundaries and avoids a monolithic central turn-brain file.
 
 REBUILD-014 normalization hardening now preprocesses turn text early in shared turn orchestration before interpretation/deliberation/objective framing so explicit recall/compare intents remain deterministic even under diacritic/mojibake degradation.
+
+## REBUILD-015 text hygiene propagation
+
+The architecture now separates **raw text preservation** from **canonical/display text**. Normalization is centralized in `orchestration/text_normalize.py` and reused by orchestration, persistence, snapshot/focus, rendering, and trace formatting to prevent layer-local drift.
+
+REBUILD-015 follow-up: persisted derived artifacts are read without pre-clean masking so hygiene checks can trigger real snapshot/focus rebuild+writeback (not detect-only), including previous-thread retrieval paths.
+
+Snapshot/focus retrieval now applies two gates before returning persisted artifacts: (1) dirty-text hygiene gate and (2) stale-head freshness gate, both feeding deterministic rebuild/writeback from canonical turn sources.
+
+Line-level snapshot hygiene is enforced during artifact retrieval/build: a single dirty line is sufficient to trigger rebuild/writeback from canonicalized turn sources.
+
+Snapshot construction now applies anti-recursion flattening for generated recap-like assistant text before persistence to prevent transitive summary amplification in future recall/snapshot reuse.

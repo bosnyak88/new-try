@@ -28,6 +28,25 @@ from syntaris.contracts.runtime import (
     TurnResult,
 )
 from syntaris.persistence.schema import SCHEMA_SQL, SCHEMA_VERSION
+from syntaris.orchestration.text_normalize import clean_display_text, normalize_text
+
+
+def _dirty_marker_count(text: str) -> int:
+    markers = ("Ã", "Å", "Ă", "ĺ", "Ĺ", "�")
+    return sum(text.count(marker) for marker in markers)
+
+
+def _best_canonical_text(stored_text: str, raw_text: str | None) -> str:
+    stored_canonical = normalize_text(stored_text).canonical_text
+    if raw_text is None:
+        return stored_canonical
+
+    raw_canonical = normalize_text(raw_text).canonical_text
+    stored_score = _dirty_marker_count(stored_canonical)
+    raw_score = _dirty_marker_count(raw_canonical)
+    if raw_score < stored_score:
+        return raw_canonical
+    return stored_canonical
 
 
 def utc_now() -> datetime:
@@ -124,6 +143,18 @@ class PersistenceStore:
                         "UPDATE turns SET thread_id = ?, mode = ?, turn_index = ? WHERE turn_id = ?",
                         (thread_id, "chat", idx, int(turn_id)),
                     )
+
+        turn_cols = {row[1] for row in conn.execute("PRAGMA table_info(turns)").fetchall()}
+        if turn_cols and "user_message_raw" not in turn_cols:
+            conn.execute("ALTER TABLE turns ADD COLUMN user_message_raw TEXT")
+        if turn_cols and "assistant_reply_raw" not in turn_cols:
+            conn.execute("ALTER TABLE turns ADD COLUMN assistant_reply_raw TEXT")
+
+        turn_cols = {row[1] for row in conn.execute("PRAGMA table_info(turns)").fetchall()}
+        if "user_message_raw" in turn_cols:
+            conn.execute("UPDATE turns SET user_message_raw = user_message WHERE user_message_raw IS NULL")
+        if "assistant_reply_raw" in turn_cols:
+            conn.execute("UPDATE turns SET assistant_reply_raw = assistant_reply WHERE assistant_reply_raw IS NULL")
 
         trace_cols = {
             row[1]
@@ -407,7 +438,7 @@ class PersistenceStore:
 
             rows = conn.execute(
                 """
-                SELECT turn_id, turn_index, user_message, assistant_reply, reply_backend, degraded
+                SELECT turn_id, turn_index, user_message, assistant_reply, user_message_raw, assistant_reply_raw, reply_backend, degraded
                 FROM turns
                 WHERE thread_id = ?
                 ORDER BY turn_id DESC
@@ -420,8 +451,18 @@ class PersistenceStore:
                 ThreadContextTurn(
                     turn_id=int(row["turn_id"]),
                     turn_index=int(row["turn_index"]),
-                    user_message=str(row["user_message"]),
-                    assistant_reply=str(row["assistant_reply"]),
+                    user_message=clean_display_text(
+                        _best_canonical_text(
+                            stored_text=str(row["user_message"]),
+                            raw_text=str(row["user_message_raw"]) if row["user_message_raw"] is not None else None,
+                        )
+                    ),
+                    assistant_reply=clean_display_text(
+                        _best_canonical_text(
+                            stored_text=str(row["assistant_reply"]),
+                            raw_text=str(row["assistant_reply_raw"]) if row["assistant_reply_raw"] is not None else None,
+                        )
+                    ),
                     backend=str(row["reply_backend"]),
                     degraded=bool(row["degraded"]),
                 )
@@ -454,6 +495,15 @@ class PersistenceStore:
                 previous_thread_key=previous_thread_key,
             )
 
+    def get_thread_turn_head(self, thread_id: int) -> tuple[int, int | None]:
+        with sqlite3.connect(self.db_path) as conn:
+            row = conn.execute(
+                "SELECT COUNT(1), MAX(turn_id) FROM turns WHERE thread_id = ?",
+                (thread_id,),
+            ).fetchone()
+            assert row is not None
+            return int(row[0] or 0), int(row[1]) if row[1] is not None else None
+
 
     def upsert_thread_snapshot(self, snapshot: ThreadSnapshotPack) -> None:
         lines_json = json.dumps(
@@ -461,8 +511,8 @@ class PersistenceStore:
                 {
                     "turn_id": line.turn_id,
                     "turn_index": line.turn_index,
-                    "user_message": line.user_message,
-                    "assistant_reply": line.assistant_reply,
+                    "user_message": clean_display_text(line.user_message),
+                    "assistant_reply": clean_display_text(line.assistant_reply),
                 }
                 for line in snapshot.snapshot_lines
             ],
@@ -510,7 +560,7 @@ class PersistenceStore:
                     snapshot.source_metadata.filtered_pending_turn_count,
                     snapshot.source_metadata.filtered_control_turn_count,
                     lines_json,
-                    snapshot.snapshot_text,
+                    clean_display_text(snapshot.snapshot_text),
                     snapshot.previous_thread_id,
                     snapshot.previous_thread_key,
                 ),
@@ -555,7 +605,7 @@ class PersistenceStore:
             )
 
     def upsert_thread_focus(self, focus: ThreadFocusPack) -> None:
-        lines_json = json.dumps([{"key": line.key, "text": line.text} for line in focus.focus_lines], ensure_ascii=False, sort_keys=True)
+        lines_json = json.dumps([{"key": line.key, "text": clean_display_text(line.text)} for line in focus.focus_lines], ensure_ascii=False, sort_keys=True)
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(
                 """
@@ -694,15 +744,17 @@ class PersistenceStore:
             turn_index = turn_count + 1
             cur = conn.execute(
                 """
-                INSERT INTO turns(session_id, thread_id, mode, turn_index, user_message, assistant_reply, reply_backend, degraded, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO turns(session_id, thread_id, mode, turn_index, user_message, user_message_raw, assistant_reply, assistant_reply_raw, reply_backend, degraded, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     session_id,
                     thread_id,
                     mode,
                     turn_index,
+                    normalize_text(user_message).canonical_text,
                     user_message,
+                    normalize_text(assistant_reply).canonical_text,
                     assistant_reply,
                     reply_backend,
                     int(degraded),
@@ -718,8 +770,8 @@ class PersistenceStore:
             thread_key=thread_key,
             mode=mode,
             turn_index=turn_index,
-            user_message=user_message,
-            assistant_reply=assistant_reply,
+            user_message=normalize_text(user_message).canonical_text,
+            assistant_reply=normalize_text(assistant_reply).canonical_text,
             reply_backend=reply_backend,
             degraded=degraded,
             created_at=created_at,
@@ -796,8 +848,18 @@ class PersistenceStore:
                 thread_key=str(turn_row["thread_key"]),
                 mode=str(turn_row["mode"]),
                 turn_index=int(turn_row["turn_index"]),
-                user_message=str(turn_row["user_message"]),
-                assistant_reply=str(turn_row["assistant_reply"]),
+                user_message=clean_display_text(
+                    _best_canonical_text(
+                        stored_text=str(turn_row["user_message"]),
+                        raw_text=str(turn_row["user_message_raw"]) if "user_message_raw" in turn_row.keys() and turn_row["user_message_raw"] is not None else None,
+                    )
+                ),
+                assistant_reply=clean_display_text(
+                    _best_canonical_text(
+                        stored_text=str(turn_row["assistant_reply"]),
+                        raw_text=str(turn_row["assistant_reply_raw"]) if "assistant_reply_raw" in turn_row.keys() and turn_row["assistant_reply_raw"] is not None else None,
+                    )
+                ),
                 reply_backend=str(turn_row["reply_backend"]),
                 degraded=bool(turn_row["degraded"]),
                 created_at=datetime.fromisoformat(str(turn_row["created_at"])),

@@ -109,3 +109,15 @@ REBUILD-013 adds shared deterministic comparison-pack and answer-strategy orches
 - REBUILD-014 follow-up: added shared preprocessing normalization in turn execution before interpretation/deliberation/objective/decomposition, plus mojibake regression tests at CLI/unit level.
 
 - REBUILD-014 follow-up: explicit current-vs-previous compare phrases now map to `turn_interpreted.kind=compare_previous` (clean + mojibake forms), ensuring intent precedence is preserved through deliberation/strategy/response-plan and trace output matches visible behavior.
+
+## REBUILD-015 propagation addendum
+
+Text normalization/repair was propagated across contracts-adjacent runtime behavior, orchestration, persistence migration, derived artifacts, response rendering, trace readability, CLI outputs, and regression coverage.
+
+- REBUILD-015 follow-up: fixed previous-thread legacy artifact pollution by making dirty persisted snapshot/focus detection trigger actual rebuild-and-writeback; previous recall now resolves from refreshed clean artifacts.
+
+- REBUILD-015 follow-up-2: added stale artifact freshness enforcement (`last_turn_id`/`turn_count` checks) so current snapshot/recall paths no longer reuse outdated persisted packs.
+
+- REBUILD-015 follow-up-3: strengthened line-level degraded-pattern detection (including observed forms like `errĺ‘l`, `beszĂ©ljĂĽnk`, `elĺ‘zĺ‘`, `hasonlĂ­tsd`) and enforced transitive historical cleanup in snapshot rebuild/writeback.
+
+- REBUILD-015 follow-up-4: added recap/summary flattening in snapshot line construction to reduce recursive summary-of-summary pollution while preserving deterministic recall behavior.

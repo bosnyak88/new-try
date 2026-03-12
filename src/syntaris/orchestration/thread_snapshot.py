@@ -14,6 +14,7 @@ from syntaris.contracts.runtime import (
 )
 from syntaris.orchestration.recap import match_recap_query
 from syntaris.persistence import PersistenceStore
+from syntaris.orchestration.text_normalize import clean_display_text, contains_degraded_text, flatten_generated_summary_text
 
 _CONTROL_PREFIXES = ("/",)
 _AFFIRMATIVE = {"igen", "oké", "mehet", "arra", "igen arra"}
@@ -29,14 +30,14 @@ def _is_control_turn(user_message: str) -> bool:
 
 
 def _is_pending_turn(user_message: str, assistant_reply: str) -> bool:
-    normalized = user_message.strip().lower()
+    normalized = clean_display_text(user_message).strip().lower()
     if normalized in _AFFIRMATIVE or normalized in _NEGATIVE:
         return True
-    return "váltsak? (igen/nem)" in assistant_reply.lower()
+    return "váltsak? (igen/nem)" in clean_display_text(assistant_reply).lower()
 
 
 def _is_recap_turn(user_message: str, assistant_reply: str) -> bool:
-    return match_recap_query(user_message).action.value != "none" or assistant_reply.startswith("Szál recap:")
+    return match_recap_query(clean_display_text(user_message)).action.value != "none" or clean_display_text(assistant_reply).startswith("Szál recap:")
 
 
 def _build_snapshot_text(pack: ThreadSnapshotPack) -> str:
@@ -84,8 +85,8 @@ def build_thread_snapshot_pack(context: RuntimeContext, thread_id: int, mode: st
             ThreadSnapshotLine(
                 turn_id=turn.turn_id,
                 turn_index=turn.turn_index,
-                user_message=turn.user_message,
-                assistant_reply=turn.assistant_reply,
+                user_message=clean_display_text(turn.user_message),
+                assistant_reply=flatten_generated_summary_text(turn.assistant_reply),
             )
         )
 
@@ -112,6 +113,33 @@ def build_thread_snapshot_pack(context: RuntimeContext, thread_id: int, mode: st
     )
     return ThreadSnapshotPack(**{**provisional.__dict__, "snapshot_text": _build_snapshot_text(provisional)})
 
+
+
+
+def _snapshot_has_dirty_text(snapshot: ThreadSnapshotPack) -> bool:
+    if clean_display_text(snapshot.snapshot_text) != snapshot.snapshot_text:
+        return True
+    if contains_degraded_text(snapshot.snapshot_text):
+        return True
+    for line in snapshot.snapshot_lines:
+        if clean_display_text(line.user_message) != line.user_message:
+            return True
+        if clean_display_text(line.assistant_reply) != line.assistant_reply:
+            return True
+        if contains_degraded_text(line.user_message):
+            return True
+        if contains_degraded_text(line.assistant_reply):
+            return True
+    return False
+
+
+def _snapshot_is_stale(store: PersistenceStore, snapshot: ThreadSnapshotPack) -> bool:
+    turn_count, last_turn_id = store.get_thread_turn_head(snapshot.thread_id)
+    if snapshot.turn_count != turn_count:
+        return True
+    if snapshot.last_turn_id != last_turn_id:
+        return True
+    return False
 
 def refresh_thread_snapshot(context: RuntimeContext, thread_id: int, mode: str, limit: int | None = None, reason: str = "manual_refresh") -> SnapshotBuildResult | None:
     snapshot = build_thread_snapshot_pack(context, thread_id=thread_id, mode=mode, limit=limit)
@@ -158,6 +186,16 @@ def build_thread_snapshot_view(context: RuntimeContext, request: ThreadSnapshotR
 
     existing = store.read_thread_snapshot(thread_id)
     if existing is not None:
+        if _snapshot_has_dirty_text(existing) or _snapshot_is_stale(store, existing):
+            built = refresh_thread_snapshot(
+                context,
+                thread_id=thread_id,
+                mode=mode,
+                limit=request.limit,
+                reason=f"{request.source}:hygiene_or_stale_refresh",
+            )
+            assert built is not None
+            return ThreadSnapshotView(request=request, found=True, snapshot=built.snapshot, loaded_from_persistence=False)
         return ThreadSnapshotView(request=request, found=True, snapshot=existing, loaded_from_persistence=True)
 
     built = refresh_thread_snapshot(

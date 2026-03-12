@@ -133,7 +133,7 @@ def _resolve_route_and_state(
 
     pending_resolution = PendingResolutionAction.NONE
     pending = state.pending_route
-    normalized = request.message.strip().lower()
+    normalized = preprocess_turn_message(request.message).strip().lower()
     if pending is not None:
         if normalized in _AFFIRMATIVE:
             route = RouteDecision(
@@ -327,7 +327,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     current_summary: str | None = None
     if context_load.pack.recent_turns:
         last = context_load.pack.recent_turns[-1]
-        current_summary = f"#{last.turn_index}: {last.user_message}"
+        current_summary = f"#{last.turn_index}: {preprocess_turn_message(last.user_message)}"
 
     previous_view = build_thread_snapshot_view(
         context,
@@ -336,7 +336,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     previous_summary: str | None = None
     if previous_view.found and previous_view.snapshot is not None and previous_view.snapshot.snapshot_lines:
         prev_last = previous_view.snapshot.snapshot_lines[-1]
-        previous_summary = f"#{prev_last.turn_index}: {prev_last.user_message}"
+        previous_summary = f"#{prev_last.turn_index}: {preprocess_turn_message(prev_last.user_message)}"
     if previous_summary is None and resolved.state_after.previous_thread_id is not None:
         previous_context = store.build_thread_context_pack(
             thread_id=resolved.state_after.previous_thread_id,
@@ -345,7 +345,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         )
         if previous_context is not None and previous_context.recent_turns:
             prev_last = previous_context.recent_turns[-1]
-            previous_summary = f"#{prev_last.turn_index}: {prev_last.user_message}"
+            previous_summary = f"#{prev_last.turn_index}: {preprocess_turn_message(prev_last.user_message)}"
 
     evidence_pack = build_evidence_pack(
         message=normalized_message,

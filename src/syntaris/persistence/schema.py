@@ -1,4 +1,4 @@
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS app_meta (
@@ -27,7 +27,9 @@ CREATE TABLE IF NOT EXISTS turns (
     mode TEXT NOT NULL,
     turn_index INTEGER NOT NULL,
     user_message TEXT NOT NULL,
+    user_message_raw TEXT,
     assistant_reply TEXT NOT NULL,
+    assistant_reply_raw TEXT,
     reply_backend TEXT NOT NULL,
     degraded INTEGER NOT NULL,
     created_at TEXT NOT NULL,

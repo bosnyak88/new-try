@@ -129,3 +129,15 @@ Use `trace-last` after `talk` turns to inspect high-level reasoning metadata:
 Events intentionally avoid hidden chain-of-thought and expose only safe summary-level structure.
 
 Note: REBUILD-014 recall/compare intent matching is now preprocessing-hardened (diacritic/mojibake repair) in the shared turn path; `trace-last` should align with visible recall/structured compare output for explicit phrases.
+
+## Operational text-hygiene behavior
+
+If old persisted snapshot/focus artifacts contain degraded text, `thread-snapshot` / `thread-focus` will rebuild via hygiene refresh when needed (or immediately with `--refresh`).
+
+Legacy previous-thread snapshot/focus payloads are no longer only cleaned in-memory: dirty detection now triggers real rebuild + persistence writeback from canonical turn sources.
+
+Snapshot/focus views now enforce freshness: if persisted `last_turn_id`/`turn_count` is behind the live thread head, runtime performs deterministic rebuild+writeback before returning the artifact.
+
+Operationally, snapshot hygiene is line-level (not only blob-level): dirty/degraded text inside any snapshot line forces rebuild/writeback.
+
+`hol tartottunk?` / snapshot reuse now include recap-flattening safeguards so historical generated summaries do not recursively re-expand through snapshot-backed recall.

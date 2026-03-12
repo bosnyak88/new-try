@@ -123,3 +123,23 @@ Syntaris now runs a shared deterministic reasoning scaffold after answer-strateg
 
 This is **not** hidden chain-of-thought: only bounded high-level artifacts are produced, then consumed by `response_plan.py` and rendered through the existing plan-render boundary.
 `trace-last` now exposes high-level metadata via: `objective_framed`, `decomposition_built`, `evidence_pack_built`, `synthesis_plan_built`.
+
+## Canonical text hygiene policy (REBUILD-015)
+
+Syntaris now applies one shared normalization policy for Hungarian-first text handling across talk/runtime/persistence/rendering.
+
+- raw text is preserved in persistence (`turns.user_message_raw`, `turns.assistant_reply_raw`) for audit/debug
+- canonical text is persisted/consumed for orchestration and derived artifacts
+- shared mojibake repair + Unicode NFC normalization runs through `orchestration/text_normalize.py`
+- snapshot/focus read paths auto-refresh persisted artifacts when stored display text is dirty
+- recall/compare/structured outputs now render cleaned display text consistently
+
+- persisted snapshot/focus artifacts are now loaded raw for hygiene inspection and automatically rebuilt+written back when dirty (including previous-thread paths)
+
+- snapshot/focus persistence is freshness-checked against thread turn head (`turn_count`/`last_turn_id`); stale persisted artifacts are rebuilt and written back before being served
+
+- snapshot cleanliness is enforced line-by-line; any dirty snapshot line triggers canonical rebuild/writeback so transitive historical pollution does not persist in snapshot artifacts
+
+- recall-style assistant blobs are flattened for snapshot line construction (summary-of-summary anti-recursion) so `hol tartottunk?` and snapshot reuse stay compact
+
+- packaging smoke: `python -m pip install -e . --no-build-isolation`

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from syntaris.orchestration.text_normalize import clean_display_text
 from syntaris.contracts.runtime import (
     DecompositionPlan,
     EvidenceItem,
@@ -27,7 +28,7 @@ def build_evidence_pack(
             EvidenceItem(
                 unit_id=unit.unit_id,
                 source="current_message",
-                detail=message,
+                detail=clean_display_text(message),
                 support=SupportLabel.SUPPORTED,
             )
         ]
@@ -37,7 +38,7 @@ def build_evidence_pack(
                 EvidenceItem(
                     unit_id=unit.unit_id,
                     source="focus_pack",
-                    detail=focus.focus_lines[0].text,
+                    detail=clean_display_text(focus.focus_lines[0].text),
                     support=SupportLabel.WEAK_SUPPORT,
                 )
             )
@@ -48,7 +49,7 @@ def build_evidence_pack(
                 EvidenceItem(
                     unit_id=unit.unit_id,
                     source="recall_snapshot",
-                    detail=f"#{line.turn_index}: {line.user_message} → {line.assistant_reply}",
+                    detail=f"#{line.turn_index}: {clean_display_text(line.user_message)} → {clean_display_text(line.assistant_reply)}",
                     support=SupportLabel.SUPPORTED,
                 )
             )
@@ -58,7 +59,7 @@ def build_evidence_pack(
                 EvidenceItem(
                     unit_id=unit.unit_id,
                     source="followup_target",
-                    detail=followup.target_line,
+                    detail=clean_display_text(followup.target_line),
                     support=SupportLabel.SUPPORTED,
                 )
             )
@@ -68,7 +69,7 @@ def build_evidence_pack(
                 EvidenceItem(
                     unit_id=unit.unit_id,
                     source="current_thread",
-                    detail=f"Mostani szál: {current_thread_summary or 'nincs stabil előzmény'}",
+                    detail=f"Mostani szál: {clean_display_text(current_thread_summary) if current_thread_summary else 'nincs stabil előzmény'}",
                     support=SupportLabel.SUPPORTED if current_thread_summary else SupportLabel.WEAK_SUPPORT,
                 )
             )
@@ -76,7 +77,7 @@ def build_evidence_pack(
                 EvidenceItem(
                     unit_id=unit.unit_id,
                     source="previous_thread",
-                    detail=f"Előző szál: {previous_thread_summary or 'nincs stabil előzmény'}",
+                    detail=f"Előző szál: {clean_display_text(previous_thread_summary) if previous_thread_summary else 'nincs stabil előzmény'}",
                     support=SupportLabel.SUPPORTED if previous_thread_summary else SupportLabel.WEAK_SUPPORT,
                 )
             )
