@@ -99,3 +99,5 @@ Migration/backfill remains schema-safe; legacy artifact cleanup happens through 
 Operationally, no destructive migration is required for legacy snapshot/focus staleness; runtime freshness checks rebuild stale packs from canonical turn sources on first access.
 
 Runtime artifact hygiene now validates both freshness and line-level cleanliness, then rebuilds from canonicalized turn sources when either gate fails.
+
+Packaging acceptance note: editable install without build isolation is validated against the declared setuptools+wheel build requirements in `pyproject.toml`.

@@ -1249,3 +1249,47 @@ def test_cli_hol_tartottunk_remains_meaningful_recall(tmp_path, monkeypatch, cap
     assert recall["kind"] == "recall"
     assert recall["reply"].strip() != "Rendben."
     assert "Röviden itt tartottunk" in recall["reply"]
+
+
+def test_cli_hol_tartottunk_avoids_recursive_followup_amplification(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "első állapot"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "hol tartottunk?"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "hol tartottunk?"])
+    cli.main()
+    second = json.loads(capsys.readouterr().out)
+
+    assert second["kind"] == "recall"
+    assert second["reply"].count("Innen menjünk tovább?") == 1
+    assert "Röviden itt tartottunk: Röviden itt tartottunk:" not in second["reply"]
+
+
+def test_cli_current_snapshot_flattens_nested_recall_blobs(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "első állapot"])
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "hol tartottunk?"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-snapshot", "--current", "--refresh"])
+    cli.main()
+    snap = json.loads(capsys.readouterr().out)
+    text = snap["snapshot"]["snapshot_text"]
+    assert "Innen menjünk tovább?\nInnen menjünk tovább?" not in text
+    assert "Röviden itt tartottunk: Röviden itt tartottunk:" not in text

@@ -139,3 +139,5 @@ Legacy previous-thread snapshot/focus payloads are no longer only cleaned in-mem
 Snapshot/focus views now enforce freshness: if persisted `last_turn_id`/`turn_count` is behind the live thread head, runtime performs deterministic rebuild+writeback before returning the artifact.
 
 Operationally, snapshot hygiene is line-level (not only blob-level): dirty/degraded text inside any snapshot line forces rebuild/writeback.
+
+`hol tartottunk?` / snapshot reuse now include recap-flattening safeguards so historical generated summaries do not recursively re-expand through snapshot-backed recall.

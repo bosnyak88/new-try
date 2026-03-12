@@ -73,6 +73,30 @@ def contains_degraded_text(text: str) -> bool:
     return any(marker in text for marker in _DEGRADED_MARKERS)
 
 
+def flatten_generated_summary_text(text: str) -> str:
+    cleaned = clean_display_text(text)
+    lines = [line.strip() for line in cleaned.splitlines() if line.strip()]
+    if not lines:
+        return cleaned
+
+    lines = [line for line in lines if line != "Innen menjünk tovább?"]
+    if not lines:
+        return ""
+
+    header = lines[0]
+    if header.startswith("Röviden itt tartottunk:") or header.startswith("Szál recap:"):
+        bullets = [line for line in lines[1:] if line.startswith("• #")]
+        if bullets:
+            return f"{header} {bullets[-1]}"
+        return header
+    if len(lines) > 2 and header in {"Lényeg:", "Összevetés:", "Ami biztos:", "Következő lépés:"}:
+        bullet = next((line for line in lines[1:] if line.startswith("•")), None)
+        return f"{header} {bullet}" if bullet is not None else header
+    if len(lines) > 2:
+        return " ".join(lines[:2])
+    return "\n".join(lines)
+
+
 def _repair_common_mojibake(text: str) -> str:
     repaired_direct = text
     for broken, fixed in _DIRECT_MOJIBAKE_MAP.items():

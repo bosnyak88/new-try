@@ -14,7 +14,7 @@ from syntaris.contracts.runtime import (
 )
 from syntaris.orchestration.recap import match_recap_query
 from syntaris.persistence import PersistenceStore
-from syntaris.orchestration.text_normalize import clean_display_text, contains_degraded_text
+from syntaris.orchestration.text_normalize import clean_display_text, contains_degraded_text, flatten_generated_summary_text
 
 _CONTROL_PREFIXES = ("/",)
 _AFFIRMATIVE = {"igen", "oké", "mehet", "arra", "igen arra"}
@@ -86,7 +86,7 @@ def build_thread_snapshot_pack(context: RuntimeContext, thread_id: int, mode: st
                 turn_id=turn.turn_id,
                 turn_index=turn.turn_index,
                 user_message=clean_display_text(turn.user_message),
-                assistant_reply=clean_display_text(turn.assistant_reply),
+                assistant_reply=flatten_generated_summary_text(turn.assistant_reply),
             )
         )
 

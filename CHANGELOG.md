@@ -150,3 +150,5 @@
 - REBUILD-015 follow-up: enforced snapshot/focus freshness checks against live thread head and rebuild/writeback on stale persisted artifacts, including current recall path.
 
 - REBUILD-015 final follow-up: added line-level degraded-pattern detection and transitive historical cleanup so fresh snapshots are also clean, not only up-to-date.
+
+- REBUILD-015 final follow-up: added anti-recursion flattening for recap-like assistant text in snapshot artifacts and recall reuse paths.

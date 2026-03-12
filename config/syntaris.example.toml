@@ -55,3 +55,5 @@ level = "info"
 # Runtime enforces derived artifact freshness (stale `last_turn_id`/`turn_count` triggers rebuild+writeback).
 
 # Snapshot hygiene is line-level: any degraded line triggers deterministic rebuild/writeback from canonical turn text.
+
+# Snapshot recall quality includes anti-recursion flattening for recap-like assistant lines.
