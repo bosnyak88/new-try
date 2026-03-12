@@ -147,7 +147,7 @@ def run_live_loop(
             state = _to_live_state(context)
             outputs.append(
                 _output(
-                    "turn",
+                    result.output_kind,
                     result.turn.assistant_reply,
                     state,
                     turn_id=result.turn.turn_id,

@@ -447,3 +447,99 @@ def test_cli_thread_view_previous_missing(tmp_path, monkeypatch, capsys):
 
     assert exit_code == 0
     assert out["found"] is False
+
+
+def test_cli_thread_recap_current_previous_named(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "szia"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-recap", "--current"])
+    cli.main()
+    current = json.loads(capsys.readouterr().out)
+    assert current["found"] is True
+    assert current["thread_key"] == "work"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-recap", "--previous"])
+    cli.main()
+    previous = json.loads(capsys.readouterr().out)
+    assert previous["found"] is True
+    assert previous["thread_key"] == "default"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-recap", "work"])
+    cli.main()
+    named = json.loads(capsys.readouterr().out)
+    assert named["found"] is True
+    assert named["thread_key"] == "work"
+
+
+def test_cli_recap_queries_and_trace_metadata(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "szia"])
+    cli.main()
+    first = json.loads(capsys.readouterr().out)
+    base_thread = first["thread_key"]
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "hol tartunk?"])
+    cli.main()
+    current = json.loads(capsys.readouterr().out)
+    assert current["kind"] == "recap"
+    assert "Szál recap:" in current["reply"]
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "hol tartunk a work szálon?"])
+    cli.main()
+    named = json.loads(capsys.readouterr().out)
+    assert named["kind"] == "recap"
+    assert "Szál recap: work" in named["reply"]
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "mutasd az előző szálat"])
+    cli.main()
+    previous = json.loads(capsys.readouterr().out)
+    assert previous["kind"] == "recap"
+    assert f"Szál recap: {base_thread}" in previous["reply"]
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "session-status"])
+    cli.main()
+    status = json.loads(capsys.readouterr().out)
+    assert status["thread_key"] == "work"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
+    cli.main()
+    trace = json.loads(capsys.readouterr().out)
+    event_names = [event["event_name"] for event in trace["trace_events"]]
+    assert "recap_query_recognized" in event_names
+    assert "thread_recap_built" in event_names
+
+
+def test_cli_thread_recap_missing_targets(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-recap", "--previous"])
+    cli.main()
+    previous = json.loads(capsys.readouterr().out)
+    assert previous["found"] is False
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-recap", "missing"])
+    cli.main()
+    missing = json.loads(capsys.readouterr().out)
+    assert missing["found"] is False

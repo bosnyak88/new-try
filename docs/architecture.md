@@ -1,4 +1,4 @@
-## Architecture (REBUILD-008 deterministic thread context pack foundation)
+## Architecture (REBUILD-009 deterministic thread recap/resume foundation)
 
 ## Design principles
 
@@ -63,3 +63,13 @@ Control commands are not persisted as normal turns.
 - The same projection path serves CLI inspection (`thread-view`) and turn-time context loading (`execute_turn`).
 - Projection remains bounded (`conversation.context_turn_window`, overrideable via `thread-view --limit`).
 - Context packs are raw-but-shaped: session/thread metadata + bounded recent persisted turns; no summarization, embeddings, or semantic recall.
+
+
+## Thread recap layer
+
+- `orchestration/recap.py` is a dedicated deterministic layer that maps `ThreadContextPack` => `ThreadRecapView`.
+- Shared recap builder is reused by CLI (`thread-recap`) and talk turn execution (`talk --once`, `talk --live`, `talk --script`).
+- Recap content is deterministic and bounded: thread metadata + recent turn lines from the context pack window.
+- Recap queries are recognized by explicit Hungarian-first phrase families (current/previous/named), with conservative normalization (`strip`, case-insensitive regex).
+- Recap is evaluated only after explicit overrides, live slash controls, pending resolution, and deterministic routing phrases.
+- Recap turns bypass the reply adapter but still persist a normal turn + trace with recap metadata (`recap_query_recognized`, `thread_recap_built`).

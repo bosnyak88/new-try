@@ -239,6 +239,66 @@ class ContextSource(str, Enum):
     EXECUTION_TARGET = "execution_target"
 
 
+class RecapTarget(str, Enum):
+    CURRENT = "current"
+    PREVIOUS = "previous"
+    NAMED = "named"
+
+
+@dataclass(frozen=True)
+class RecapRequest:
+    target: RecapTarget
+    thread_key: str | None = None
+    limit: int | None = None
+
+
+@dataclass(frozen=True)
+class ThreadRecapLine:
+    turn_id: int
+    turn_index: int
+    user_message: str
+    assistant_reply: str
+
+
+@dataclass(frozen=True)
+class ThreadRecapView:
+    request: RecapRequest
+    found: bool
+    session_id: int | None
+    thread_id: int | None
+    thread_key: str | None
+    turn_count: int | None
+    last_turn_id: int | None
+    mode: str | None
+    previous_thread_id: int | None
+    previous_thread_key: str | None
+    recap_lines: list[ThreadRecapLine]
+    recap_text: str
+
+
+class RecapQueryAction(str, Enum):
+    NONE = "none"
+    CURRENT = "current"
+    PREVIOUS = "previous"
+    NAMED = "named"
+
+
+@dataclass(frozen=True)
+class RecapQueryMatch:
+    action: RecapQueryAction
+    thread_key: str | None = None
+    pattern_name: str | None = None
+
+
+@dataclass(frozen=True)
+class RecapTrace:
+    recognized: bool
+    source: str | None = None
+    target_thread_key: str | None = None
+    context_turn_count: int | None = None
+    bypassed_reply_adapter: bool = False
+
+
 @dataclass(frozen=True)
 class ContextLoadResult:
     source: ContextSource

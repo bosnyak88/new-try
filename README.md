@@ -16,6 +16,7 @@ The current repository contains:
 - deterministic Hungarian-first routing for named switching/creation plus previous-thread return phrases
 - state and latest-trace inspection from CLI
 - deterministic thread context-pack projection and inspection (`thread-view`)
+- deterministic thread recap projection/inspection (`thread-recap`) and recap-query responses in talk flows
 
 ## Quick start
 
@@ -42,6 +43,10 @@ The current repository contains:
    - `python -m syntaris.cli --config config/syntaris.example.toml thread-view --current`
    - `python -m syntaris.cli --config config/syntaris.example.toml thread-view --previous`
    - `python -m syntaris.cli --config config/syntaris.example.toml thread-view <thread_key>`
+11. Inspect thread recap views:
+   - `python -m syntaris.cli --config config/syntaris.example.toml thread-recap --current`
+   - `python -m syntaris.cli --config config/syntaris.example.toml thread-recap --previous`
+   - `python -m syntaris.cli --config config/syntaris.example.toml thread-recap <thread_key>`
 
 ## Commands currently available
 
@@ -54,6 +59,7 @@ The current repository contains:
 - `session-status`
 - `thread-list`
 - `thread-view [--current|--previous|<thread_key>] [--limit <N>]`
+- `thread-recap [--current|--previous|<thread_key>] [--limit <N>]`
 - `trace-last`
 
 
@@ -64,4 +70,5 @@ The current repository contains:
 - create/switch thread: `új szál: <thread_key>`, `legyen új szál: <thread_key>`, `nyiss új szálat: <thread_key>`
 - named topic-shift aliases: `más téma: <thread_key>`, `új téma: <thread_key>`, `egy másik dolog: <thread_key>`
 - unmatched text defaults to active-thread continuation
-- precedence: explicit `--thread`/`--mode` > live slash commands > named thread phrases > previous-thread/topic-shift phrases > continue active
+- recap queries: `hol tartunk?`, `hol tartunk most?`, `mutasd a mostani szálat`, `foglald össze ezt a szálat`, `mutasd az előző szálat`, `foglald össze az előző szálat`, `hol tartunk az előző szálon?`, `mutasd a <thread_key> szálat`, `foglald össze a <thread_key> szálat`, `hol tartunk a <thread_key> szálon?`
+- precedence: explicit `--thread`/`--mode` > live slash commands > pending resolution > explicit routing phrases > suggestive pending phrases > recap query phrases > continue active

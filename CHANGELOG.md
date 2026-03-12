@@ -1,3 +1,13 @@
+## 0.9.0 - REBUILD-009 deterministic thread recap / resume foundation
+
+- Added first-class recap contracts: `RecapTarget`, `RecapRequest`, `ThreadRecapLine`, `ThreadRecapView`, recap query/trace metadata contracts.
+- Introduced dedicated recap orchestration module to build deterministic recap views from `ThreadContextPack` data.
+- Added `thread-recap` CLI command (`--current`, `--previous`, named thread, optional `--limit`).
+- Added deterministic recap query phrase families (current/previous/named) in shared turn execution path; once/live/script now reuse the same recap handling.
+- Recap query responses bypass reply adapter generation but persist normal turns and preserve active thread unless explicit routing already changed it.
+- Extended turn trace events with recap handling metadata (`recap_query_recognized`, `thread_recap_built`).
+- Added deterministic tests for recap command targets, missing target handling, recap query outputs, live-loop recap kind, and trace metadata propagation.
+
 ## 0.8.0 - REBUILD-008 deterministic thread context / resume-pack foundation
 
 - Added first-class thread context contracts and config key `conversation.context_turn_window`.

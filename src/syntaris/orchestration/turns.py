@@ -9,6 +9,9 @@ from syntaris.contracts.runtime import (
     PendingRouteProposal,
     RouteDecision,
     RouteDecisionAction,
+    RecapRequest,
+    RecapTarget,
+    RecapTrace,
     RouteStateTransition,
     RuntimeContext,
     TalkRequest,
@@ -16,6 +19,7 @@ from syntaris.contracts.runtime import (
     TurnResult,
 )
 from syntaris.orchestration.context_pack import load_execution_context_pack
+from syntaris.orchestration.recap import build_thread_recap_view, match_recap_query
 from syntaris.orchestration.routing import resolve_route_decision
 from syntaris.persistence import PersistenceStore
 from syntaris.reply.adapters import ReplyOutput
@@ -28,6 +32,7 @@ class TalkRunResult:
     turn: TurnResult
     state: ActiveConversationState
     route: RouteDecision
+    output_kind: str = "turn"
 
 
 _AFFIRMATIVE = {"igen", "oké", "mehet", "arra", "igen arra"}
@@ -180,6 +185,17 @@ def _resolve_route_and_state(
     return _RouteResolution(state_before=state, state_after=updated_state, route=routed, execution_message=request.message)
 
 
+def _build_recap_request(message: str) -> RecapRequest | None:
+    match = match_recap_query(message)
+    if match.action.value == "none":
+        return None
+    if match.action.value == "current":
+        return RecapRequest(target=RecapTarget.CURRENT)
+    if match.action.value == "previous":
+        return RecapRequest(target=RecapTarget.PREVIOUS)
+    return RecapRequest(target=RecapTarget.NAMED, thread_key=match.thread_key)
+
+
 def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "talk_once") -> TalkRunResult:
     store = PersistenceStore(context.config.paths.db_path)
     store.initialize(data_dir=context.config.paths.data_dir)
@@ -234,6 +250,50 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     )
 
     execution_message = resolved.execution_message
+    recap_request = _build_recap_request(execution_message)
+    recap_trace = RecapTrace(recognized=False)
+    if recap_request is not None:
+        recap_view = build_thread_recap_view(context, recap_request)
+        recap_text = recap_view.recap_text if recap_view.found else "A kért recap szál nem található."
+        turn = store.create_turn(
+            session_id=resolved.state_before.session_id,
+            thread_id=resolved.state_after.thread_id,
+            thread_key=resolved.state_after.thread_key,
+            mode=resolved.state_after.mode,
+            user_message=execution_message,
+            assistant_reply=recap_text,
+            reply_backend="deterministic",
+            degraded=False,
+        )
+        recap_trace = RecapTrace(
+            recognized=True,
+            source=recap_request.target.value,
+            target_thread_key=recap_view.thread_key,
+            context_turn_count=len(recap_view.recap_lines),
+            bypassed_reply_adapter=True,
+        )
+        events = build_turn_trace_events(
+            state=resolved.state_after,
+            turn=turn,
+            backend="deterministic",
+            degraded=False,
+            source=source,
+            route=resolved.route,
+            context_load=context_load,
+            recap_trace=recap_trace,
+        )
+        store.create_trace_events(
+            session_id=turn.session_id,
+            thread_id=turn.thread_id,
+            turn_id=turn.turn_id,
+            mode=turn.mode,
+            backend="deterministic",
+            degraded=False,
+            events=events,
+        )
+        latest_state = store.get_active_state() or resolved.state_after
+        return TalkRunResult(turn=turn, state=latest_state, route=resolved.route, output_kind="recap")
+
     reply_adapter = build_reply_adapter(context.config.reply)
     reply: ReplyOutput = reply_adapter.generate(
         TurnInput(
@@ -262,6 +322,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         source=source,
         route=resolved.route,
         context_load=context_load,
+        recap_trace=recap_trace,
     )
     store.create_trace_events(
         session_id=turn.session_id,
