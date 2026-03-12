@@ -20,6 +20,9 @@ db_path = "./.syntaris/runtime.db"
 default_thread_key = "default"
 default_mode = "chat"
 context_turn_window = 5
+snapshot_turn_window = 8
+snapshot_include_recap_turns = false
+snapshot_include_pending_turns = false
 
 [reply]
 # deterministic | llama-http

@@ -14,12 +14,14 @@ from syntaris.contracts.runtime import (
     RecapTrace,
     RouteStateTransition,
     RuntimeContext,
+    SnapshotTrace,
     TalkRequest,
     TurnInput,
     TurnResult,
 )
 from syntaris.orchestration.context_pack import load_execution_context_pack
 from syntaris.orchestration.recap import build_thread_recap_view, match_recap_query
+from syntaris.orchestration.thread_snapshot import refresh_snapshot_for_transition
 from syntaris.orchestration.routing import resolve_route_decision
 from syntaris.persistence import PersistenceStore
 from syntaris.reply.adapters import ReplyOutput
@@ -201,6 +203,29 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     store.initialize(data_dir=context.config.paths.data_dir)
 
     resolved = _resolve_route_and_state(store, context, request, source)
+    snapshot_trace: SnapshotTrace | None = None
+
+    transition_snapshot = refresh_snapshot_for_transition(
+        context=context,
+        from_thread_id=resolved.state_before.thread_id,
+        from_mode=resolved.state_before.mode,
+        switched=resolved.state_before.thread_id != resolved.state_after.thread_id,
+        source=source,
+    )
+    if transition_snapshot is not None:
+        meta = transition_snapshot.snapshot.source_metadata
+        snapshot_trace = SnapshotTrace(
+            built=True,
+            refreshed=transition_snapshot.refreshed,
+            source=transition_snapshot.reason,
+            thread_id=transition_snapshot.snapshot.thread_id,
+            thread_key=transition_snapshot.snapshot.thread_key,
+            source_turn_count=meta.source_turn_count,
+            included_turn_count=meta.included_turn_count,
+            filtered_recap_turn_count=meta.filtered_recap_turn_count,
+            filtered_pending_turn_count=meta.filtered_pending_turn_count,
+            filtered_control_turn_count=meta.filtered_control_turn_count,
+        )
 
     if resolved.execution_message is None:
         pending = resolved.state_after.pending_route
@@ -230,6 +255,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             source=source,
             route=resolved.route,
             context_load=context_load,
+            snapshot_trace=snapshot_trace,
         )
         store.create_trace_events(
             session_id=turn.session_id,
@@ -281,6 +307,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             route=resolved.route,
             context_load=context_load,
             recap_trace=recap_trace,
+            snapshot_trace=snapshot_trace,
         )
         store.create_trace_events(
             session_id=turn.session_id,
@@ -323,6 +350,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         route=resolved.route,
         context_load=context_load,
         recap_trace=recap_trace,
+        snapshot_trace=snapshot_trace,
     )
     store.create_trace_events(
         session_id=turn.session_id,

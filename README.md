@@ -72,3 +72,12 @@ The current repository contains:
 - unmatched text defaults to active-thread continuation
 - recap queries: `hol tartunk?`, `hol tartunk most?`, `mutasd a mostani szálat`, `foglald össze ezt a szálat`, `mutasd az előző szálat`, `foglald össze az előző szálat`, `hol tartunk az előző szálon?`, `mutasd a <thread_key> szálat`, `foglald össze a <thread_key> szálat`, `hol tartunk a <thread_key> szálon?`
 - precedence: explicit `--thread`/`--mode` > live slash commands > pending resolution > explicit routing phrases > suggestive pending phrases > recap query phrases > continue active
+
+
+## Thread snapshot / handoff foundation
+
+Syntaris now persists deterministic thread snapshot packs via a shared snapshot module (`orchestration/thread_snapshot.py`).
+Snapshots are compact handoff packs built from the thread context window, excluding recap/control/pending turns by default.
+
+CLI inspection uses `thread-snapshot --current`, `thread-snapshot --previous`, or `thread-snapshot <thread_key>` with optional `--refresh` and `--limit`.
+Snapshots are also refreshed automatically when routing switches away from a thread so handoff state remains stable for later resume/recall work.

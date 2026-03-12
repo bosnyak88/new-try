@@ -1,4 +1,4 @@
-from syntaris.contracts.runtime import ActiveConversationState, ContextLoadResult, RecapTrace, RouteDecision, RuntimeContext, TurnResult
+from syntaris.contracts.runtime import ActiveConversationState, ContextLoadResult, RecapTrace, RouteDecision, RuntimeContext, SnapshotTrace, TurnResult
 
 
 def build_boot_trace(context: RuntimeContext) -> dict[str, str | bool]:
@@ -18,6 +18,7 @@ def build_turn_trace_events(
     route: RouteDecision,
     context_load: ContextLoadResult,
     recap_trace: RecapTrace | None = None,
+    snapshot_trace: SnapshotTrace | None = None,
 ) -> list[dict[str, object]]:
     events = [
         {
@@ -80,6 +81,25 @@ def build_turn_trace_events(
         },
     ]
 
+
+
+    if snapshot_trace is not None and snapshot_trace.built:
+        events.append(
+            {
+                "event_name": "thread_snapshot_refreshed",
+                "payload": {
+                    "refreshed": snapshot_trace.refreshed,
+                    "source": snapshot_trace.source,
+                    "thread_id": snapshot_trace.thread_id,
+                    "thread_key": snapshot_trace.thread_key,
+                    "source_turn_count": snapshot_trace.source_turn_count,
+                    "included_turn_count": snapshot_trace.included_turn_count,
+                    "filtered_recap_turn_count": snapshot_trace.filtered_recap_turn_count,
+                    "filtered_pending_turn_count": snapshot_trace.filtered_pending_turn_count,
+                    "filtered_control_turn_count": snapshot_trace.filtered_control_turn_count,
+                },
+            }
+        )
 
     if recap_trace is not None and recap_trace.recognized:
         events.append(

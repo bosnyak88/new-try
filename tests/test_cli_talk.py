@@ -543,3 +543,70 @@ def test_cli_thread_recap_missing_targets(tmp_path, monkeypatch, capsys):
     cli.main()
     missing = json.loads(capsys.readouterr().out)
     assert missing["found"] is False
+
+
+def test_cli_thread_snapshot_current_previous_named_and_refresh(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "első"]) 
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "hol tartunk?"])
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-snapshot", "--current"])
+    cli.main()
+    current = json.loads(capsys.readouterr().out)
+    assert current["found"] is True
+    assert current["snapshot"]["thread_key"] == "work"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-snapshot", "--previous"])
+    cli.main()
+    previous = json.loads(capsys.readouterr().out)
+    assert previous["found"] is True
+    assert previous["snapshot"]["thread_key"] == "default"
+    assert previous["snapshot"]["source_metadata"]["filtered_recap_turn_count"] >= 1
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-snapshot", "work", "--refresh"])
+    cli.main()
+    named = json.loads(capsys.readouterr().out)
+    assert named["found"] is True
+    assert named["snapshot"]["thread_key"] == "work"
+    assert named["request"]["refresh"] is True
+
+
+def test_cli_thread_snapshot_missing_targets_and_trace_metadata(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-snapshot", "--previous"])
+    cli.main()
+    previous = json.loads(capsys.readouterr().out)
+    assert previous["found"] is False
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-snapshot", "missing"])
+    cli.main()
+    missing = json.loads(capsys.readouterr().out)
+    assert missing["found"] is False
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work"])
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "vissza a default szálra"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
+    cli.main()
+    trace = json.loads(capsys.readouterr().out)
+    names = [event["event_name"] for event in trace["trace_events"]]
+    assert "thread_snapshot_refreshed" in names

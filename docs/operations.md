@@ -79,3 +79,12 @@ The same recap builder is used in once/live/script execution when deterministic 
 - named: `mutasd a <thread_key> szálat`, `foglald össze a <thread_key> szálat`, `hol tartunk a <thread_key> szálon?`
 
 Recap queries do not implicitly switch active thread and produce trace metadata for recap handling.
+
+
+## Thread snapshot / handoff foundation
+
+Syntaris now persists deterministic thread snapshot packs via a shared snapshot module (`orchestration/thread_snapshot.py`).
+Snapshots are compact handoff packs built from the thread context window, excluding recap/control/pending turns by default.
+
+CLI inspection uses `thread-snapshot --current`, `thread-snapshot --previous`, or `thread-snapshot <thread_key>` with optional `--refresh` and `--limit`.
+Snapshots are also refreshed automatically when routing switches away from a thread so handoff state remains stable for later resume/recall work.

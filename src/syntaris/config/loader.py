@@ -63,6 +63,18 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
             os.getenv("SYNTARIS_CONTEXT_TURN_WINDOW"),
             conversation.get("context_turn_window", 5),
         ),
+        snapshot_turn_window=_pick_int(
+            os.getenv("SYNTARIS_SNAPSHOT_TURN_WINDOW"),
+            conversation.get("snapshot_turn_window", 8),
+        ),
+        snapshot_include_recap_turns=(
+            os.getenv("SYNTARIS_SNAPSHOT_INCLUDE_RECAP_TURNS", str(conversation.get("snapshot_include_recap_turns", False))).lower()
+            in {"1", "true", "yes", "on"}
+        ),
+        snapshot_include_pending_turns=(
+            os.getenv("SYNTARIS_SNAPSHOT_INCLUDE_PENDING_TURNS", str(conversation.get("snapshot_include_pending_turns", False))).lower()
+            in {"1", "true", "yes", "on"}
+        ),
     )
 
     return AppConfig(
