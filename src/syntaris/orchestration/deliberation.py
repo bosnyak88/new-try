@@ -48,7 +48,8 @@ def assemble_deliberation_input(
     )
     references_other = "másik" in normalized
     structured_request = (
-        (("lényeg" in normalized and "következő" in normalized)
+        interpretation.kind.value == "compare_previous"
+        or (("lényeg" in normalized and "következő" in normalized)
          or ("biztos" in normalized and "feltételezés" in normalized)
          or ("fő probléma" in normalized and "mit kell" in normalized)
          or ("hasonlítsd össze" in normalized)

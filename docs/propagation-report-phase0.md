@@ -107,3 +107,5 @@ REBUILD-013 adds shared deterministic comparison-pack and answer-strategy orches
 - Tests: added deterministic objective/synthesis coverage and trace metadata assertions.
 
 - REBUILD-014 follow-up: added shared preprocessing normalization in turn execution before interpretation/deliberation/objective/decomposition, plus mojibake regression tests at CLI/unit level.
+
+- REBUILD-014 follow-up: explicit current-vs-previous compare phrases now map to `turn_interpreted.kind=compare_previous` (clean + mojibake forms), ensuring intent precedence is preserved through deliberation/strategy/response-plan and trace output matches visible behavior.

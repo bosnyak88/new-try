@@ -14,6 +14,7 @@
 - REBUILD-014 fix: centralized early turn-message preprocessing in shared orchestration so explicit recall/compare intents are interpreted consistently before strategy selection.
 - REBUILD-014 fix: added shared mojibake/diacritic-safe Hungarian text normalization so explicit previous-thread recall and compare intents are recognized before ordinary/direct fallback.
 - REBUILD-014 fix: hardened Hungarian normalization/phrase coverage for explicit previous-thread recall and explicit compare phrasing so these intents no longer fall through to ordinary direct answers.
+- REBUILD-014 fix: explicit current-vs-previous compare phrasing is now interpreted as `compare_previous` on the real talk runtime path (including mojibake forms), so trace intent kind, strategy selection, and final structured reply stay aligned.
 - REBUILD-014 fix: response-plan now consumes synthesis sections for target direct-strategy intents (support-check/diagnose+next-step/compare), preventing generic `Rendben.` replies and preserving meaningful previous-thread recall behavior.
 - REBUILD-014 fix: explicit support-check / diagnose+next-step / compare intent now deterministically triggers structured synthesis output instead of falling through to direct fallback or correction redirect in clear compare cases.
 - REBUILD-014: Added shared deterministic objective framing, question decomposition, evidence-pack assembly, and answer synthesis layers.
@@ -131,6 +132,7 @@
 - REBUILD-014 fix: centralized early turn-message preprocessing in shared orchestration so explicit recall/compare intents are interpreted consistently before strategy selection.
 - REBUILD-014 fix: added shared mojibake/diacritic-safe Hungarian text normalization so explicit previous-thread recall and compare intents are recognized before ordinary/direct fallback.
 - REBUILD-014 fix: hardened Hungarian normalization/phrase coverage for explicit previous-thread recall and explicit compare phrasing so these intents no longer fall through to ordinary direct answers.
+- REBUILD-014 fix: explicit current-vs-previous compare phrasing is now interpreted as `compare_previous` on the real talk runtime path (including mojibake forms), so trace intent kind, strategy selection, and final structured reply stay aligned.
 - REBUILD-014 fix: response-plan now consumes synthesis sections for target direct-strategy intents (support-check/diagnose+next-step/compare), preventing generic `Rendben.` replies and preserving meaningful previous-thread recall behavior.
 - REBUILD-014 fix: explicit support-check / diagnose+next-step / compare intent now deterministically triggers structured synthesis output instead of falling through to direct fallback or correction redirect in clear compare cases.
 - Added deterministic active-focus foundation (`thread_focus` persistence + orchestration) and new `thread-focus` CLI command.

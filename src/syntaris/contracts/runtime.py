@@ -332,6 +332,7 @@ class TurnInterpretationKind(str, Enum):
     RECALL_NAMED = "recall_named"
     RESUME_PREVIOUS = "resume_previous"
     RESUME_NAMED = "resume_named"
+    COMPARE_PREVIOUS = "compare_previous"
     CLARIFICATION_NEEDED = "clarification_needed"
 
 

@@ -867,6 +867,7 @@ def test_cli_compare_trace_is_not_direct_fallback(tmp_path, monkeypatch, capsys)
     cli.main()
     trace = json.loads(capsys.readouterr().out)
     payload_by_event = {event["event_name"]: event["payload"] for event in trace["trace_events"]}
+    assert '"kind": "compare_previous"' in payload_by_event["turn_interpreted"]
     assert '"selected_strategy": "structured_answer"' in payload_by_event["answer_strategy_selected"]
     assert '"kind": "structured"' in payload_by_event["response_plan_built"]
 
@@ -936,6 +937,7 @@ def test_cli_explicit_previous_recall_and_compare_clean_forms_trace_path(tmp_pat
     cli.main()
     compare_trace = json.loads(capsys.readouterr().out)
     compare_payload = {event["event_name"]: event["payload"] for event in compare_trace["trace_events"]}
+    assert '"kind": "compare_previous"' in compare_payload["turn_interpreted"]
     assert '"selected_strategy": "structured_answer"' in compare_payload["answer_strategy_selected"]
     assert '"kind": "structured"' in compare_payload["response_plan_built"]
 

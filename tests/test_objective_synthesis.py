@@ -100,6 +100,7 @@ def test_previous_thread_recall_remains_meaningful(tmp_path):
 
     trace = trace_last(runtime)
     events = {event.event_name: event.payload for event in trace.trace_events}
+    assert '"kind": "recall_previous"' in events["turn_interpreted"]
     assert "response_plan_built" in events
     assert '"kind": "recall"' in events["response_plan_built"]
 
@@ -134,3 +135,8 @@ def test_compare_mojibake_phrase_still_structured(tmp_path):
     assert result.turn.assistant_reply.strip() != "Rendben."
     assert "Mostani szál:" in result.turn.assistant_reply
     assert "Előző szál:" in result.turn.assistant_reply
+
+    trace = trace_last(runtime)
+    events = {event.event_name: event.payload for event in trace.trace_events}
+    assert '"kind": "compare_previous"' in events["turn_interpreted"]
+    assert '"selected_strategy": "structured_answer"' in events["answer_strategy_selected"]

@@ -14,6 +14,13 @@ _PREVIOUS_RECALL_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("recall_previous_elozo_szal", re.compile(r"^az\s+el[őo]z[őo]\s+sz[áa]lon\s+mi\s+volt\??$", re.IGNORECASE)),
 )
 
+_COMPARE_PREVIOUS_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    (
+        "compare_previous_hasonlitsd_ossze",
+        re.compile(r"^hasonl[íi]tsd\s+össze\s+a\s+mostanit\s+az\s+el[őo]z[őo]\s+sz[áa]llal\??$", re.IGNORECASE),
+    ),
+)
+
 _NAMED_PATTERNS: tuple[tuple[str, re.Pattern[str], TurnInterpretationKind], ...] = (
     (
         "resume_named_hozd_vissza",
@@ -52,6 +59,15 @@ def interpret_turn(message: str) -> TurnInterpretation:
             recall_request=RecallRequest(target=RecallTargetKind.PREVIOUS),
         )
 
+    if (
+        "hasonlitsd ossze a mostanit az elozo szallal" in normalized
+        or ("hasonlã" in raw_lower and "ssze" in raw_lower and "elå" in raw_lower and "szã" in raw_lower)
+    ):
+        return TurnInterpretation(
+            kind=TurnInterpretationKind.COMPARE_PREVIOUS,
+            pattern_name="compare_previous_normalized",
+        )
+
     for pattern_name, pattern, kind in _NAMED_PATTERNS:
         match = pattern.match(text)
         if match:
@@ -67,6 +83,13 @@ def interpret_turn(message: str) -> TurnInterpretation:
                 kind=TurnInterpretationKind.RECALL_PREVIOUS,
                 pattern_name=pattern_name,
                 recall_request=RecallRequest(target=RecallTargetKind.PREVIOUS),
+            )
+
+    for pattern_name, pattern in _COMPARE_PREVIOUS_PATTERNS:
+        if pattern.match(text):
+            return TurnInterpretation(
+                kind=TurnInterpretationKind.COMPARE_PREVIOUS,
+                pattern_name=pattern_name,
             )
 
     for pattern_name, pattern in _PREVIOUS_RESUME_PATTERNS:
