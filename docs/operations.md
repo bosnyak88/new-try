@@ -135,3 +135,5 @@ Note: REBUILD-014 recall/compare intent matching is now preprocessing-hardened (
 If old persisted snapshot/focus artifacts contain degraded text, `thread-snapshot` / `thread-focus` will rebuild via hygiene refresh when needed (or immediately with `--refresh`).
 
 Legacy previous-thread snapshot/focus payloads are no longer only cleaned in-memory: dirty detection now triggers real rebuild + persistence writeback from canonical turn sources.
+
+Snapshot/focus views now enforce freshness: if persisted `last_turn_id`/`turn_count` is behind the live thread head, runtime performs deterministic rebuild+writeback before returning the artifact.

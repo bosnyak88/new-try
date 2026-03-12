@@ -135,3 +135,5 @@ Syntaris now applies one shared normalization policy for Hungarian-first text ha
 - recall/compare/structured outputs now render cleaned display text consistently
 
 - persisted snapshot/focus artifacts are now loaded raw for hygiene inspection and automatically rebuilt+written back when dirty (including previous-thread paths)
+
+- snapshot/focus persistence is freshness-checked against thread turn head (`turn_count`/`last_turn_id`); stale persisted artifacts are rebuilt and written back before being served

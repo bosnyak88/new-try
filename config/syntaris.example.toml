@@ -51,3 +51,5 @@ level = "info"
 # Text hygiene: runtime stores canonical text for orchestration/display while preserving raw turn text for audit in DB raw columns.
 
 # Legacy derived artifacts (snapshot/focus) are runtime-refreshed and persisted cleanly when dirty text is detected.
+
+# Runtime enforces derived artifact freshness (stale `last_turn_id`/`turn_count` triggers rebuild+writeback).

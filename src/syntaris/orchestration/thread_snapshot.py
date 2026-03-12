@@ -132,6 +132,15 @@ def _snapshot_has_dirty_text(snapshot: ThreadSnapshotPack) -> bool:
             return True
     return False
 
+
+def _snapshot_is_stale(store: PersistenceStore, snapshot: ThreadSnapshotPack) -> bool:
+    turn_count, last_turn_id = store.get_thread_turn_head(snapshot.thread_id)
+    if snapshot.turn_count != turn_count:
+        return True
+    if snapshot.last_turn_id != last_turn_id:
+        return True
+    return False
+
 def refresh_thread_snapshot(context: RuntimeContext, thread_id: int, mode: str, limit: int | None = None, reason: str = "manual_refresh") -> SnapshotBuildResult | None:
     snapshot = build_thread_snapshot_pack(context, thread_id=thread_id, mode=mode, limit=limit)
     if snapshot is None:
@@ -177,13 +186,13 @@ def build_thread_snapshot_view(context: RuntimeContext, request: ThreadSnapshotR
 
     existing = store.read_thread_snapshot(thread_id)
     if existing is not None:
-        if _snapshot_has_dirty_text(existing):
+        if _snapshot_has_dirty_text(existing) or _snapshot_is_stale(store, existing):
             built = refresh_thread_snapshot(
                 context,
                 thread_id=thread_id,
                 mode=mode,
                 limit=request.limit,
-                reason=f"{request.source}:hygiene_refresh",
+                reason=f"{request.source}:hygiene_or_stale_refresh",
             )
             assert built is not None
             return ThreadSnapshotView(request=request, found=True, snapshot=built.snapshot, loaded_from_persistence=False)

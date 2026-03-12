@@ -97,6 +97,15 @@ def _focus_has_dirty_text(focus: ThreadFocusPack) -> bool:
             return True
     return False
 
+
+def _focus_is_stale(store: PersistenceStore, focus: ThreadFocusPack) -> bool:
+    turn_count, last_turn_id = store.get_thread_turn_head(focus.thread_id)
+    if focus.last_turn_id != last_turn_id:
+        return True
+    if focus.focus_source_turn_count > turn_count:
+        return True
+    return False
+
 def refresh_thread_focus(context: RuntimeContext, thread_id: int, mode: str, limit: int | None = None, reason: str = "manual_refresh") -> FocusUpdateResult | None:
     focus = build_thread_focus_pack(context, thread_id=thread_id, mode=mode, limit=limit)
     if focus is None:
@@ -142,13 +151,13 @@ def build_thread_focus_view(context: RuntimeContext, request: ThreadFocusRequest
 
     existing = store.read_thread_focus(thread_id)
     if existing is not None:
-        if _focus_has_dirty_text(existing):
+        if _focus_has_dirty_text(existing) or _focus_is_stale(store, existing):
             built = refresh_thread_focus(
                 context,
                 thread_id=thread_id,
                 mode=mode,
                 limit=request.limit,
-                reason=f"{request.source}:hygiene_refresh",
+                reason=f"{request.source}:hygiene_or_stale_refresh",
             )
             assert built is not None
             return ThreadFocusView(request=request, found=True, focus=built.focus, loaded_from_persistence=False)

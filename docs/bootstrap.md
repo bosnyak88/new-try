@@ -95,3 +95,5 @@ These are loaded at bootstrap and apply uniformly to once/live/script shared exe
 `init-db` now migrates `turns` with raw-text columns (`user_message_raw`, `assistant_reply_raw`) and backfills them from legacy rows to keep migration-safe auditability while enabling canonical persistence/display paths.
 
 Migration/backfill remains schema-safe; legacy artifact cleanup happens through deterministic runtime rebuild/writeback on access (not destructive migration).
+
+Operationally, no destructive migration is required for legacy snapshot/focus staleness; runtime freshness checks rebuild stale packs from canonical turn sources on first access.

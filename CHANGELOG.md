@@ -146,3 +146,5 @@
 - Added hygiene refresh behavior and regression tests for snapshot/focus/recall/compare quality.
 
 - REBUILD-015 follow-up: fixed previous-thread legacy snapshot/focus pollution by loading persisted artifacts raw for hygiene checks and forcing rebuild/writeback when dirty, including previous recall paths.
+
+- REBUILD-015 follow-up: enforced snapshot/focus freshness checks against live thread head and rebuild/writeback on stale persisted artifacts, including current recall path.

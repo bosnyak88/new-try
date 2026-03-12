@@ -115,3 +115,5 @@ REBUILD-013 adds shared deterministic comparison-pack and answer-strategy orches
 Text normalization/repair was propagated across contracts-adjacent runtime behavior, orchestration, persistence migration, derived artifacts, response rendering, trace readability, CLI outputs, and regression coverage.
 
 - REBUILD-015 follow-up: fixed previous-thread legacy artifact pollution by making dirty persisted snapshot/focus detection trigger actual rebuild-and-writeback; previous recall now resolves from refreshed clean artifacts.
+
+- REBUILD-015 follow-up-2: added stale artifact freshness enforcement (`last_turn_id`/`turn_count` checks) so current snapshot/recall paths no longer reuse outdated persisted packs.

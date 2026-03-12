@@ -494,6 +494,15 @@ class PersistenceStore:
                 previous_thread_key=previous_thread_key,
             )
 
+    def get_thread_turn_head(self, thread_id: int) -> tuple[int, int | None]:
+        with sqlite3.connect(self.db_path) as conn:
+            row = conn.execute(
+                "SELECT COUNT(1), MAX(turn_id) FROM turns WHERE thread_id = ?",
+                (thread_id,),
+            ).fetchone()
+            assert row is not None
+            return int(row[0] or 0), int(row[1]) if row[1] is not None else None
+
 
     def upsert_thread_snapshot(self, snapshot: ThreadSnapshotPack) -> None:
         lines_json = json.dumps(
