@@ -1,12 +1,26 @@
+from __future__ import annotations
+
+import subprocess
+import sys
 from pathlib import Path
 
-import tomli
 
-
-def test_pyproject_build_system_declares_editable_prerequisites():
-    data = tomli.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
-    build = data["build-system"]
-    requires = build["requires"]
-    assert any(req.startswith("setuptools") for req in requires)
-    assert "wheel" in requires
-    assert build["build-backend"] == "setuptools.build_meta"
+def test_editable_install_no_build_isolation_smoke() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "-e",
+            ".",
+            "--no-build-isolation",
+        ],
+        cwd=repo_root,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stdout

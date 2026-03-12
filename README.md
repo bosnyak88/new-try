@@ -141,3 +141,5 @@ Syntaris now applies one shared normalization policy for Hungarian-first text ha
 - snapshot cleanliness is enforced line-by-line; any dirty snapshot line triggers canonical rebuild/writeback so transitive historical pollution does not persist in snapshot artifacts
 
 - recall-style assistant blobs are flattened for snapshot line construction (summary-of-summary anti-recursion) so `hol tartottunk?` and snapshot reuse stay compact
+
+- packaging smoke: `python -m pip install -e . --no-build-isolation`

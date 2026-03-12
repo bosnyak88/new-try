@@ -101,3 +101,6 @@ Operationally, no destructive migration is required for legacy snapshot/focus st
 Runtime artifact hygiene now validates both freshness and line-level cleanliness, then rebuilds from canonicalized turn sources when either gate fails.
 
 Packaging acceptance note: editable install without build isolation is validated against the declared setuptools+wheel build requirements in `pyproject.toml`.
+
+Packaging smoke check:
+- `python -m pip install -e . --no-build-isolation`

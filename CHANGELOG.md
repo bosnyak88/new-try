@@ -152,3 +152,5 @@
 - REBUILD-015 final follow-up: added line-level degraded-pattern detection and transitive historical cleanup so fresh snapshots are also clean, not only up-to-date.
 
 - REBUILD-015 final follow-up: added anti-recursion flattening for recap-like assistant text in snapshot artifacts and recall reuse paths.
+
+- REBUILD-015 packaging follow-up: replaced proxy packaging assertion with real editable no-build-isolation install smoke regression.
