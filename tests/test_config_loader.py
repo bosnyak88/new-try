@@ -17,3 +17,6 @@ def test_env_overrides_llm_paths(tmp_path, monkeypatch):
     assert config.conversation.default_thread_key == "default"
     assert config.conversation.default_mode == "chat"
     assert config.conversation.context_turn_window == 5
+    assert config.conversation.snapshot_turn_window == 8
+    assert config.conversation.snapshot_include_recap_turns is False
+    assert config.conversation.snapshot_include_pending_turns is False

@@ -62,3 +62,12 @@
 - embeddings or fuzzy intent classification
 - broad thread history stack beyond current+previous
 - summarization or memory graph
+
+
+## Thread snapshot / handoff foundation
+
+Syntaris now persists deterministic thread snapshot packs via a shared snapshot module (`orchestration/thread_snapshot.py`).
+Snapshots are compact handoff packs built from the thread context window, excluding recap/control/pending turns by default.
+
+CLI inspection uses `thread-snapshot --current`, `thread-snapshot --previous`, or `thread-snapshot <thread_key>` with optional `--refresh` and `--limit`.
+Snapshots are also refreshed automatically when routing switches away from a thread so handoff state remains stable for later resume/recall work.

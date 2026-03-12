@@ -73,3 +73,12 @@ Control commands are not persisted as normal turns.
 - Recap queries are recognized by explicit Hungarian-first phrase families (current/previous/named), with conservative normalization (`strip`, case-insensitive regex).
 - Recap is evaluated only after explicit overrides, live slash controls, pending resolution, and deterministic routing phrases.
 - Recap turns bypass the reply adapter but still persist a normal turn + trace with recap metadata (`recap_query_recognized`, `thread_recap_built`).
+
+
+## Thread snapshot / handoff foundation
+
+Syntaris now persists deterministic thread snapshot packs via a shared snapshot module (`orchestration/thread_snapshot.py`).
+Snapshots are compact handoff packs built from the thread context window, excluding recap/control/pending turns by default.
+
+CLI inspection uses `thread-snapshot --current`, `thread-snapshot --previous`, or `thread-snapshot <thread_key>` with optional `--refresh` and `--limit`.
+Snapshots are also refreshed automatically when routing switches away from a thread so handoff state remains stable for later resume/recall work.

@@ -47,3 +47,12 @@ No additional boot-time providers are required for REBUILD-005 routing. The dete
 ## Recap bootstrap note
 
 No new providers or schema migrations are required for REBUILD-009 recap foundation. Recap views are projected from existing persisted thread turns through the context-pack loader, with the same bounded turn window (`conversation.context_turn_window` or explicit `--limit`).
+
+
+## Thread snapshot / handoff foundation
+
+Syntaris now persists deterministic thread snapshot packs via a shared snapshot module (`orchestration/thread_snapshot.py`).
+Snapshots are compact handoff packs built from the thread context window, excluding recap/control/pending turns by default.
+
+CLI inspection uses `thread-snapshot --current`, `thread-snapshot --previous`, or `thread-snapshot <thread_key>` with optional `--refresh` and `--limit`.
+Snapshots are also refreshed automatically when routing switches away from a thread so handoff state remains stable for later resume/recall work.

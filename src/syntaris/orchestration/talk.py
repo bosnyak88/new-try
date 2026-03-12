@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from syntaris.contracts.runtime import ActiveConversationState, ContextSource, LastTurnTraceView, RecapRequest, RecapTarget, RuntimeContext, SessionStatusView, TalkRequest, ThreadContextRequest, ThreadContextView, ThreadListView, ThreadRecapView
+from syntaris.contracts.runtime import ActiveConversationState, ContextSource, LastTurnTraceView, RecapRequest, RecapTarget, RuntimeContext, SessionStatusView, SnapshotTarget, TalkRequest, ThreadContextRequest, ThreadContextView, ThreadListView, ThreadRecapView, ThreadSnapshotRequest, ThreadSnapshotView
 from syntaris.orchestration.context_pack import build_thread_context_view
 from syntaris.orchestration.recap import build_thread_recap_view
+from syntaris.orchestration.thread_snapshot import build_thread_snapshot_view
 from syntaris.orchestration.turns import TalkRunResult, execute_turn
 from syntaris.persistence import PersistenceStore
 
@@ -86,3 +87,24 @@ def thread_recap_previous(context: RuntimeContext, limit: int | None = None) -> 
 
 def thread_recap_named(context: RuntimeContext, thread_key: str, limit: int | None = None) -> ThreadRecapView:
     return build_thread_recap_view(context, RecapRequest(target=RecapTarget.NAMED, thread_key=thread_key, limit=limit))
+
+
+def thread_snapshot_current(context: RuntimeContext, limit: int | None = None, refresh: bool = False) -> ThreadSnapshotView:
+    return build_thread_snapshot_view(
+        context,
+        ThreadSnapshotRequest(target=SnapshotTarget.CURRENT, limit=limit, refresh=refresh, source="cli_thread_snapshot"),
+    )
+
+
+def thread_snapshot_previous(context: RuntimeContext, limit: int | None = None, refresh: bool = False) -> ThreadSnapshotView:
+    return build_thread_snapshot_view(
+        context,
+        ThreadSnapshotRequest(target=SnapshotTarget.PREVIOUS, limit=limit, refresh=refresh, source="cli_thread_snapshot"),
+    )
+
+
+def thread_snapshot_named(context: RuntimeContext, thread_key: str, limit: int | None = None, refresh: bool = False) -> ThreadSnapshotView:
+    return build_thread_snapshot_view(
+        context,
+        ThreadSnapshotRequest(target=SnapshotTarget.NAMED, thread_key=thread_key, limit=limit, refresh=refresh, source="cli_thread_snapshot"),
+    )

@@ -6,7 +6,7 @@ from syntaris.bootstrap.init_app import build_runtime
 from syntaris.contracts.runtime import TalkRequest
 from syntaris.orchestration.doctor import run_doctor
 from syntaris.orchestration.live_loop import run_live_loop, run_live_loop_interactive
-from syntaris.orchestration.talk import init_db, list_threads, session_status, talk_once, thread_recap_current, thread_recap_named, thread_recap_previous, thread_view_current, thread_view_named, thread_view_previous, trace_last
+from syntaris.orchestration.talk import init_db, list_threads, session_status, talk_once, thread_recap_current, thread_recap_named, thread_recap_previous, thread_snapshot_current, thread_snapshot_named, thread_snapshot_previous, thread_view_current, thread_view_named, thread_view_previous, trace_last
 from syntaris.trace.events import build_boot_trace
 
 
@@ -42,6 +42,13 @@ def build_parser() -> argparse.ArgumentParser:
     recap_scope.add_argument("--previous", action="store_true", help="Recap previous thread")
     thread_recap_parser.add_argument("thread_key", nargs="?", default=None, help="Named thread key")
     thread_recap_parser.add_argument("--limit", type=int, default=None, help="Override recap turn window")
+    thread_snapshot_parser = sub.add_parser("thread-snapshot", help="Inspect deterministic persisted thread snapshot handoff pack")
+    snapshot_scope = thread_snapshot_parser.add_mutually_exclusive_group(required=False)
+    snapshot_scope.add_argument("--current", action="store_true", help="Snapshot active thread")
+    snapshot_scope.add_argument("--previous", action="store_true", help="Snapshot previous thread")
+    thread_snapshot_parser.add_argument("thread_key", nargs="?", default=None, help="Named thread key")
+    thread_snapshot_parser.add_argument("--limit", type=int, default=None, help="Override snapshot source window")
+    thread_snapshot_parser.add_argument("--refresh", action="store_true", help="Rebuild and persist snapshot before returning it")
     return parser
 
 
@@ -123,6 +130,62 @@ def _thread_context_payload(view) -> dict[str, object]:
         },
     }
 
+
+
+def _thread_snapshot_payload(view) -> dict[str, object]:
+    if not view.found or view.snapshot is None:
+        return {
+            "request": {
+                "target": view.request.target.value,
+                "thread_key": view.request.thread_key,
+                "limit": view.request.limit,
+                "refresh": view.request.refresh,
+                "source": view.request.source,
+            },
+            "found": False,
+            "loaded_from_persistence": view.loaded_from_persistence,
+            "snapshot": None,
+        }
+    snapshot = view.snapshot
+    return {
+        "request": {
+            "target": view.request.target.value,
+            "thread_key": view.request.thread_key,
+            "limit": view.request.limit,
+            "refresh": view.request.refresh,
+            "source": view.request.source,
+        },
+        "found": True,
+        "loaded_from_persistence": view.loaded_from_persistence,
+        "snapshot": {
+            "session_id": snapshot.session_id,
+            "thread_id": snapshot.thread_id,
+            "thread_key": snapshot.thread_key,
+            "mode": snapshot.mode,
+            "turn_count": snapshot.turn_count,
+            "last_turn_id": snapshot.last_turn_id,
+            "snapshot_built_at": snapshot.snapshot_built_at.isoformat(),
+            "source_metadata": {
+                "source_turn_count": snapshot.source_metadata.source_turn_count,
+                "included_turn_count": snapshot.source_metadata.included_turn_count,
+                "filtered_recap_turn_count": snapshot.source_metadata.filtered_recap_turn_count,
+                "filtered_pending_turn_count": snapshot.source_metadata.filtered_pending_turn_count,
+                "filtered_control_turn_count": snapshot.source_metadata.filtered_control_turn_count,
+            },
+            "previous_thread_id": snapshot.previous_thread_id,
+            "previous_thread_key": snapshot.previous_thread_key,
+            "snapshot_text": snapshot.snapshot_text,
+            "snapshot_lines": [
+                {
+                    "turn_id": line.turn_id,
+                    "turn_index": line.turn_index,
+                    "user_message": line.user_message,
+                    "assistant_reply": line.assistant_reply,
+                }
+                for line in snapshot.snapshot_lines
+            ],
+        },
+    }
 
 def _thread_recap_payload(view) -> dict[str, object]:
     payload = {
@@ -283,6 +346,18 @@ def main() -> int:
         else:
             view = thread_view_current(runtime, limit=args.limit)
         print(json.dumps(_thread_context_payload(view), indent=2))
+        return 0
+
+    if args.command == "thread-snapshot":
+        if args.current:
+            view = thread_snapshot_current(runtime, limit=args.limit, refresh=args.refresh)
+        elif args.previous:
+            view = thread_snapshot_previous(runtime, limit=args.limit, refresh=args.refresh)
+        elif args.thread_key:
+            view = thread_snapshot_named(runtime, thread_key=args.thread_key, limit=args.limit, refresh=args.refresh)
+        else:
+            view = thread_snapshot_current(runtime, limit=args.limit, refresh=args.refresh)
+        print(json.dumps(_thread_snapshot_payload(view), indent=2))
         return 0
 
     if args.command == "thread-recap":

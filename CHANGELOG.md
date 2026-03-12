@@ -1,3 +1,9 @@
+## Unreleased
+
+- Added deterministic thread snapshot/handoff foundation with persisted `thread_snapshots` records and shared orchestration snapshot builder.
+- Added `thread-snapshot` CLI command supporting `--current`, `--previous`, named thread keys, `--refresh`, and `--limit`.
+- Added automatic snapshot refresh on deterministic thread transitions plus trace metadata (`thread_snapshot_refreshed`).
+
 ## 0.9.0 - REBUILD-009 deterministic thread recap / resume foundation
 
 - Added first-class recap contracts: `RecapTarget`, `RecapRequest`, `ThreadRecapLine`, `ThreadRecapView`, recap query/trace metadata contracts.

@@ -17,6 +17,9 @@ from syntaris.contracts.runtime import (
     ThreadContextTurn,
     ThreadListView,
     ThreadRecord,
+    ThreadSnapshotLine,
+    ThreadSnapshotPack,
+    SnapshotSourceMetadata,
     ThreadSummaryView,
     TraceEventRecord,
     TurnResult,
@@ -138,6 +141,13 @@ class PersistenceStore:
                 )
                 """
             )
+
+        snapshot_cols = {
+            row[1]
+            for row in conn.execute("PRAGMA table_info(thread_snapshots)").fetchall()
+        }
+        if snapshot_cols and "thread_key" not in snapshot_cols:
+            conn.execute("ALTER TABLE thread_snapshots ADD COLUMN thread_key TEXT")
 
     def create_session(self) -> SessionRecord:
         created_at = utc_now()
@@ -415,6 +425,106 @@ class PersistenceStore:
                 recent_turns=recent_turns,
                 previous_thread_id=previous_thread_id,
                 previous_thread_key=previous_thread_key,
+            )
+
+
+    def upsert_thread_snapshot(self, snapshot: ThreadSnapshotPack) -> None:
+        lines_json = json.dumps(
+            [
+                {
+                    "turn_id": line.turn_id,
+                    "turn_index": line.turn_index,
+                    "user_message": line.user_message,
+                    "assistant_reply": line.assistant_reply,
+                }
+                for line in snapshot.snapshot_lines
+            ],
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                """
+                INSERT INTO thread_snapshots(
+                    session_id, thread_id, thread_key, mode, turn_count, last_turn_id,
+                    snapshot_built_at, source_turn_count, included_turn_count,
+                    filtered_recap_turn_count, filtered_pending_turn_count, filtered_control_turn_count,
+                    snapshot_lines_json, snapshot_text, previous_thread_id, previous_thread_key
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(thread_id) DO UPDATE SET
+                    session_id=excluded.session_id,
+                    thread_key=excluded.thread_key,
+                    mode=excluded.mode,
+                    turn_count=excluded.turn_count,
+                    last_turn_id=excluded.last_turn_id,
+                    snapshot_built_at=excluded.snapshot_built_at,
+                    source_turn_count=excluded.source_turn_count,
+                    included_turn_count=excluded.included_turn_count,
+                    filtered_recap_turn_count=excluded.filtered_recap_turn_count,
+                    filtered_pending_turn_count=excluded.filtered_pending_turn_count,
+                    filtered_control_turn_count=excluded.filtered_control_turn_count,
+                    snapshot_lines_json=excluded.snapshot_lines_json,
+                    snapshot_text=excluded.snapshot_text,
+                    previous_thread_id=excluded.previous_thread_id,
+                    previous_thread_key=excluded.previous_thread_key
+                """,
+                (
+                    snapshot.session_id,
+                    snapshot.thread_id,
+                    snapshot.thread_key,
+                    snapshot.mode,
+                    snapshot.turn_count,
+                    snapshot.last_turn_id,
+                    snapshot.snapshot_built_at.isoformat(),
+                    snapshot.source_metadata.source_turn_count,
+                    snapshot.source_metadata.included_turn_count,
+                    snapshot.source_metadata.filtered_recap_turn_count,
+                    snapshot.source_metadata.filtered_pending_turn_count,
+                    snapshot.source_metadata.filtered_control_turn_count,
+                    lines_json,
+                    snapshot.snapshot_text,
+                    snapshot.previous_thread_id,
+                    snapshot.previous_thread_key,
+                ),
+            )
+            conn.commit()
+
+    def read_thread_snapshot(self, thread_id: int) -> ThreadSnapshotPack | None:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            row = conn.execute("SELECT * FROM thread_snapshots WHERE thread_id = ?", (thread_id,)).fetchone()
+            if row is None:
+                return None
+            line_data = json.loads(str(row["snapshot_lines_json"]))
+            lines = [
+                ThreadSnapshotLine(
+                    turn_id=int(item["turn_id"]),
+                    turn_index=int(item["turn_index"]),
+                    user_message=str(item["user_message"]),
+                    assistant_reply=str(item["assistant_reply"]),
+                )
+                for item in line_data
+            ]
+            return ThreadSnapshotPack(
+                session_id=int(row["session_id"]),
+                thread_id=int(row["thread_id"]),
+                thread_key=str(row["thread_key"]),
+                mode=str(row["mode"]),
+                turn_count=int(row["turn_count"]),
+                last_turn_id=int(row["last_turn_id"]) if row["last_turn_id"] is not None else None,
+                snapshot_built_at=datetime.fromisoformat(str(row["snapshot_built_at"])),
+                source_metadata=SnapshotSourceMetadata(
+                    source_turn_count=int(row["source_turn_count"]),
+                    included_turn_count=int(row["included_turn_count"]),
+                    filtered_recap_turn_count=int(row["filtered_recap_turn_count"]),
+                    filtered_pending_turn_count=int(row["filtered_pending_turn_count"]),
+                    filtered_control_turn_count=int(row["filtered_control_turn_count"]),
+                ),
+                snapshot_lines=lines,
+                snapshot_text=str(row["snapshot_text"]),
+                previous_thread_id=int(row["previous_thread_id"]) if row["previous_thread_id"] is not None else None,
+                previous_thread_key=str(row["previous_thread_key"]) if row["previous_thread_key"] is not None else None,
             )
 
     def list_threads_view(self, session_id: int, active_thread_id: int) -> ThreadListView:

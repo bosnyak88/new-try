@@ -1,4 +1,4 @@
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS app_meta (
@@ -31,6 +31,30 @@ CREATE TABLE IF NOT EXISTS turns (
     reply_backend TEXT NOT NULL,
     degraded INTEGER NOT NULL,
     created_at TEXT NOT NULL,
+    FOREIGN KEY(session_id) REFERENCES sessions(session_id),
+    FOREIGN KEY(thread_id) REFERENCES threads(thread_id)
+);
+
+
+
+CREATE TABLE IF NOT EXISTS thread_snapshots (
+    snapshot_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id INTEGER NOT NULL,
+    thread_id INTEGER NOT NULL UNIQUE,
+    thread_key TEXT NOT NULL,
+    mode TEXT NOT NULL,
+    turn_count INTEGER NOT NULL,
+    last_turn_id INTEGER,
+    snapshot_built_at TEXT NOT NULL,
+    source_turn_count INTEGER NOT NULL,
+    included_turn_count INTEGER NOT NULL,
+    filtered_recap_turn_count INTEGER NOT NULL,
+    filtered_pending_turn_count INTEGER NOT NULL,
+    filtered_control_turn_count INTEGER NOT NULL,
+    snapshot_lines_json TEXT NOT NULL,
+    snapshot_text TEXT NOT NULL,
+    previous_thread_id INTEGER,
+    previous_thread_key TEXT,
     FOREIGN KEY(session_id) REFERENCES sessions(session_id),
     FOREIGN KEY(thread_id) REFERENCES threads(thread_id)
 );

@@ -36,6 +36,9 @@ class ConversationConfig:
     default_thread_key: str = "default"
     default_mode: str = ModeKind.CHAT.value
     context_turn_window: int = 5
+    snapshot_turn_window: int = 8
+    snapshot_include_recap_turns: bool = False
+    snapshot_include_pending_turns: bool = False
 
 
 @dataclass(frozen=True)
@@ -230,6 +233,83 @@ class ThreadContextView:
     request: ThreadContextRequest
     found: bool
     pack: ThreadContextPack | None
+
+
+class SnapshotTarget(str, Enum):
+    CURRENT = "current"
+    PREVIOUS = "previous"
+    NAMED = "named"
+
+
+@dataclass(frozen=True)
+class ThreadSnapshotRequest:
+    target: SnapshotTarget
+    thread_key: str | None = None
+    limit: int | None = None
+    refresh: bool = False
+    source: str = "unspecified"
+
+
+@dataclass(frozen=True)
+class ThreadSnapshotLine:
+    turn_id: int
+    turn_index: int
+    user_message: str
+    assistant_reply: str
+
+
+@dataclass(frozen=True)
+class SnapshotSourceMetadata:
+    source_turn_count: int
+    included_turn_count: int
+    filtered_recap_turn_count: int
+    filtered_pending_turn_count: int
+    filtered_control_turn_count: int
+
+
+@dataclass(frozen=True)
+class ThreadSnapshotPack:
+    session_id: int
+    thread_id: int
+    thread_key: str
+    mode: str
+    turn_count: int
+    last_turn_id: int | None
+    snapshot_built_at: datetime
+    source_metadata: SnapshotSourceMetadata
+    snapshot_lines: list[ThreadSnapshotLine]
+    snapshot_text: str
+    previous_thread_id: int | None = None
+    previous_thread_key: str | None = None
+
+
+@dataclass(frozen=True)
+class ThreadSnapshotView:
+    request: ThreadSnapshotRequest
+    found: bool
+    snapshot: ThreadSnapshotPack | None
+    loaded_from_persistence: bool = False
+
+
+@dataclass(frozen=True)
+class SnapshotBuildResult:
+    snapshot: ThreadSnapshotPack
+    refreshed: bool
+    reason: str
+
+
+@dataclass(frozen=True)
+class SnapshotTrace:
+    built: bool
+    refreshed: bool
+    source: str
+    thread_id: int
+    thread_key: str
+    source_turn_count: int
+    included_turn_count: int
+    filtered_recap_turn_count: int
+    filtered_pending_turn_count: int
+    filtered_control_turn_count: int
 
 
 class ContextSource(str, Enum):
