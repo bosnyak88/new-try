@@ -133,3 +133,5 @@ Syntaris now applies one shared normalization policy for Hungarian-first text ha
 - shared mojibake repair + Unicode NFC normalization runs through `orchestration/text_normalize.py`
 - snapshot/focus read paths auto-refresh persisted artifacts when stored display text is dirty
 - recall/compare/structured outputs now render cleaned display text consistently
+
+- persisted snapshot/focus artifacts are now loaded raw for hygiene inspection and automatically rebuilt+written back when dirty (including previous-thread paths)

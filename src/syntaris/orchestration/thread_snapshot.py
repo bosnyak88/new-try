@@ -119,10 +119,16 @@ def build_thread_snapshot_pack(context: RuntimeContext, thread_id: int, mode: st
 def _snapshot_has_dirty_text(snapshot: ThreadSnapshotPack) -> bool:
     if clean_display_text(snapshot.snapshot_text) != snapshot.snapshot_text:
         return True
+    if any(marker in snapshot.snapshot_text for marker in ("Ã", "Å", "�")):
+        return True
     for line in snapshot.snapshot_lines:
         if clean_display_text(line.user_message) != line.user_message:
             return True
         if clean_display_text(line.assistant_reply) != line.assistant_reply:
+            return True
+        if any(marker in line.user_message for marker in ("Ã", "Å", "�")):
+            return True
+        if any(marker in line.assistant_reply for marker in ("Ã", "Å", "�")):
             return True
     return False
 

@@ -31,6 +31,23 @@ from syntaris.persistence.schema import SCHEMA_SQL, SCHEMA_VERSION
 from syntaris.orchestration.text_normalize import clean_display_text, normalize_text
 
 
+def _dirty_marker_count(text: str) -> int:
+    return text.count("Ã") + text.count("Å") + text.count("�")
+
+
+def _best_canonical_text(stored_text: str, raw_text: str | None) -> str:
+    stored_canonical = normalize_text(stored_text).canonical_text
+    if raw_text is None:
+        return stored_canonical
+
+    raw_canonical = normalize_text(raw_text).canonical_text
+    stored_score = _dirty_marker_count(stored_canonical)
+    raw_score = _dirty_marker_count(raw_canonical)
+    if raw_score < stored_score:
+        return raw_canonical
+    return stored_canonical
+
+
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -433,8 +450,18 @@ class PersistenceStore:
                 ThreadContextTurn(
                     turn_id=int(row["turn_id"]),
                     turn_index=int(row["turn_index"]),
-                    user_message=clean_display_text(str(row["user_message"])),
-                    assistant_reply=clean_display_text(str(row["assistant_reply"])),
+                    user_message=clean_display_text(
+                        _best_canonical_text(
+                            stored_text=str(row["user_message"]),
+                            raw_text=str(row["user_message_raw"]) if row["user_message_raw"] is not None else None,
+                        )
+                    ),
+                    assistant_reply=clean_display_text(
+                        _best_canonical_text(
+                            stored_text=str(row["assistant_reply"]),
+                            raw_text=str(row["assistant_reply_raw"]) if row["assistant_reply_raw"] is not None else None,
+                        )
+                    ),
                     backend=str(row["reply_backend"]),
                     degraded=bool(row["degraded"]),
                 )
@@ -541,8 +568,8 @@ class PersistenceStore:
                 ThreadSnapshotLine(
                     turn_id=int(item["turn_id"]),
                     turn_index=int(item["turn_index"]),
-                    user_message=clean_display_text(str(item["user_message"])),
-                    assistant_reply=clean_display_text(str(item["assistant_reply"])),
+                    user_message=str(item["user_message"]),
+                    assistant_reply=str(item["assistant_reply"]),
                 )
                 for item in line_data
             ]
@@ -562,7 +589,7 @@ class PersistenceStore:
                     filtered_control_turn_count=int(row["filtered_control_turn_count"]),
                 ),
                 snapshot_lines=lines,
-                snapshot_text=clean_display_text(str(row["snapshot_text"])),
+                snapshot_text=str(row["snapshot_text"]),
                 previous_thread_id=int(row["previous_thread_id"]) if row["previous_thread_id"] is not None else None,
                 previous_thread_key=str(row["previous_thread_key"]) if row["previous_thread_key"] is not None else None,
             )
@@ -616,7 +643,7 @@ class PersistenceStore:
             if row is None:
                 return None
             line_data = json.loads(str(row["focus_lines_json"]))
-            lines = [FocusLine(key=str(item["key"]), text=clean_display_text(str(item["text"]))) for item in line_data]
+            lines = [FocusLine(key=str(item["key"]), text=str(item["text"])) for item in line_data]
             return ThreadFocusPack(
                 session_id=int(row["session_id"]),
                 thread_id=int(row["thread_id"]),
@@ -811,8 +838,18 @@ class PersistenceStore:
                 thread_key=str(turn_row["thread_key"]),
                 mode=str(turn_row["mode"]),
                 turn_index=int(turn_row["turn_index"]),
-                user_message=clean_display_text(str(turn_row["user_message"])),
-                assistant_reply=clean_display_text(str(turn_row["assistant_reply"])),
+                user_message=clean_display_text(
+                    _best_canonical_text(
+                        stored_text=str(turn_row["user_message"]),
+                        raw_text=str(turn_row["user_message_raw"]) if "user_message_raw" in turn_row.keys() and turn_row["user_message_raw"] is not None else None,
+                    )
+                ),
+                assistant_reply=clean_display_text(
+                    _best_canonical_text(
+                        stored_text=str(turn_row["assistant_reply"]),
+                        raw_text=str(turn_row["assistant_reply_raw"]) if "assistant_reply_raw" in turn_row.keys() and turn_row["assistant_reply_raw"] is not None else None,
+                    )
+                ),
                 reply_backend=str(turn_row["reply_backend"]),
                 degraded=bool(turn_row["degraded"]),
                 created_at=datetime.fromisoformat(str(turn_row["created_at"])),

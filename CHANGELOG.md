@@ -144,3 +144,5 @@
 - REBUILD-015: introduced shared canonical text normalization + mojibake repair policy and propagated it across talk/reasoning/persistence/derived artifacts/trace rendering.
 - Added migration-safe raw text preservation columns in `turns` while persisting canonical text for runtime use.
 - Added hygiene refresh behavior and regression tests for snapshot/focus/recall/compare quality.
+
+- REBUILD-015 follow-up: fixed previous-thread legacy snapshot/focus pollution by loading persisted artifacts raw for hygiene checks and forcing rebuild/writeback when dirty, including previous recall paths.

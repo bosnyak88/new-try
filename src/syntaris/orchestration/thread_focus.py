@@ -93,6 +93,8 @@ def _focus_has_dirty_text(focus: ThreadFocusPack) -> bool:
     for line in focus.focus_lines:
         if clean_display_text(line.text) != line.text:
             return True
+        if any(marker in line.text for marker in ("Ã", "Å", "�")):
+            return True
     return False
 
 def refresh_thread_focus(context: RuntimeContext, thread_id: int, mode: str, limit: int | None = None, reason: str = "manual_refresh") -> FocusUpdateResult | None:

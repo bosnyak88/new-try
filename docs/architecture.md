@@ -127,3 +127,5 @@ REBUILD-014 normalization hardening now preprocesses turn text early in shared t
 ## REBUILD-015 text hygiene propagation
 
 The architecture now separates **raw text preservation** from **canonical/display text**. Normalization is centralized in `orchestration/text_normalize.py` and reused by orchestration, persistence, snapshot/focus, rendering, and trace formatting to prevent layer-local drift.
+
+REBUILD-015 follow-up: persisted derived artifacts are read without pre-clean masking so hygiene checks can trigger real snapshot/focus rebuild+writeback (not detect-only), including previous-thread retrieval paths.
