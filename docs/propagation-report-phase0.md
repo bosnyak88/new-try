@@ -105,3 +105,5 @@ REBUILD-013 adds shared deterministic comparison-pack and answer-strategy orches
 - Trace: added objective/decomposition/evidence/synthesis events.
 - Config/example + loader: added bounded reasoning/evidence controls.
 - Tests: added deterministic objective/synthesis coverage and trace metadata assertions.
+
+- REBUILD-014 follow-up: added shared preprocessing normalization in turn execution before interpretation/deliberation/objective/decomposition, plus mojibake regression tests at CLI/unit level.

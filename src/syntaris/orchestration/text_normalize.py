@@ -58,3 +58,8 @@ def normalize_hungarian_for_match(text: str) -> str:
     )
     cleaned = folded.replace("?", " ").replace("!", " ").replace(".", " ")
     return " ".join(cleaned.split())
+
+
+def preprocess_turn_message(text: str) -> str:
+    """Best-effort runtime preprocessing preserving semantics for orchestration stages."""
+    return _repair_common_mojibake(text.strip())

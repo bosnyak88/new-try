@@ -121,3 +121,5 @@ Turn orchestration now contains explicit modules between answer-strategy and res
 
 `response_plan` remains a consumer of these artifacts; it does not recompute decomposition/synthesis decisions.
 This preserves contract boundaries and avoids a monolithic central turn-brain file.
+
+REBUILD-014 normalization hardening now preprocesses turn text early in shared turn orchestration before interpretation/deliberation/objective framing so explicit recall/compare intents remain deterministic even under diacritic/mojibake degradation.

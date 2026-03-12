@@ -127,3 +127,5 @@ Use `trace-last` after `talk` turns to inspect high-level reasoning metadata:
 - `synthesis_plan_built`
 
 Events intentionally avoid hidden chain-of-thought and expose only safe summary-level structure.
+
+Note: REBUILD-014 recall/compare intent matching is now preprocessing-hardened (diacritic/mojibake repair) in the shared turn path; `trace-last` should align with visible recall/structured compare output for explicit phrases.

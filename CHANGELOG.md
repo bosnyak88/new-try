@@ -11,6 +11,7 @@
 
 ## Unreleased
 
+- REBUILD-014 fix: centralized early turn-message preprocessing in shared orchestration so explicit recall/compare intents are interpreted consistently before strategy selection.
 - REBUILD-014 fix: added shared mojibake/diacritic-safe Hungarian text normalization so explicit previous-thread recall and compare intents are recognized before ordinary/direct fallback.
 - REBUILD-014 fix: hardened Hungarian normalization/phrase coverage for explicit previous-thread recall and explicit compare phrasing so these intents no longer fall through to ordinary direct answers.
 - REBUILD-014 fix: response-plan now consumes synthesis sections for target direct-strategy intents (support-check/diagnose+next-step/compare), preventing generic `Rendben.` replies and preserving meaningful previous-thread recall behavior.
@@ -127,6 +128,7 @@
 
 ## Unreleased
 
+- REBUILD-014 fix: centralized early turn-message preprocessing in shared orchestration so explicit recall/compare intents are interpreted consistently before strategy selection.
 - REBUILD-014 fix: added shared mojibake/diacritic-safe Hungarian text normalization so explicit previous-thread recall and compare intents are recognized before ordinary/direct fallback.
 - REBUILD-014 fix: hardened Hungarian normalization/phrase coverage for explicit previous-thread recall and explicit compare phrasing so these intents no longer fall through to ordinary direct answers.
 - REBUILD-014 fix: response-plan now consumes synthesis sections for target direct-strategy intents (support-check/diagnose+next-step/compare), preventing generic `Rendben.` replies and preserving meaningful previous-thread recall behavior.

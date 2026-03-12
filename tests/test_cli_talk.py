@@ -869,3 +869,31 @@ def test_cli_compare_trace_is_not_direct_fallback(tmp_path, monkeypatch, capsys)
     payload_by_event = {event["event_name"]: event["payload"] for event in trace["trace_events"]}
     assert '"selected_strategy": "structured_answer"' in payload_by_event["answer_strategy_selected"]
     assert '"kind": "structured"' in payload_by_event["response_plan_built"]
+
+
+def test_cli_previous_recall_and_compare_mojibake_forms(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "új szál: work"])
+    cli.main()
+    capsys.readouterr()
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "vissza a default szálra"])
+    cli.main()
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "az elÅzÅ szÃ¡lon mi volt?"])
+    cli.main()
+    recall = json.loads(capsys.readouterr().out)
+    assert recall["reply"].strip() != "Rendben."
+    assert recall["kind"] == "recall"
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "hasonlÃ­tsd Ã¶ssze a mostanit az elÅzÅ szÃ¡llal"])
+    cli.main()
+    compare = json.loads(capsys.readouterr().out)
+    assert compare["reply"].strip() != "Rendben."
+    assert compare["kind"] == "structured"
+    assert "Mostani szál:" in compare["reply"]
+    assert "Előző szál:" in compare["reply"]

@@ -44,6 +44,7 @@ from syntaris.orchestration.objective_frame import frame_objective
 from syntaris.orchestration.question_decompose import build_decomposition_plan
 from syntaris.orchestration.evidence_pack import build_evidence_pack
 from syntaris.orchestration.answer_synthesis import build_synthesis_plan
+from syntaris.orchestration.text_normalize import preprocess_turn_message
 from syntaris.orchestration.response_plan import build_response_plan
 from syntaris.orchestration.routing import resolve_route_decision
 from syntaris.persistence import PersistenceStore
@@ -289,27 +290,28 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     )
 
     execution_message = resolved.execution_message
-    interpretation = interpret_turn(execution_message)
+    normalized_message = preprocess_turn_message(execution_message)
+    interpretation = interpret_turn(normalized_message)
     recall_resolution = resolve_recall_request(context, interpretation)
     focus_view = build_thread_focus_view(
         context,
         ThreadFocusRequest(target=FocusTarget.CURRENT, source=f"{source}:turn"),
     )
     if context.config.conversation.followup_resolution_enabled:
-        lower_message = execution_message.strip().lower()
+        lower_message = normalized_message.strip().lower()
         followup_only_cue = any(phrase in lower_message for phrase in {"erről", "ebből", "abból"})
         structured_cue = any(phrase in lower_message for phrase in {"lényeg", "következő", "biztos", "feltételezés", "fő probléma", "hasonlítsd össze"})
         if focus_view.found and focus_view.focus is not None and bool(focus_view.focus.focus_lines):
-            followup_resolution = resolve_followup_reference(execution_message, focus_view.focus)
+            followup_resolution = resolve_followup_reference(normalized_message, focus_view.focus)
         elif followup_only_cue and not structured_cue:
-            followup_resolution = resolve_followup_reference(execution_message, None)
+            followup_resolution = resolve_followup_reference(normalized_message, None)
         else:
             followup_resolution = resolve_followup_reference("", None)
     else:
         followup_resolution = resolve_followup_reference("", None)
 
     deliberation_input = assemble_deliberation_input(
-        message=execution_message,
+        message=normalized_message,
         interpretation=interpretation,
         recall=recall_resolution,
         followup=followup_resolution,
@@ -318,8 +320,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     )
     comparison_pack = build_comparison_pack(context, deliberation_input)
     strategy_selection = select_answer_strategy(context, comparison_pack)
-    objective = frame_objective(execution_message, strategy_selection)
-    decomposition = build_decomposition_plan(execution_message, objective)
+    objective = frame_objective(normalized_message, strategy_selection)
+    decomposition = build_decomposition_plan(normalized_message, objective)
     max_units = max(1, context.config.conversation.max_reasoning_units)
     decomposition = type(decomposition)(units=decomposition.units[:max_units], multi_part=decomposition.multi_part)
     current_summary: str | None = None
@@ -346,7 +348,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             previous_summary = f"#{prev_last.turn_index}: {prev_last.user_message}"
 
     evidence_pack = build_evidence_pack(
-        message=execution_message,
+        message=normalized_message,
         decomposition=decomposition,
         recall=recall_resolution,
         focus=focus_view.focus if focus_view.found else None,
