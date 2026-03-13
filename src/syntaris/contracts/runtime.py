@@ -702,6 +702,8 @@ class WorkframeTrace:
     blocker_text: str | None
     next_step_status: str
     next_step_line_count: int
+    query_family: str | None = None
+    uncertainty_marked: bool = False
 
 class ObjectiveKind(str, Enum):
     EXPLAIN = "explain"

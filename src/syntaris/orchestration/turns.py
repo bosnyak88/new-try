@@ -347,6 +347,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     )
     semantic_turns = semantic_context.recent_turns if semantic_context is not None else context_load.pack.recent_turns
     workframe_state = derive_workframe_state(semantic_turns, normalized_message)
+    historical_workframe_state = derive_workframe_state(semantic_turns, "")
     workframe_queries = detect_query_signals(normalized_message)
     workframe_updates = detect_update_signals(normalized_message)
     decomposition = build_decomposition_plan(normalized_message, objective)
@@ -415,6 +416,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         workframe_state=workframe_state,
         workframe_queries=workframe_queries,
         workframe_updates=workframe_updates,
+        historical_workframe_state=historical_workframe_state,
     )
 
     recap_trace = RecapTrace(recognized=False)
@@ -539,6 +541,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         blocker_text=workframe_state.blocker_text,
         next_step_status=workframe_state.next_step_status.value,
         next_step_line_count=len(workframe_state.next_step_lines),
+        query_family=workframe_queries.family,
+        uncertainty_marked=workframe_updates.uncertainty_marked,
     )
 
     if response_plan.kind.value in {"recall", "resume", "clarification"} or any(section.lines for section in response_plan.sections):

@@ -220,6 +220,8 @@ def build_turn_trace_events(
                     "blocker_text": clean_display_text(workframe_trace.blocker_text) if workframe_trace.blocker_text else None,
                     "next_step_status": workframe_trace.next_step_status,
                     "next_step_line_count": workframe_trace.next_step_line_count,
+                    "query_family": workframe_trace.query_family,
+                    "uncertainty_marked": workframe_trace.uncertainty_marked,
                 },
             }
         )
