@@ -213,7 +213,10 @@ def _claim_capture_lines(interpretation: TurnInterpretation) -> list[str]:
     if ClaimKind.CURRENT_FOCUS in by_kind:
         return [f"Rögzítettem a mostani fókuszt: {clean_display_text(by_kind[ClaimKind.CURRENT_FOCUS])}."]
     if ClaimKind.CURRENT_DIRECTION in by_kind:
-        return [f"Rögzítettem a mostani irányt: {clean_display_text(by_kind[ClaimKind.CURRENT_DIRECTION])}."]
+        direction_value = by_kind[ClaimKind.CURRENT_DIRECTION]
+        if direction_value.startswith("állapot:"):
+            return [f"Jelezted az ideiglenes állapotodat, ezt most így kezelem: {clean_display_text(direction_value)}."]
+        return [f"Rögzítettem a mostani irányt: {clean_display_text(direction_value)}."]
 
     return ["Rögzítettem az explicit állításodat."]
 
@@ -233,6 +236,7 @@ def build_response_plan(
     owner_identity: OwnerIdentityProfile | None = None,
     personal_memory: PersonalMemoryView | None = None,
     time_context: TimeContext | None = None,
+    has_previous_thread: bool = False,
 ) -> ResponsePlan:
     if interpretation.memory_query is not None and personal_memory is not None:
         return ResponsePlan(
@@ -256,6 +260,13 @@ def build_response_plan(
         return ResponsePlan(
             kind=ResponsePlanKind.ORDINARY,
             sections=[ResponsePlanSection(title="claim_capture", lines=_claim_capture_lines(interpretation))],
+            focus_used=focus is not None,
+        )
+
+    if interpretation.kind.value == "compare_previous" and not has_previous_thread:
+        return ResponsePlan(
+            kind=ResponsePlanKind.CLARIFICATION,
+            sections=[ResponsePlanSection(title="compare_previous_missing", lines=["Még nincs előző szál, ezért nem tudok megalapozott összehasonlítást adni."])],
             focus_used=focus is not None,
         )
 

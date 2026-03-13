@@ -207,3 +207,29 @@ def test_casual_state_sentence_does_not_override_owner_name(tmp_path):
     result = talk_once(runtime, TalkRequest(message="ki vagyok?"))
     assert "Árpi" in result.turn.assistant_reply
     assert "Fáradt" not in result.turn.assistant_reply
+
+
+def test_temporary_state_sentence_is_handled_as_temporary_state(tmp_path):
+    runtime = _runtime(tmp_path)
+    intake = talk_once(runtime, TalkRequest(message="most fáradt vagyok"))
+    assert "ideiglenes" in intake.turn.assistant_reply.lower() or "állapot" in intake.turn.assistant_reply.lower()
+
+    split = talk_once(runtime, TalkRequest(message="ebből mi ideiglenes és mi biztos?"))
+    lower = split.turn.assistant_reply.lower()
+    assert "ideiglenes" in lower
+    assert "fáradt" in lower or "faradt" in lower
+
+
+def test_previous_thread_recall_without_previous_is_explicit(tmp_path):
+    runtime = _runtime(tmp_path)
+    result = talk_once(runtime, TalkRequest(message="az előző szálon mi volt?"))
+    lower = result.turn.assistant_reply.lower()
+    assert "nincs" in lower and "előző szál" in lower
+    assert result.turn.assistant_reply.strip().lower() != "rendben."
+
+
+def test_compare_without_previous_thread_is_explicitly_unavailable(tmp_path):
+    runtime = _runtime(tmp_path)
+    result = talk_once(runtime, TalkRequest(message="hasonlítsd össze a mostanit az előző szállal"))
+    lower = result.turn.assistant_reply.lower()
+    assert "nincs előző szál" in lower or "nem tudok megalapozott összehasonlítást" in lower

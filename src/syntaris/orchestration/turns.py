@@ -400,6 +400,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         owner_identity=owner_identity,
         personal_memory=personal_memory,
         time_context=time_context,
+        has_previous_thread=resolved.state_after.previous_thread_id is not None,
     )
 
     recap_trace = RecapTrace(recognized=False)
