@@ -27,6 +27,10 @@ from syntaris.contracts.runtime import (
     TraceEventRecord,
     TurnResult,
     OwnerIdentityProfile,
+    PersonalMemoryView,
+    ClaimCapture,
+    ClaimScope,
+    ClaimKind,
 )
 from syntaris.persistence.schema import SCHEMA_SQL, SCHEMA_VERSION
 from syntaris.orchestration.text_normalize import clean_display_text, normalize_text
@@ -184,6 +188,29 @@ class PersistenceStore:
         if snapshot_cols and "thread_key" not in snapshot_cols:
             conn.execute("ALTER TABLE thread_snapshots ADD COLUMN thread_key TEXT")
 
+
+        claims_exists = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='personal_claims'").fetchone()
+        if claims_exists is None:
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS personal_claims (
+                    claim_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_id INTEGER NOT NULL,
+                    thread_id INTEGER,
+                    claim_kind TEXT NOT NULL,
+                    claim_scope TEXT NOT NULL,
+                    claim_value TEXT NOT NULL,
+                    source_turn_id INTEGER NOT NULL,
+                    active INTEGER NOT NULL DEFAULT 1,
+                    created_at TEXT NOT NULL,
+                    superseded_at TEXT,
+                    FOREIGN KEY(session_id) REFERENCES sessions(session_id),
+                    FOREIGN KEY(thread_id) REFERENCES threads(thread_id),
+                    FOREIGN KEY(source_turn_id) REFERENCES turns(turn_id)
+                )
+                """
+            )
+
         focus_exists = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='thread_focus'").fetchone()
         if focus_exists is None:
             conn.execute(
@@ -322,31 +349,100 @@ class PersistenceStore:
             conn.execute("DELETE FROM app_meta WHERE key = ?", ("pending_route",))
             conn.commit()
 
-    def get_owner_identity(self) -> OwnerIdentityProfile:
+    def get_personal_memory(self, session_id: int, thread_id: int) -> PersonalMemoryView:
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
-            rows = conn.execute(
-                "SELECT key, value FROM app_meta WHERE key IN ('owner_name', 'owner_relation')"
+            stable_rows = conn.execute(
+                """
+                SELECT claim_kind, claim_value
+                FROM personal_claims
+                WHERE session_id = ? AND claim_scope = 'stable' AND active = 1
+                """,
+                (session_id,),
             ).fetchall()
-        values = {str(row["key"]): str(row["value"]) for row in rows}
-        return OwnerIdentityProfile(
-            owner_name=values.get("owner_name"),
-            owner_relation=values.get("owner_relation"),
+            thread_rows = conn.execute(
+                """
+                SELECT claim_kind, claim_value
+                FROM personal_claims
+                WHERE session_id = ? AND thread_id = ? AND claim_scope = 'thread' AND active = 1
+                """,
+                (session_id, thread_id),
+            ).fetchall()
+
+        stable = {str(r["claim_kind"]): str(r["claim_value"]) for r in stable_rows}
+        scoped = {str(r["claim_kind"]): str(r["claim_value"]) for r in thread_rows}
+        return PersonalMemoryView(
+            owner_name=stable.get("owner_name"),
+            owner_relation=stable.get("owner_relation"),
+            system_role=stable.get("system_role"),
+            current_focus=scoped.get("current_focus"),
+            current_direction=scoped.get("current_direction"),
         )
 
-    def set_owner_identity(self, owner_name: str | None = None, owner_relation: str | None = None) -> OwnerIdentityProfile:
+    def capture_claims(self, session_id: int, thread_id: int, source_turn_id: int, captures: list[ClaimCapture]) -> None:
+        if not captures:
+            return
+        created_at = utc_now().isoformat()
         with sqlite3.connect(self.db_path) as conn:
-            if owner_name:
+            for item in captures:
                 conn.execute(
-                    "INSERT OR REPLACE INTO app_meta(key, value) VALUES(?, ?)",
-                    ("owner_name", owner_name),
+                    """
+                    UPDATE personal_claims
+                    SET active = 0, superseded_at = ?
+                    WHERE session_id = ? AND claim_kind = ? AND claim_scope = ? AND active = 1
+                    """,
+                    (created_at, session_id, item.kind.value, item.scope.value),
                 )
-            if owner_relation:
                 conn.execute(
-                    "INSERT OR REPLACE INTO app_meta(key, value) VALUES(?, ?)",
-                    ("owner_relation", owner_relation),
+                    """
+                    INSERT INTO personal_claims(
+                        session_id, thread_id, claim_kind, claim_scope, claim_value, source_turn_id, active, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+                    """,
+                    (
+                        session_id,
+                        thread_id if item.scope == ClaimScope.THREAD else None,
+                        item.kind.value,
+                        item.scope.value,
+                        clean_display_text(item.value),
+                        source_turn_id,
+                        created_at,
+                    ),
                 )
             conn.commit()
+
+    def get_owner_identity(self) -> OwnerIdentityProfile:
+        state = self.get_active_state()
+        if state is None:
+            return OwnerIdentityProfile()
+        memory = self.get_personal_memory(session_id=state.session_id, thread_id=state.thread_id)
+        return OwnerIdentityProfile(
+            owner_name=memory.owner_name,
+            owner_relation=memory.owner_relation,
+            system_role=memory.system_role,
+        )
+
+    def set_owner_identity(self, owner_name: str | None = None, owner_relation: str | None = None, system_role: str | None = None) -> OwnerIdentityProfile:
+        state = self.get_active_state()
+        if state is None:
+            return OwnerIdentityProfile()
+        captures: list[ClaimCapture] = []
+        if owner_name:
+            captures.append(ClaimCapture(kind=ClaimKind.OWNER_NAME, value=owner_name, scope=ClaimScope.STABLE))
+        if owner_relation:
+            captures.append(ClaimCapture(kind=ClaimKind.OWNER_RELATION, value=owner_relation, scope=ClaimScope.STABLE))
+        if system_role:
+            captures.append(ClaimCapture(kind=ClaimKind.SYSTEM_ROLE, value=system_role, scope=ClaimScope.STABLE))
+        if captures:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                row = conn.execute(
+                    "SELECT MAX(turn_id) AS turn_id FROM turns WHERE session_id = ?",
+                    (state.session_id,),
+                ).fetchone()
+                source_turn_id = int(row["turn_id"]) if row is not None and row["turn_id"] is not None else 0
+            if source_turn_id > 0:
+                self.capture_claims(state.session_id, state.thread_id, source_turn_id, captures)
         return self.get_owner_identity()
 
     def get_session_status_view(self, default_thread_key: str, default_mode: str) -> SessionStatusView:

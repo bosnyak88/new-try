@@ -9,6 +9,8 @@ from syntaris.contracts.runtime import (
     EvidencePack,
     ObjectiveFrame,
     OwnerIdentityProfile,
+    PersonalMemoryView,
+    MemoryQueryKind,
     PersonalEntryKind,
     RecallResolution,
     ResponsePlan,
@@ -92,6 +94,41 @@ def _personal_entry_lines(signal: PersonalEntryKind, display_name: str, focus: s
     return ["Rendben, visszakapcsoltam ide. Folytassuk innen — most beszélgessünk, vagy oldjunk meg egy konkrét feladatot?"]
 
 
+def _memory_query_lines(query: MemoryQueryKind, memory: PersonalMemoryView) -> list[str]:
+    if query == MemoryQueryKind.WHO_AM_I:
+        if memory.owner_name:
+            return [f"A megadott adataid alapján {memory.owner_name} vagy."]
+        return ["Ezt még nem tudom biztosan, mert nem mondtad ki egyértelműen a neved."]
+    if query == MemoryQueryKind.RELATIONSHIP:
+        if memory.owner_relation == "creator":
+            return ["Amit biztosan tudok: te tervezed/építed ezt a rendszert, én pedig a személyes társ-rendszeredként segítek."]
+        return ["A kapcsolatunkról még csak annyit tudok biztosan, amit explicit mondtál — ezt még nem rögzítettük."]
+    if query == MemoryQueryKind.SYSTEM_ROLE:
+        if memory.system_role:
+            return [f"A kimondott szerepem: {memory.system_role}."]
+        return ["A szerepemről még nincs egyértelmű, explicit állításod eltárolva."]
+    if query == MemoryQueryKind.CURRENT_FOCUS:
+        if memory.current_focus:
+            return [f"A mostani fókusznak ezt mondtad: {clean_display_text(memory.current_focus)}."]
+        if memory.current_direction:
+            return [f"Most erre az irányra álltunk: {clean_display_text(memory.current_direction)}."]
+        return ["Mostani fókuszt még nem állítottál be explicit módon."]
+
+    lines: list[str] = []
+    if memory.owner_name:
+        lines.append(f"• Név (explicit): {memory.owner_name}")
+    if memory.owner_relation:
+        relation = "creator" if memory.owner_relation == "creator" else memory.owner_relation
+        lines.append(f"• Kapcsolat (explicit): {relation}")
+    if memory.system_role:
+        lines.append(f"• Szerep (explicit): {memory.system_role}")
+    if memory.current_focus:
+        lines.append(f"• Mostani fókusz (szál-szintű): {clean_display_text(memory.current_focus)}")
+    elif memory.current_direction:
+        lines.append(f"• Mostani irány (szál-szintű): {clean_display_text(memory.current_direction)}")
+    return lines or ["Még nincs olyan explicit állításod eltárolva, amit biztos tényként vissza tudok mondani."]
+
+
 def build_response_plan(
     context: RuntimeContext,
     interpretation: TurnInterpretation,
@@ -105,8 +142,16 @@ def build_response_plan(
     focus: ThreadFocusPack | None = None,
     followup_target: str | None = None,
     owner_identity: OwnerIdentityProfile | None = None,
+    personal_memory: PersonalMemoryView | None = None,
     time_context: TimeContext | None = None,
 ) -> ResponsePlan:
+    if interpretation.memory_query is not None and personal_memory is not None:
+        return ResponsePlan(
+            kind=ResponsePlanKind.STRUCTURED,
+            sections=[ResponsePlanSection(title="explicit_memory", lines=_memory_query_lines(interpretation.memory_query, personal_memory))],
+            focus_used=focus is not None,
+        )
+
     if interpretation.kind.value == "personal_entry" and interpretation.personal_entry is not None:
         signal = interpretation.personal_entry
         name = signal.owner_name or (owner_identity.owner_name if owner_identity is not None else None)

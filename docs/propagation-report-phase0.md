@@ -155,3 +155,7 @@ Guardrails kept:
 - Visszatérésnél a válaszok csak perzisztált turn-időbélyeg + aktuális helyi idő alapján jeleznek gap-et (nincs megfigyelés- vagy fake-memory állítás).
 - Relatív időkifejezések (`most`, `ma`, `tegnap`, `holnap`, `majd`) determinisztikusan kerülnek groundingra és trace-ben láthatók.
 - Scope-határ: ez még nem reminder/executor/rutin-tanulás.
+
+
+## REBUILD-019 propagation
+Reviewed and updated contracts, interpretation, persistence schema/store, response planning, trace, CLI-validated behavior, docs, and regression tests for controlled explicit personal memory.

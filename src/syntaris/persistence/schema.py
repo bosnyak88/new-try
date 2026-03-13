@@ -1,4 +1,4 @@
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS app_meta (
@@ -78,6 +78,22 @@ CREATE TABLE IF NOT EXISTS thread_focus (
     focus_lines_json TEXT NOT NULL,
     FOREIGN KEY(session_id) REFERENCES sessions(session_id),
     FOREIGN KEY(thread_id) REFERENCES threads(thread_id)
+);
+
+CREATE TABLE IF NOT EXISTS personal_claims (
+    claim_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id INTEGER NOT NULL,
+    thread_id INTEGER,
+    claim_kind TEXT NOT NULL,
+    claim_scope TEXT NOT NULL,
+    claim_value TEXT NOT NULL,
+    source_turn_id INTEGER NOT NULL,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL,
+    superseded_at TEXT,
+    FOREIGN KEY(session_id) REFERENCES sessions(session_id),
+    FOREIGN KEY(thread_id) REFERENCES threads(thread_id),
+    FOREIGN KEY(source_turn_id) REFERENCES turns(turn_id)
 );
 
 CREATE TABLE IF NOT EXISTS trace_events (

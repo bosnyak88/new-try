@@ -1,5 +1,5 @@
 from syntaris.orchestration.text_normalize import clean_display_text
-from syntaris.contracts.runtime import ActiveConversationState, AnswerStrategyTrace, ComparisonPackTrace, ContextLoadResult, DecompositionTrace, EvidencePackTrace, FollowupTrace, ObjectiveFrameTrace, RecapTrace, RecallTrace, ResponsePlanTrace, RouteDecision, RuntimeContext, SnapshotTrace, SynthesisTrace, ThreadFocusTrace, TurnInterpretTrace, TurnResult
+from syntaris.contracts.runtime import ActiveConversationState, AnswerStrategyTrace, ClaimCaptureTrace, ComparisonPackTrace, ContextLoadResult, DecompositionTrace, EvidencePackTrace, FollowupTrace, ObjectiveFrameTrace, RecapTrace, RecallTrace, ResponsePlanTrace, RouteDecision, RuntimeContext, SnapshotTrace, SynthesisTrace, ThreadFocusTrace, TurnInterpretTrace, TurnResult
 
 
 def build_boot_trace(context: RuntimeContext) -> dict[str, str | bool]:
@@ -31,6 +31,7 @@ def build_turn_trace_events(
     decomposition_trace: DecompositionTrace | None = None,
     evidence_trace: EvidencePackTrace | None = None,
     synthesis_trace: SynthesisTrace | None = None,
+    claim_capture_trace: ClaimCaptureTrace | None = None,
 ) -> list[dict[str, object]]:
     events = [
         {
@@ -109,6 +110,8 @@ def build_turn_trace_events(
                     "owner_relation": interpret_trace.owner_relation,
                     "declared_focus": interpret_trace.declared_focus,
                     "declared_direction": interpret_trace.declared_direction,
+                    "memory_query": interpret_trace.memory_query,
+                    "claim_capture_count": interpret_trace.claim_capture_count,
                     "relative_time_terms": interpret_trace.relative_time_terms,
                 },
             }
@@ -201,6 +204,17 @@ def build_turn_trace_events(
             }
         )
 
+
+    if claim_capture_trace is not None and claim_capture_trace.captured:
+        events.append(
+            {
+                "event_name": "explicit_claims_captured",
+                "payload": {
+                    "captured": claim_capture_trace.captured,
+                    "items": claim_capture_trace.items,
+                },
+            }
+        )
 
     if comparison_trace is not None and comparison_trace.built:
         events.append(

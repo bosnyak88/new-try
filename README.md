@@ -180,3 +180,10 @@ This is intentionally not a full long-term profile graph; only explicitly stated
 - Visszatérésnél a válaszok csak perzisztált turn-időbélyeg + aktuális helyi idő alapján jeleznek gap-et (nincs megfigyelés- vagy fake-memory állítás).
 - Relatív időkifejezések (`most`, `ma`, `tegnap`, `holnap`, `majd`) determinisztikusan kerülnek groundingra és trace-ben láthatók.
 - Scope-határ: ez még nem reminder/executor/rutin-tanulás.
+
+
+## Controlled explicit personal memory (REBUILD-019)
+- Stable memory captures only explicit user claims (e.g. name, owner relation, explicit system role).
+- Session/thread-scoped declarations (e.g. current focus/direction) are stored separately from stable claims.
+- Answers to self-report questions are grounded only in explicit captured facts; no inferred profile expansion and no fake memory claims.
+- Corrections supersede older active values for the same claim kind/scope.

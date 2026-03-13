@@ -1,3 +1,9 @@
+## REBUILD-019
+- Added deterministic explicit personal-memory foundation with stable claims (name, owner relation, explicit system role) and thread-scoped declared state (focus/direction).
+- Added grounded memory-query answers in Hungarian ("ki vagyok?", "mit tudsz rólam biztosan?", "mi a kapcsolatunk?", "mi a szereped?", "mi a mostani fókusz?").
+- Added minimal correction/supersession path by replacing active claim values of the same kind/scope.
+- Added persistence table `personal_claims`, trace event `explicit_claims_captured`, and regression coverage for memory capture/query/correction.
+
 ## REBUILD-018 — deterministic time-awareness / session continuity foundation
 
 - Follow-up zárás: timezone/bootstrap függőségi rés lezárva (`tzdata` deklarált Windows-függőség), UTC útvonal `timezone.utc`-re keményítve, dokumentáció és tesztek igazítva.

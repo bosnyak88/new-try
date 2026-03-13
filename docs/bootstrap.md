@@ -121,3 +121,6 @@ REBUILD-017 note: intake bridge and explicit teach-mode use existing schema; onl
 - Visszatérésnél a válaszok csak perzisztált turn-időbélyeg + aktuális helyi idő alapján jeleznek gap-et (nincs megfigyelés- vagy fake-memory állítás).
 - Relatív időkifejezések (`most`, `ma`, `tegnap`, `holnap`, `majd`) determinisztikusan kerülnek groundingra és trace-ben láthatók.
 - Scope-határ: ez még nem reminder/executor/rutin-tanulás.
+
+
+REBUILD-019 extends DB bootstrap with the `personal_claims` table for explicit deterministic claim persistence.
