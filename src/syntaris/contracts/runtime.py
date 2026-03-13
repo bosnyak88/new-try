@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from typing import Protocol, runtime_checkable
+from zoneinfo import ZoneInfo
 
 
 class ModeKind(str, Enum):
@@ -55,6 +57,21 @@ class ConversationConfig:
 
 
 @dataclass(frozen=True)
+class TimeConfig:
+    timezone: str = "Europe/Budapest"
+
+
+@runtime_checkable
+class Clock(Protocol):
+    def now(self) -> datetime: ...
+
+
+class SystemClock:
+    def now(self) -> datetime:
+        return datetime.now(ZoneInfo("UTC"))
+
+
+@dataclass(frozen=True)
 class AppConfig:
     name: str
     environment: str
@@ -62,6 +79,7 @@ class AppConfig:
     paths: AppPaths
     reply: ReplyConfig
     conversation: ConversationConfig = field(default_factory=ConversationConfig)
+    time: TimeConfig = field(default_factory=TimeConfig)
     trace_enabled: bool = True
     trace_level: str = "info"
 
@@ -69,6 +87,7 @@ class AppConfig:
 @dataclass(frozen=True)
 class RuntimeContext:
     config: AppConfig
+    clock: Clock = field(default_factory=SystemClock)
 
 
 @dataclass(frozen=True)
@@ -378,6 +397,40 @@ class TurnInterpretation:
     recall_request: RecallRequest | None = None
     clarification_reason: str | None = None
     personal_entry: PersonalEntrySignal | None = None
+    relative_time_terms: list[str] = field(default_factory=list)
+
+
+class DaypartKind(str, Enum):
+    REGGEL = "reggel"
+    DELELOTT = "delelott"
+    DELUTAN = "delutan"
+    ESTE = "este"
+    EJJEL = "ejjel"
+
+
+class SessionGapKind(str, Enum):
+    IMMEDIATE = "immediate"
+    SHORT = "short"
+    SAME_DAY_LONG = "same_day_long"
+    CROSS_DAY = "cross_day"
+    UNKNOWN = "unknown"
+
+
+@dataclass(frozen=True)
+class RelativeTimeGrounding:
+    term: str
+    resolved_label: str
+
+
+@dataclass(frozen=True)
+class TimeContext:
+    timezone: str
+    now_local_iso: str
+    daypart: DaypartKind
+    gap_kind: SessionGapKind
+    gap_minutes: int | None = None
+    last_turn_local_iso: str | None = None
+    relative_grounding: list[RelativeTimeGrounding] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -695,6 +748,7 @@ class TurnInterpretTrace:
     owner_relation: str | None = None
     declared_focus: str | None = None
     declared_direction: str | None = None
+    relative_time_terms: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -733,6 +787,9 @@ class ResponsePlanTrace:
     section_count: int
     clarification_emitted: bool
     focus_used: bool = False
+    daypart: str | None = None
+    gap_kind: str | None = None
+    relative_grounding: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

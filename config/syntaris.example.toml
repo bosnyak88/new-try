@@ -57,3 +57,7 @@ level = "info"
 # Snapshot hygiene is line-level: any degraded line triggers deterministic rebuild/writeback from canonical turn text.
 
 # Snapshot recall quality includes anti-recursion flattening for recap-like assistant lines.
+
+
+[time]
+timezone = "Europe/Budapest"

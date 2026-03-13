@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 
 from syntaris.contracts.runtime import (
     ActiveConversationState,
@@ -46,6 +46,7 @@ from syntaris.orchestration.evidence_pack import build_evidence_pack
 from syntaris.orchestration.answer_synthesis import build_synthesis_plan
 from syntaris.orchestration.text_normalize import preprocess_turn_message
 from syntaris.orchestration.response_plan import build_response_plan
+from syntaris.orchestration.time_context import build_time_context
 from syntaris.orchestration.routing import resolve_route_decision
 from syntaris.persistence import PersistenceStore
 from syntaris.reply.adapters import ReplyOutput
@@ -185,7 +186,7 @@ def _resolve_route_and_state(
             reason=route.pending_proposal.reason,
             match_pattern=route.pending_proposal.match_pattern,
             source=source,
-            proposed_at=datetime.now(timezone.utc).isoformat(),
+            proposed_at=context.clock.now().isoformat(),
         )
         store.set_pending_route(proposal)
         state_after = store.get_active_state() or state
@@ -241,6 +242,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             filtered_control_turn_count=meta.filtered_control_turn_count,
         )
 
+    turn_created_at = context.clock.now()
+
     if resolved.execution_message is None:
         pending = resolved.state_after.pending_route
         assert pending is not None
@@ -254,6 +257,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             assistant_reply=assistant,
             reply_backend="deterministic",
             degraded=True,
+            created_at=turn_created_at,
         )
         context_load = load_execution_context_pack(
             context=context,
@@ -292,6 +296,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     execution_message = resolved.execution_message
     normalized_message = preprocess_turn_message(execution_message)
     interpretation = interpret_turn(normalized_message)
+    last_turn_at = store.read_last_turn_at(resolved.state_after.thread_id)
+    time_context = build_time_context(context, last_turn_at=last_turn_at, relative_terms=interpretation.relative_time_terms)
     owner_identity = store.get_owner_identity()
     if interpretation.personal_entry is not None:
         owner_identity = store.set_owner_identity(
@@ -387,6 +393,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         focus=focus_view.focus if focus_view.found else None,
         followup_target=followup_resolution.target_line,
         owner_identity=owner_identity,
+        time_context=time_context,
     )
 
     recap_trace = RecapTrace(recognized=False)
@@ -399,6 +406,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         owner_relation=interpretation.personal_entry.owner_relation if interpretation.personal_entry is not None else None,
         declared_focus=interpretation.personal_entry.declared_focus if interpretation.personal_entry is not None else None,
         declared_direction=interpretation.personal_entry.declared_direction if interpretation.personal_entry is not None else None,
+        relative_time_terms=interpretation.relative_time_terms,
     )
     recall_trace = RecallTrace(
         requested=interpretation.recall_request is not None,
@@ -416,6 +424,9 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         section_count=len(response_plan.sections),
         clarification_emitted=response_plan.kind.value == "clarification",
         focus_used=response_plan.focus_used,
+        daypart=time_context.daypart.value,
+        gap_kind=time_context.gap_kind.value,
+        relative_grounding=[f"{item.term}:{item.resolved_label}" for item in time_context.relative_grounding],
     )
     focus_trace = ThreadFocusTrace(
         loaded=focus_view.found and focus_view.focus is not None,
@@ -484,6 +495,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             assistant_reply=planned_text,
             reply_backend="deterministic",
             degraded=False,
+            created_at=turn_created_at,
         )
         events = build_turn_trace_events(
             state=resolved.state_after,
@@ -554,6 +566,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         assistant_reply=reply.text,
         reply_backend=reply.backend,
         degraded=reply.degraded,
+        created_at=turn_created_at,
     )
     events = build_turn_trace_events(
         state=resolved.state_after,

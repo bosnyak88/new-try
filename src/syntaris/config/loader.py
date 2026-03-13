@@ -3,7 +3,7 @@ from pathlib import Path
 
 import tomli
 
-from syntaris.contracts.runtime import AppConfig, AppPaths, ConversationConfig, LLMConfig, ReplyConfig
+from syntaris.contracts.runtime import AppConfig, AppPaths, ConversationConfig, LLMConfig, ReplyConfig, TimeConfig
 
 
 def _pick(value: str | None, fallback: str) -> str:
@@ -32,6 +32,7 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
     paths = raw.get("paths", {})
     reply = raw.get("reply", {})
     conversation = raw.get("conversation", {})
+    time = raw.get("time", {})
 
     llm_config = LLMConfig(
         server_bin_path=_pick(os.getenv("SYNTARIS_LLM_SERVER_BIN"), llm.get("server_bin_path", "")),
@@ -129,6 +130,10 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
         ),
     )
 
+    time_config = TimeConfig(
+        timezone=_pick(os.getenv("SYNTARIS_TIMEZONE"), time.get("timezone", "Europe/Budapest")),
+    )
+
     return AppConfig(
         name=app.get("name", "syntaris"),
         environment=os.getenv("SYNTARIS_ENV", app.get("environment", "development")),
@@ -136,6 +141,7 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
         paths=paths_config,
         reply=reply_config,
         conversation=conversation_config,
+        time=time_config,
         trace_enabled=trace.get("enabled", True),
         trace_level=trace.get("level", "info"),
     )

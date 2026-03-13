@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 from syntaris.contracts.runtime import (
     RuntimeContext,
@@ -104,7 +104,7 @@ def build_thread_snapshot_pack(context: RuntimeContext, thread_id: int, mode: st
         mode=context_pack.mode,
         turn_count=context_pack.turn_count,
         last_turn_id=context_pack.last_turn_id,
-        snapshot_built_at=datetime.now(timezone.utc),
+        snapshot_built_at=context.clock.now(),
         source_metadata=metadata,
         snapshot_lines=lines,
         snapshot_text="",

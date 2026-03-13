@@ -149,7 +149,7 @@ def test_personal_entry_simple_greeting_is_hungarian_and_non_fallback(tmp_path):
     result = talk_once(runtime, TalkRequest(message="szia"))
 
     assert result.turn.assistant_reply.strip() != "Rendben."
-    assert "Szia" in result.turn.assistant_reply
+    assert any(token in result.turn.assistant_reply for token in ["Szia", "Jó reggelt", "délelőtt", "délután", "Jó estét"])
     assert "miben" in result.turn.assistant_reply.lower()
 
 
@@ -169,7 +169,7 @@ def test_personal_entry_creator_framing_and_return_route_are_distinct(tmp_path):
     back = talk_once(runtime, TalkRequest(message="folytassuk innen"))
 
     assert "tervezed" in creator.turn.assistant_reply or "fejleszted" in creator.turn.assistant_reply
-    assert "visszakapcsoltam" in back.turn.assistant_reply
+    assert any(token in back.turn.assistant_reply.lower() for token in ["jó újra itt", "visszakapcsoltam"])
     assert creator.turn.assistant_reply != back.turn.assistant_reply
 
 

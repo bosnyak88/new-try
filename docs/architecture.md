@@ -147,3 +147,11 @@ A new deterministic interpretation path (`TurnInterpretationKind.PERSONAL_ENTRY`
 - trace includes personal-entry metadata through `turn_interpreted` payload fields (`personal_entry_kind`, owner fields, declared focus/direction when explicit)
 
 This layer does not infer broad profile traits and does not claim unstored long-term memory.
+
+
+## Determinisztikus időtudat (REBUILD-018)
+- A runtime közös, tesztelhető órát (`RuntimeContext.clock`) és explicit időzónát (`[time].timezone`) használ.
+- A rendszer daypart-érzékeny magyar köszönést ad (reggel/délelőtt/délután/este/éjjel).
+- Visszatérésnél a válaszok csak perzisztált turn-időbélyeg + aktuális helyi idő alapján jeleznek gap-et (nincs megfigyelés- vagy fake-memory állítás).
+- Relatív időkifejezések (`most`, `ma`, `tegnap`, `holnap`, `majd`) determinisztikusan kerülnek groundingra és trace-ben láthatók.
+- Scope-határ: ez még nem reminder/executor/rutin-tanulás.

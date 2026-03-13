@@ -70,12 +70,23 @@ def _extract_declared_focus(normalized: str) -> str | None:
     return None
 
 
+def _extract_relative_time_terms(normalized: str) -> list[str]:
+    terms: list[str] = []
+    for term in ("most", "ma", "tegnap", "holnap", "majd", "ma reggel", "ma delutan"):
+        if term in normalized:
+            mapped = "ma délután" if term == "ma delutan" else term
+            if mapped not in terms:
+                terms.append(mapped)
+    return terms
+
+
 def interpret_turn(message: str) -> TurnInterpretation:
     text = message.strip()
     raw_lower = text.lower()
     normalized = normalize_hungarian_for_match(text)
 
     owner_name = _extract_owner_name(text)
+    relative_terms = _extract_relative_time_terms(normalized)
     owner_framing = any(
         phrase in normalized
         for phrase in (
@@ -89,7 +100,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
         phrase in normalized
         for phrase in ("folytassuk innen", "vissza syntarisra", "vissza szintarisra")
     )
-    greeting = normalized in {"szia", "szia syntaris", "szia szintaris"} or normalized.startswith("szia syntaris ")
+    greeting = normalized in {"szia", "szia syntaris", "szia szintaris", "jo reggelt", "jo estet", "jo ejt", "szep jo reggelt"} or normalized.startswith("szia syntaris ")
 
     personal_chat_intake = any(phrase in normalized for phrase in ("ma beszelgetni szeretnek", "csak beszelgessunk", "ma inkabb csak dumalnek"))
     concrete_help_intake = any(
@@ -117,6 +128,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
                 owner_name=owner_name,
                 owner_relation="creator",
             ),
+            relative_time_terms=relative_terms,
         )
 
     if owner_name is not None and ("en " in normalized and " vagyok" in normalized):
@@ -124,6 +136,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
             kind=TurnInterpretationKind.PERSONAL_ENTRY,
             pattern_name="personal_entry_self_intro",
             personal_entry=PersonalEntrySignal(kind=PersonalEntryKind.SELF_INTRO, owner_name=owner_name),
+            relative_time_terms=relative_terms,
         )
 
     if declared_focus is not None or declared_direction is not None:
@@ -135,6 +148,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
                 declared_focus=declared_focus,
                 declared_direction=declared_direction,
             ),
+            relative_time_terms=relative_terms,
         )
 
     if personal_chat_intake:
@@ -142,6 +156,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
             kind=TurnInterpretationKind.PERSONAL_ENTRY,
             pattern_name="personal_entry_personal_chat_intake",
             personal_entry=PersonalEntrySignal(kind=PersonalEntryKind.PERSONAL_CHAT_INTAKE),
+            relative_time_terms=relative_terms,
         )
 
     if concrete_help_intake:
@@ -152,6 +167,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
                 kind=PersonalEntryKind.CONCRETE_HELP_INTAKE,
                 declared_direction="concrete_help",
             ),
+            relative_time_terms=relative_terms,
         )
 
     if resume_intake:
@@ -159,6 +175,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
             kind=TurnInterpretationKind.PERSONAL_ENTRY,
             pattern_name="personal_entry_resume_intake",
             personal_entry=PersonalEntrySignal(kind=PersonalEntryKind.RESUME_INTAKE),
+            relative_time_terms=relative_terms,
         )
 
     if return_entry:
@@ -166,6 +183,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
             kind=TurnInterpretationKind.PERSONAL_ENTRY,
             pattern_name="personal_entry_return",
             personal_entry=PersonalEntrySignal(kind=PersonalEntryKind.RETURN_ENTRY),
+            relative_time_terms=relative_terms,
         )
 
     if greeting:
@@ -173,6 +191,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
             kind=TurnInterpretationKind.PERSONAL_ENTRY,
             pattern_name="personal_entry_greeting",
             personal_entry=PersonalEntrySignal(kind=PersonalEntryKind.GREETING, owner_name=owner_name),
+            relative_time_terms=relative_terms,
         )
 
     if (
@@ -184,6 +203,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
             kind=TurnInterpretationKind.RECALL_PREVIOUS,
             pattern_name="recall_previous_normalized",
             recall_request=RecallRequest(target=RecallTargetKind.PREVIOUS),
+            relative_time_terms=relative_terms,
         )
 
     if (
@@ -193,6 +213,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
         return TurnInterpretation(
             kind=TurnInterpretationKind.COMPARE_PREVIOUS,
             pattern_name="compare_previous_normalized",
+            relative_time_terms=relative_terms,
         )
 
     for pattern_name, pattern, kind in _NAMED_PATTERNS:
@@ -202,6 +223,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
                 kind=kind,
                 pattern_name=pattern_name,
                 recall_request=RecallRequest(target=RecallTargetKind.NAMED, thread_key=match.group(1).strip().lower()),
+                relative_time_terms=relative_terms,
             )
 
     for pattern_name, pattern in _PREVIOUS_RECALL_PATTERNS:
@@ -210,6 +232,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
                 kind=TurnInterpretationKind.RECALL_PREVIOUS,
                 pattern_name=pattern_name,
                 recall_request=RecallRequest(target=RecallTargetKind.PREVIOUS),
+                relative_time_terms=relative_terms,
             )
 
     for pattern_name, pattern in _COMPARE_PREVIOUS_PATTERNS:
@@ -217,6 +240,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
             return TurnInterpretation(
                 kind=TurnInterpretationKind.COMPARE_PREVIOUS,
                 pattern_name=pattern_name,
+                relative_time_terms=relative_terms,
             )
 
     for pattern_name, pattern in _PREVIOUS_RESUME_PATTERNS:
@@ -225,6 +249,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
                 kind=TurnInterpretationKind.RESUME_PREVIOUS,
                 pattern_name=pattern_name,
                 recall_request=RecallRequest(target=RecallTargetKind.PREVIOUS),
+                relative_time_terms=relative_terms,
             )
 
     for pattern_name, pattern in _CURRENT_RECALL_PATTERNS:
@@ -233,6 +258,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
                 kind=TurnInterpretationKind.RECALL_CURRENT,
                 pattern_name=pattern_name,
                 recall_request=RecallRequest(target=RecallTargetKind.CURRENT),
+                relative_time_terms=relative_terms,
             )
 
     for pattern_name, pattern in _AMBIGUOUS_RESUME_PATTERNS:
@@ -241,6 +267,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
                 kind=TurnInterpretationKind.CLARIFICATION_NEEDED,
                 pattern_name=pattern_name,
                 clarification_reason="resume_target_ambiguous",
+                relative_time_terms=relative_terms,
             )
 
-    return TurnInterpretation(kind=TurnInterpretationKind.ORDINARY)
+    return TurnInterpretation(kind=TurnInterpretationKind.ORDINARY, relative_time_terms=relative_terms)
