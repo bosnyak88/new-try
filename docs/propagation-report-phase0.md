@@ -121,3 +121,19 @@ Text normalization/repair was propagated across contracts-adjacent runtime behav
 - REBUILD-015 follow-up-3: strengthened line-level degraded-pattern detection (including observed forms like `errĺ‘l`, `beszĂ©ljĂĽnk`, `elĺ‘zĺ‘`, `hasonlĂ­tsd`) and enforced transitive historical cleanup in snapshot rebuild/writeback.
 
 - REBUILD-015 follow-up-4: added recap/summary flattening in snapshot line construction to reduce recursive summary-of-summary pollution while preserving deterministic recall behavior.
+
+## REBUILD-016 personal-entry/owner-intro propagation
+
+Reviewed and updated layers:
+- contracts: added explicit personal-entry interpretation contracts and minimal owner identity profile contract
+- orchestration: deterministic personal-entry detection + response planning path, including explicit intro/owner/return distinctions
+- persistence: minimal explicit identity persistence through `app_meta` keys (`owner_name`, `owner_relation`)
+- trace: `turn_interpreted` payload extended with personal-entry metadata
+- CLI/runtime behavior: once/live/script continue to use shared turn path with deterministic no-LLM compatibility
+- docs/changelog/tests: updated for operator visibility and deterministic regression coverage
+
+Guardrails kept:
+- no architecture redesign
+- no fake-memory claims
+- no broad profile inference
+- no menu-style interrogation

@@ -2,7 +2,14 @@ from __future__ import annotations
 
 import re
 
-from syntaris.contracts.runtime import RecallRequest, RecallTargetKind, TurnInterpretation, TurnInterpretationKind
+from syntaris.contracts.runtime import (
+    PersonalEntryKind,
+    PersonalEntrySignal,
+    RecallRequest,
+    RecallTargetKind,
+    TurnInterpretation,
+    TurnInterpretationKind,
+)
 from syntaris.orchestration.text_normalize import normalize_hungarian_for_match
 
 _CURRENT_RECALL_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
@@ -42,11 +49,73 @@ _AMBIGUOUS_RESUME_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("resume_ambiguous_folytassuk_onnan", re.compile(r"^folytassuk\s+onnan\??$", re.IGNORECASE)),
 )
 
+_OWNER_NAME_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"(?:^|\s)én\s+([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű]+)\s+vagyok(?:\s|$)", re.IGNORECASE),
+    re.compile(r"(?:^|\s)([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű]+)\s+vagyok(?:\s|$)", re.IGNORECASE),
+)
+
+
+def _extract_owner_name(text: str) -> str | None:
+    for pattern in _OWNER_NAME_PATTERNS:
+        match = pattern.search(text)
+        if match:
+            raw = match.group(1).strip()
+            return raw[:1].upper() + raw[1:].lower()
+    return None
+
 
 def interpret_turn(message: str) -> TurnInterpretation:
     text = message.strip()
     raw_lower = text.lower()
     normalized = normalize_hungarian_for_match(text)
+
+    owner_name = _extract_owner_name(text)
+    owner_framing = any(
+        phrase in normalized
+        for phrase in (
+            "en terveztem a rendszered",
+            "en fejlesztelek",
+            "en epitettem a rendszered",
+            "a te rendszergedet en terveztem",
+        )
+    )
+    return_entry = any(
+        phrase in normalized
+        for phrase in ("folytassuk innen", "vissza syntarisra", "vissza szintarisra")
+    )
+    greeting = normalized in {"szia", "szia syntaris", "szia szintaris"} or normalized.startswith("szia syntaris ")
+
+    if owner_framing:
+        return TurnInterpretation(
+            kind=TurnInterpretationKind.PERSONAL_ENTRY,
+            pattern_name="personal_entry_owner_framing",
+            personal_entry=PersonalEntrySignal(
+                kind=PersonalEntryKind.OWNER_FRAMING,
+                owner_name=owner_name,
+                owner_relation="creator",
+            ),
+        )
+
+    if owner_name is not None and ("en " in normalized and " vagyok" in normalized):
+        return TurnInterpretation(
+            kind=TurnInterpretationKind.PERSONAL_ENTRY,
+            pattern_name="personal_entry_self_intro",
+            personal_entry=PersonalEntrySignal(kind=PersonalEntryKind.SELF_INTRO, owner_name=owner_name),
+        )
+
+    if return_entry:
+        return TurnInterpretation(
+            kind=TurnInterpretationKind.PERSONAL_ENTRY,
+            pattern_name="personal_entry_return",
+            personal_entry=PersonalEntrySignal(kind=PersonalEntryKind.RETURN_ENTRY),
+        )
+
+    if greeting:
+        return TurnInterpretation(
+            kind=TurnInterpretationKind.PERSONAL_ENTRY,
+            pattern_name="personal_entry_greeting",
+            personal_entry=PersonalEntrySignal(kind=PersonalEntryKind.GREETING, owner_name=owner_name),
+        )
 
     if (
         "elozo szalon mi volt" in normalized

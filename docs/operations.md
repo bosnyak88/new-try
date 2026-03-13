@@ -141,3 +141,21 @@ Snapshot/focus views now enforce freshness: if persisted `last_turn_id`/`turn_co
 Operationally, snapshot hygiene is line-level (not only blob-level): dirty/degraded text inside any snapshot line forces rebuild/writeback.
 
 `hol tartottunk?` / snapshot reuse now include recap-flattening safeguards so historical generated summaries do not recursively re-expand through snapshot-backed recall.
+
+## Personal-entry deterministic checks (REBUILD-016)
+
+Run on a clean DB:
+
+- `python -m syntaris.cli --config config/syntaris.example.toml talk --once "szia"`
+- `python -m syntaris.cli --config config/syntaris.example.toml talk --once "szia syntaris"`
+- `python -m syntaris.cli --config config/syntaris.example.toml talk --once "én Árpi vagyok"`
+- `python -m syntaris.cli --config config/syntaris.example.toml talk --once "szia syntaris én Árpi vagyok"`
+- `python -m syntaris.cli --config config/syntaris.example.toml talk --once "én terveztem a rendszered"`
+- `python -m syntaris.cli --config config/syntaris.example.toml talk --once "folytassuk innen"`
+
+Expected:
+- natural compact Hungarian reply
+- no mojibake
+- no bare `Rendben.` full reply
+- no fake-memory overclaim
+- one compact next-step question at most

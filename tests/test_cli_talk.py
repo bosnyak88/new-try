@@ -1293,3 +1293,38 @@ def test_cli_current_snapshot_flattens_nested_recall_blobs(tmp_path, monkeypatch
     text = snap["snapshot"]["snapshot_text"]
     assert "Innen menjünk tovább?\nInnen menjünk tovább?" not in text
     assert "Röviden itt tartottunk: Röviden itt tartottunk:" not in text
+
+
+def test_cli_personal_entry_owner_intro_and_return_flow(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    for text in [
+        "szia",
+        "szia syntaris",
+        "én Árpi vagyok",
+        "szia syntaris én Árpi vagyok",
+        "én terveztem a rendszered",
+        "Árpi vagyok, én fejlesztelek",
+        "folytassuk innen",
+        "vissza syntarisra",
+    ]:
+        monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", text])
+        cli.main()
+        out = json.loads(capsys.readouterr().out)
+        assert out["reply"].strip() != "Rendben."
+        assert "[fallback]" not in out["reply"]
+        assert out["reply"].count("?") <= 1
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "szia"])
+    cli.main()
+    with_name = json.loads(capsys.readouterr().out)
+    assert "Árpi" in with_name["reply"]
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
+    cli.main()
+    trace = json.loads(capsys.readouterr().out)
+    payload_by_event = {event["event_name"]: event["payload"] for event in trace["trace_events"]}
+    assert '"kind": "personal_entry"' in payload_by_event["turn_interpreted"]

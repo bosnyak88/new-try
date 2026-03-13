@@ -104,3 +104,8 @@ Packaging acceptance note: editable install without build isolation is validated
 
 Packaging smoke check:
 - `python -m pip install -e . --no-build-isolation`
+
+## REBUILD-016 propagation note
+
+Bootstrap/init flow does not require new tables or mandatory migrations for personal-entry support.
+Minimal explicit identity facts (`owner_name`, `owner_relation`) are stored in existing `app_meta` only when directly provided in user text.
