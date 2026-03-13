@@ -184,3 +184,14 @@ Use `talk --once` with: `én Árpi vagyok`, `ki vagyok?`, `én terveztem a rends
 Use `trace-last` to confirm `explicit_claims_captured` appears after capture turns.
 
 - Expected after REBUILD-019 follow-up: no bare `Rendben.` on explicit claim/correction capture turns (`ez az én személyes rendszerem`, `javítás: a nevem ...`).
+
+## REBUILD-020 operational notes
+
+- Scoped temporary state answers are deterministic and timestamp-grounded.
+- For clock-sensitive validation (same-day vs cross-day), use fixed-clock tests in `tests/test_personal_memory.py` and `tests/test_time_awareness.py`.
+- Useful probes:
+  - `talk --once "a mai fókusz a syntaris"`
+  - `talk --once "mi a mostani fókusz?"`
+  - `talk --once "ma beszélgetni szeretnék"`
+  - `talk --once "miről akartam most beszélni?"`
+  - `talk --once "mi maradt aktív mostanról?"`

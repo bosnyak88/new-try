@@ -36,6 +36,8 @@ max_reasoning_units = 4
 max_evidence_items_per_unit = 3
 support_labeling_enabled = true
 synthesis_include_next_step = true
+scoped_state_short_stale_minutes = 120
+scoped_state_same_day_stale_minutes = 480
 
 [reply]
 # deterministic | llama-http

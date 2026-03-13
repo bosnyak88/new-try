@@ -53,6 +53,8 @@ class ConversationConfig:
     max_evidence_items_per_unit: int = 3
     support_labeling_enabled: bool = True
     synthesis_include_next_step: bool = True
+    scoped_state_short_stale_minutes: int = 120
+    scoped_state_same_day_stale_minutes: int = 480
 
 
 @dataclass(frozen=True)
@@ -365,7 +367,15 @@ class ClaimKind(str, Enum):
 
 class ClaimScope(str, Enum):
     STABLE = "stable"
+    DAY = "day"
+    SESSION = "session"
     THREAD = "thread"
+
+
+class ScopedStateStatus(str, Enum):
+    ACTIVE = "active"
+    STALE = "stale"
+    EXPIRED = "expired"
 
 
 class MemoryQueryKind(str, Enum):
@@ -374,6 +384,8 @@ class MemoryQueryKind(str, Enum):
     RELATIONSHIP = "relationship"
     SYSTEM_ROLE = "system_role"
     CURRENT_FOCUS = "current_focus"
+    CURRENT_DIRECTION = "current_direction"
+    ACTIVE_STATE = "active_state"
 
 
 class RecallTargetKind(str, Enum):
@@ -445,6 +457,14 @@ class SessionGapKind(str, Enum):
     UNKNOWN = "unknown"
 
 
+class ContinuityClass(str, Enum):
+    SAME_SESSION = "same_session"
+    SHORT_GAP_SAME_DAY = "short_gap_same_day"
+    LONG_GAP_SAME_DAY = "long_gap_same_day"
+    CROSS_DAY = "cross_day"
+    NEW_OR_UNKNOWN = "new_or_unknown"
+
+
 @dataclass(frozen=True)
 class RelativeTimeGrounding:
     term: str
@@ -459,7 +479,32 @@ class TimeContext:
     gap_kind: SessionGapKind
     gap_minutes: int | None = None
     last_turn_local_iso: str | None = None
+    continuity_class: ContinuityClass = ContinuityClass.NEW_OR_UNKNOWN
     relative_grounding: list[RelativeTimeGrounding] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class ScopedStateItem:
+    kind: ClaimKind
+    value: str
+    scope: ClaimScope
+    status: ScopedStateStatus
+    source_turn_id: int
+    created_at_iso: str
+    superseded_at_iso: str | None = None
+
+
+@dataclass(frozen=True)
+class ScopedStateView:
+    items: list[ScopedStateItem] = field(default_factory=list)
+
+    @property
+    def active_items(self) -> list[ScopedStateItem]:
+        return [item for item in self.items if item.status == ScopedStateStatus.ACTIVE]
+
+    @property
+    def recent_items(self) -> list[ScopedStateItem]:
+        return [item for item in self.items if item.status in {ScopedStateStatus.ACTIVE, ScopedStateStatus.STALE}]
 
 
 @dataclass(frozen=True)
@@ -826,6 +871,7 @@ class ResponsePlanTrace:
     focus_used: bool = False
     daypart: str | None = None
     gap_kind: str | None = None
+    continuity_class: str | None = None
     relative_grounding: list[str] = field(default_factory=list)
 
 
@@ -1017,6 +1063,9 @@ class PersonalMemoryView:
     system_role: str | None = None
     current_focus: str | None = None
     current_direction: str | None = None
+    current_focus_status: ScopedStateStatus | None = None
+    current_direction_status: ScopedStateStatus | None = None
+    scoped_state: ScopedStateView = field(default_factory=ScopedStateView)
 
 
 @dataclass(frozen=True)

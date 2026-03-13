@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from syntaris.contracts.runtime import (
+    ContinuityClass,
     DaypartKind,
     RelativeTimeGrounding,
     RuntimeContext,
@@ -63,6 +64,18 @@ def resolve_gap_kind(now_local: datetime, last_turn_at: datetime | None) -> tupl
     return SessionGapKind.SAME_DAY_LONG, minutes
 
 
+def continuity_from_gap(gap_kind: SessionGapKind) -> ContinuityClass:
+    if gap_kind == SessionGapKind.IMMEDIATE:
+        return ContinuityClass.SAME_SESSION
+    if gap_kind == SessionGapKind.SHORT:
+        return ContinuityClass.SHORT_GAP_SAME_DAY
+    if gap_kind == SessionGapKind.SAME_DAY_LONG:
+        return ContinuityClass.LONG_GAP_SAME_DAY
+    if gap_kind == SessionGapKind.CROSS_DAY:
+        return ContinuityClass.CROSS_DAY
+    return ContinuityClass.NEW_OR_UNKNOWN
+
+
 def ground_relative_terms(now_local: datetime, terms: list[str]) -> list[RelativeTimeGrounding]:
     grounded: list[RelativeTimeGrounding] = []
     for term in terms:
@@ -102,5 +115,6 @@ def build_time_context(
         gap_kind=gap_kind,
         gap_minutes=gap_minutes,
         last_turn_local_iso=last_local.isoformat() if last_local is not None else None,
+        continuity_class=continuity_from_gap(gap_kind),
         relative_grounding=grounded,
     )

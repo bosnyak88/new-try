@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from pathlib import Path
 
 from syntaris.contracts.runtime import (
@@ -31,6 +32,9 @@ from syntaris.contracts.runtime import (
     ClaimCapture,
     ClaimScope,
     ClaimKind,
+    ScopedStateItem,
+    ScopedStateStatus,
+    ScopedStateView,
 )
 from syntaris.persistence.schema import SCHEMA_SQL, SCHEMA_VERSION
 from syntaris.orchestration.text_normalize import clean_display_text, normalize_text
@@ -56,6 +60,31 @@ def _best_canonical_text(stored_text: str, raw_text: str | None) -> str:
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _resolve_scoped_state_status(
+    *,
+    scope: ClaimScope,
+    active: bool,
+    created_at: datetime,
+    now_local: datetime,
+    short_stale_minutes: int,
+    same_day_stale_minutes: int,
+) -> ScopedStateStatus:
+    if not active:
+        return ScopedStateStatus.EXPIRED
+    if scope == ClaimScope.STABLE:
+        return ScopedStateStatus.ACTIVE
+
+    created_local = created_at.astimezone(now_local.tzinfo)
+    if scope in {ClaimScope.DAY, ClaimScope.SESSION} and created_local.date() != now_local.date():
+        return ScopedStateStatus.EXPIRED
+    delta_minutes = max(0, int((now_local - created_local).total_seconds() // 60))
+    if delta_minutes <= short_stale_minutes:
+        return ScopedStateStatus.ACTIVE
+    if delta_minutes <= same_day_stale_minutes:
+        return ScopedStateStatus.STALE
+    return ScopedStateStatus.EXPIRED
 
 
 def _parse_pending_route(value: str | None) -> PendingRouteStatusView | None:
@@ -349,7 +378,17 @@ class PersistenceStore:
             conn.execute("DELETE FROM app_meta WHERE key = ?", ("pending_route",))
             conn.commit()
 
-    def get_personal_memory(self, session_id: int, thread_id: int) -> PersonalMemoryView:
+    def get_personal_memory(
+        self,
+        session_id: int,
+        thread_id: int,
+        *,
+        now: datetime,
+        timezone_name: str,
+        short_stale_minutes: int,
+        same_day_stale_minutes: int,
+    ) -> PersonalMemoryView:
+        now_local = now.astimezone(ZoneInfo(timezone_name))
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             stable_rows = conn.execute(
@@ -360,38 +399,75 @@ class PersistenceStore:
                 """,
                 (session_id,),
             ).fetchall()
-            thread_rows = conn.execute(
+            scoped_rows = conn.execute(
                 """
-                SELECT claim_kind, claim_value
+                SELECT claim_kind, claim_scope, claim_value, source_turn_id, active, created_at, superseded_at
                 FROM personal_claims
-                WHERE session_id = ? AND thread_id = ? AND claim_scope = 'thread' AND active = 1
+                WHERE session_id = ?
+                  AND claim_scope IN ('day', 'session', 'thread')
+                  AND (thread_id = ? OR claim_scope IN ('day', 'session'))
+                ORDER BY claim_id DESC
                 """,
                 (session_id, thread_id),
             ).fetchall()
 
         stable = {str(r["claim_kind"]): str(r["claim_value"]) for r in stable_rows}
-        scoped = {str(r["claim_kind"]): str(r["claim_value"]) for r in thread_rows}
+        scoped_items: list[ScopedStateItem] = []
+        latest_by_kind: dict[str, ScopedStateItem] = {}
+        for row in scoped_rows:
+            scope = ClaimScope(str(row["claim_scope"]))
+            status = _resolve_scoped_state_status(
+                scope=scope,
+                active=bool(int(row["active"])),
+                created_at=datetime.fromisoformat(str(row["created_at"])),
+                now_local=now_local,
+                short_stale_minutes=short_stale_minutes,
+                same_day_stale_minutes=same_day_stale_minutes,
+            )
+            item = ScopedStateItem(
+                kind=ClaimKind(str(row["claim_kind"])),
+                value=str(row["claim_value"]),
+                scope=scope,
+                status=status,
+                source_turn_id=int(row["source_turn_id"]),
+                created_at_iso=str(row["created_at"]),
+                superseded_at_iso=str(row["superseded_at"]) if row["superseded_at"] is not None else None,
+            )
+            scoped_items.append(item)
+            key = item.kind.value
+            if key not in latest_by_kind:
+                latest_by_kind[key] = item
+
+        focus_item = latest_by_kind.get(ClaimKind.CURRENT_FOCUS.value)
+        direction_item = latest_by_kind.get(ClaimKind.CURRENT_DIRECTION.value)
+
         return PersonalMemoryView(
             owner_name=stable.get("owner_name"),
             owner_relation=stable.get("owner_relation"),
             system_role=stable.get("system_role"),
-            current_focus=scoped.get("current_focus"),
-            current_direction=scoped.get("current_direction"),
+            current_focus=focus_item.value if focus_item is not None else None,
+            current_direction=direction_item.value if direction_item is not None else None,
+            current_focus_status=focus_item.status if focus_item is not None else None,
+            current_direction_status=direction_item.status if direction_item is not None else None,
+            scoped_state=ScopedStateView(items=scoped_items),
         )
 
-    def capture_claims(self, session_id: int, thread_id: int, source_turn_id: int, captures: list[ClaimCapture]) -> None:
+    def capture_claims(self, session_id: int, thread_id: int, source_turn_id: int, captures: list[ClaimCapture], created_at: datetime | None = None) -> None:
         if not captures:
             return
-        created_at = utc_now().isoformat()
+        created_at_iso = (created_at or utc_now()).isoformat()
         with sqlite3.connect(self.db_path) as conn:
             for item in captures:
+                scoped_thread_id = thread_id if item.scope == ClaimScope.THREAD else None
                 conn.execute(
                     """
                     UPDATE personal_claims
                     SET active = 0, superseded_at = ?
-                    WHERE session_id = ? AND claim_kind = ? AND claim_scope = ? AND active = 1
+                    WHERE session_id = ? AND claim_kind = ? AND claim_scope = ?
+                      AND (thread_id = ? OR (? IS NULL AND thread_id IS NULL))
+                      AND active = 1
                     """,
-                    (created_at, session_id, item.kind.value, item.scope.value),
+                    (created_at_iso, session_id, item.kind.value, item.scope.value, scoped_thread_id, scoped_thread_id),
                 )
                 conn.execute(
                     """
@@ -401,12 +477,12 @@ class PersistenceStore:
                     """,
                     (
                         session_id,
-                        thread_id if item.scope == ClaimScope.THREAD else None,
+                        scoped_thread_id,
                         item.kind.value,
                         item.scope.value,
                         clean_display_text(item.value),
                         source_turn_id,
-                        created_at,
+                        created_at_iso,
                     ),
                 )
             conn.commit()
@@ -415,7 +491,15 @@ class PersistenceStore:
         state = self.get_active_state()
         if state is None:
             return OwnerIdentityProfile()
-        memory = self.get_personal_memory(session_id=state.session_id, thread_id=state.thread_id)
+        now = utc_now()
+        memory = self.get_personal_memory(
+            session_id=state.session_id,
+            thread_id=state.thread_id,
+            now=now,
+            timezone_name="UTC",
+            short_stale_minutes=120,
+            same_day_stale_minutes=480,
+        )
         return OwnerIdentityProfile(
             owner_name=memory.owner_name,
             owner_relation=memory.owner_relation,

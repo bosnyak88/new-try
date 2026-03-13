@@ -77,6 +77,7 @@ def test_relative_time_grounding_surfaces_in_trace(tmp_path):
 
     plan = events["response_plan_built"]
     assert plan["daypart"] is not None
+    assert plan["continuity_class"] is not None
     assert any(item.startswith("tegnap:") for item in plan["relative_grounding"])
 
 

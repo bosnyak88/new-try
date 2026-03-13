@@ -124,3 +124,13 @@ REBUILD-017 note: intake bridge and explicit teach-mode use existing schema; onl
 
 
 REBUILD-019 extends DB bootstrap with the `personal_claims` table for explicit deterministic claim persistence.
+
+## REBUILD-020 bootstrap/config additions
+
+`[conversation]` now supports deterministic scoped-state aging knobs:
+- `scoped_state_short_stale_minutes` (default `120`)
+- `scoped_state_same_day_stale_minutes` (default `480`)
+
+Environment overrides:
+- `SYNTARIS_SCOPED_STATE_SHORT_STALE_MINUTES`
+- `SYNTARIS_SCOPED_STATE_SAME_DAY_STALE_MINUTES`

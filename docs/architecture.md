@@ -163,3 +163,22 @@ This layer does not infer broad profile traits and does not claim unstored long-
 - `persistence.store` persists claims in `personal_claims` with active/superseded state and stable vs thread scope classes.
 - `response_plan` renders grounded Hungarian answers from persisted explicit claims/scoped state only.
 - `trace.events` emits `explicit_claims_captured` when deterministic claim capture is applied.
+
+## REBUILD-020 propagation: deterministic scoped-state substrate
+
+- `contracts/runtime.py`
+  - Added explicit scope classes (`stable`, `day`, `session`, `thread`) and scoped-state status (`active`, `stale`, `expired`).
+  - Added continuity-class metadata on time context.
+  - Extended personal-memory DTO to expose scoped-state view + active-state status fields.
+- `persistence/store.py`
+  - Kept single `personal_claims` table; no schema chaos.
+  - Capture path now supersedes by claim-kind+scope boundary (thread-bound for thread scope, global for day/session/stable).
+  - Read path classifies temporary scoped claims deterministically by timestamp/day boundary and exposes active/stale/expired.
+- `orchestration`
+  - Turn interpretation captures explicit temporary direction/focus statements into correct scope classes.
+  - Response planning uses scoped-state status for grounded focus/direction/active-state answers and continuity-aware resume phrasing.
+  - Time-context now includes explicit continuity class for deterministic session-boundary shaping.
+- `trace`
+  - `response_plan_built` includes continuity metadata (`continuity_class`) for explainable runtime behavior.
+
+Design boundary preserved: no monolithic central brain, no CLI-smearing, no routine-learning graph engine.

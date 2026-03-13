@@ -146,6 +146,7 @@ def build_turn_trace_events(
                     "focus_used": response_plan_trace.focus_used,
                     "daypart": response_plan_trace.daypart,
                     "gap_kind": response_plan_trace.gap_kind,
+                    "continuity_class": response_plan_trace.continuity_class,
                     "relative_grounding": response_plan_trace.relative_grounding,
                 },
             }

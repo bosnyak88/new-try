@@ -128,6 +128,14 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
             os.getenv("SYNTARIS_SYNTHESIS_INCLUDE_NEXT_STEP", str(conversation.get("synthesis_include_next_step", True))).lower()
             in {"1", "true", "yes", "on"}
         ),
+        scoped_state_short_stale_minutes=_pick_int(
+            os.getenv("SYNTARIS_SCOPED_STATE_SHORT_STALE_MINUTES"),
+            conversation.get("scoped_state_short_stale_minutes", 120),
+        ),
+        scoped_state_same_day_stale_minutes=_pick_int(
+            os.getenv("SYNTARIS_SCOPED_STATE_SAME_DAY_STALE_MINUTES"),
+            conversation.get("scoped_state_same_day_stale_minutes", 480),
+        ),
     )
 
     time_config = TimeConfig(

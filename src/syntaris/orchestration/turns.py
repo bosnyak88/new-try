@@ -300,7 +300,14 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     interpretation = interpret_turn(normalized_message)
     last_turn_at = store.read_last_turn_at(resolved.state_after.thread_id)
     time_context = build_time_context(context, last_turn_at=last_turn_at, relative_terms=interpretation.relative_time_terms)
-    personal_memory = store.get_personal_memory(session_id=resolved.state_after.session_id, thread_id=resolved.state_after.thread_id)
+    personal_memory = store.get_personal_memory(
+        session_id=resolved.state_after.session_id,
+        thread_id=resolved.state_after.thread_id,
+        now=turn_created_at,
+        timezone_name=context.config.time.timezone,
+        short_stale_minutes=context.config.conversation.scoped_state_short_stale_minutes,
+        same_day_stale_minutes=context.config.conversation.scoped_state_same_day_stale_minutes,
+    )
     owner_identity = store.get_owner_identity()
     recall_resolution = resolve_recall_request(context, interpretation)
     focus_view = build_thread_focus_view(
@@ -432,6 +439,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         focus_used=response_plan.focus_used,
         daypart=time_context.daypart.value,
         gap_kind=time_context.gap_kind.value,
+        continuity_class=time_context.continuity_class.value,
         relative_grounding=[f"{item.term}:{item.resolved_label}" for item in time_context.relative_grounding],
     )
     focus_trace = ThreadFocusTrace(
@@ -508,6 +516,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             thread_id=resolved.state_after.thread_id,
             source_turn_id=turn.turn_id,
             captures=interpretation.claim_capture,
+            created_at=turn_created_at,
         )
         events = build_turn_trace_events(
             state=resolved.state_after,

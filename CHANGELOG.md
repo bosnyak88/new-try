@@ -1,3 +1,11 @@
+## REBUILD-020
+- Added deterministic time-scoped state foundation separating stable claims from day/session/thread-scoped temporary state.
+- Extended temporary state lifecycle handling to explicit `active` / `stale` / `expired` statuses with deterministic timestamp + day-boundary evaluation.
+- Added deterministic continuity-class metadata (`same_session`, short-gap same-day, long-gap same-day, cross-day, unknown) and propagated it into trace.
+- Updated interpretation/capture for explicit direction/focus statements (`a mai fókusz ...`, `ma beszélgetni szeretnék`, `most a munkáról akarok beszélni`, `most valami konkrét segítség kell`).
+- Updated Hungarian memory/state answers (`mi a mostani fókusz?`, `miről akartam most beszélni?`, `mi maradt aktív mostanról?`) to remain grounded and expiry-honest.
+- Added scoped-state continuity/expiry regression coverage and kept deterministic no-LLM behavior green.
+
 ## REBUILD-019
 - Added deterministic explicit personal-memory foundation with stable claims (name, owner relation, explicit system role) and thread-scoped declared state (focus/direction).
 - Added grounded memory-query answers in Hungarian ("ki vagyok?", "mit tudsz rólam biztosan?", "mi a kapcsolatunk?", "mi a szereped?", "mi a mostani fókusz?").
