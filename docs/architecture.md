@@ -34,3 +34,5 @@ The authoritative model is `WorkframeState` with:
 - next-step status/lines
 
 This model is derived in orchestration and propagated to response planning and trace.
+
+- Workframe update signals now distinguish explicit blocker declaration vs hedged blocker/objective/next-step proposals to keep state-write certainty discipline consistent with response and trace layers.

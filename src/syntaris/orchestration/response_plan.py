@@ -382,6 +382,28 @@ def build_response_plan(
             if workframe_state.objective_status.value == "active" and workframe_state.objective_text:
                 lines.append(f"A korábbi aktív célt megőrzöm háttér-kontinuitásnak: {clean_display_text(workframe_state.objective_text)}.")
             return ResponsePlan(kind=ResponsePlanKind.PERSONAL_ENTRY, sections=[ResponsePlanSection(title="chat_update", lines=lines)], focus_used=focus is not None)
+        if getattr(workframe_updates, "declares_blocker_explicit", False):
+            lines = ["Rendben, ezt explicit fő blokkert állításként rögzítem."]
+            if workframe_state.blocker_text:
+                lines.append(f"Fő blokker: {clean_display_text(workframe_state.blocker_text)}.")
+            if workframe_state.objective_status.value == "active" and workframe_state.objective_text:
+                lines.append(f"Aktív cél változatlanul: {clean_display_text(workframe_state.objective_text)}.")
+            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="blocker_update", lines=lines)], focus_used=focus is not None)
+        if getattr(workframe_updates, "hedged_blocker", False):
+            lines = ["Ezt lehetséges blokkerként kezelem, még nem biztos állításként."]
+            if workframe_state.blocker_text:
+                lines.append(f"Jelölt blokker: {clean_display_text(workframe_state.blocker_text)}.")
+            return ResponsePlan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="hedged_blocker", lines=lines)], focus_used=focus is not None)
+        if getattr(workframe_updates, "hedged_objective", False):
+            lines = ["Értem, ez egy lehetséges cél-javaslat, még nem végleges aktív cél."]
+            if workframe_state.objective_text:
+                lines.append(f"Javasolt cél: {clean_display_text(workframe_state.objective_text)}.")
+            return ResponsePlan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="hedged_objective", lines=lines)], focus_used=focus is not None)
+        if getattr(workframe_updates, "hedged_next_step", False):
+            lines = ["Ezt javasolt következő lépésként kezelem, nem biztos döntésként."]
+            if workframe_state.next_step_lines:
+                lines.append(f"Lehetséges következő lépés: {clean_display_text(workframe_state.next_step_lines[0])}")
+            return ResponsePlan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="hedged_next_step", lines=lines)], focus_used=focus is not None)
 
     if interpretation.claim_capture:
         return ResponsePlan(

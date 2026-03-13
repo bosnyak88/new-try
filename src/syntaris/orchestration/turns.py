@@ -542,7 +542,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         next_step_status=workframe_state.next_step_status.value,
         next_step_line_count=len(workframe_state.next_step_lines),
         query_family=workframe_queries.family,
-        uncertainty_marked=workframe_updates.uncertainty_marked,
+        uncertainty_marked=workframe_updates.uncertainty_marked or (workframe_queries.family == "uncertainty_query") or (response_plan.kind.value == "uncertainty_labeled"),
     )
 
     if response_plan.kind.value in {"recall", "resume", "clarification"} or any(section.lines for section in response_plan.sections):

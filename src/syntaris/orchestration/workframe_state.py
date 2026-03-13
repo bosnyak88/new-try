@@ -54,6 +54,7 @@ class WorkframeUpdateSignals:
     declares_work: bool = False
     declares_objective: bool = False
     declares_chat: bool = False
+    declares_blocker_explicit: bool = False
     resume_here: bool = False
     hedged_blocker: bool = False
     hedged_objective: bool = False
@@ -90,6 +91,7 @@ def detect_update_signals(message: str) -> WorkframeUpdateSignals:
         declares_work=any(phrase in n for phrase in ("most ezen dolgozunk", "ezen dolgozunk most", "most ezen a feladaton dolgozunk")),
         declares_objective=_OBJECTIVE_ACTIVE.search(n) is not None,
         declares_chat=any(phrase in n for phrase in ("most csak beszelgetunk", "most csak dumalunk", "most inkabb beszelgetunk")),
+        declares_blocker_explicit=_BLOCKER_EXPLICIT.search(n) is not None,
         resume_here=(n == "folytassuk innen"),
         hedged_blocker=("lehet hogy" in n and "blokk" in n) or (_BLOCKER_HEDGED.search(n) is not None),
         hedged_objective=("jo lenne" in n and "ticket" in n) or ("jo lenne" in n and "cel" in n),

@@ -86,3 +86,40 @@ def test_continuity_focus_snapshot_trace_alignment(tmp_path):
     assert focus.found and focus.focus is not None and focus.focus.workframe_state is not None
     assert snapshot.snapshot.workframe_state.objective_status.value == "active"
     assert focus.focus.workframe_state.objective_status.value == "active"
+
+
+def test_explicit_blocker_declaration_ack_and_objective_not_demoted(tmp_path):
+    runtime = _runtime(tmp_path)
+    talk_once(runtime, TalkRequest(message="most ezen dolgozunk"))
+    talk_once(runtime, TalkRequest(message="a cél most a rebuild-023 ticket lezárása"))
+    blocker_decl = talk_once(runtime, TalkRequest(message="ebben most az a fő probléma hogy a recall még nem elég erős"))
+
+    assert "explicit fő blokkert" in blocker_decl.turn.assistant_reply
+    assert "Aktív cél változatlanul" in blocker_decl.turn.assistant_reply
+
+    certainty = talk_once(runtime, TalkRequest(message="mi biztos ebben és mi csak feltételezés?"))
+    assert "Aktív cél: a rebuild-023 ticket lezarasa" in certainty.turn.assistant_reply
+
+
+def test_hedged_blocker_and_tentative_next_step_stay_uncertain_with_trace(tmp_path):
+    runtime = _runtime(tmp_path)
+    _seed(runtime)
+
+    hedged_blocker = talk_once(runtime, TalkRequest(message="lehet hogy a recall a blokk, de nem vagyok benne biztos"))
+    hedged_step = talk_once(runtime, TalkRequest(message="talán az lenne a következő lépés hogy megnézzük a trace-t"))
+
+    assert "lehetséges blokkerként" in hedged_blocker.turn.assistant_reply.lower()
+    assert "javasolt következő lépésként" in hedged_step.turn.assistant_reply.lower()
+
+    trace = trace_last(runtime)
+    payloads = {e.event_name: json.loads(e.payload) for e in trace.trace_events}
+    assert payloads["workframe_state_derived"]["uncertainty_marked"] is True
+
+
+def test_weak_objective_proposal_not_generic_filler(tmp_path):
+    runtime = _runtime(tmp_path)
+    _seed(runtime)
+
+    weak = talk_once(runtime, TalkRequest(message="jó lenne lezárni ezt a ticketet"))
+    assert weak.turn.assistant_reply.strip() != "Rendben."
+    assert "lehetséges cél-javaslat" in weak.turn.assistant_reply.lower()
