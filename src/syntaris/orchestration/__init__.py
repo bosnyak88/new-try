@@ -1,37 +1,11 @@
-from syntaris.orchestration.doctor import run_doctor
-from syntaris.orchestration.talk import (
-    init_db,
-    talk_once,
-    thread_focus_current,
-    thread_focus_named,
-    thread_focus_previous,
-    thread_recap_current,
-    thread_recap_named,
-    thread_recap_previous,
-    thread_snapshot_current,
-    thread_snapshot_named,
-    thread_snapshot_previous,
-    thread_view_current,
-    thread_view_named,
-    thread_view_previous,
-    trace_last,
-)
+"""Orchestration package marker.
 
-__all__ = [
-    "run_doctor",
-    "init_db",
-    "talk_once",
-    "thread_focus_current",
-    "thread_focus_previous",
-    "thread_focus_named",
-    "thread_recap_current",
-    "thread_recap_previous",
-    "thread_recap_named",
-    "thread_snapshot_current",
-    "thread_snapshot_previous",
-    "thread_snapshot_named",
-    "thread_view_current",
-    "thread_view_previous",
-    "thread_view_named",
-    "trace_last",
-]
+Intentionally avoids eager re-exports to keep import boundaries acyclic:
+- persistence modules may import orchestration submodules (e.g. text normalization)
+- orchestration modules may import persistence store
+
+Keeping package import side-effect free prevents import-time cycles between
+`syntaris.persistence` and `syntaris.orchestration` during isolated module loading.
+"""
+
+__all__: list[str] = []
