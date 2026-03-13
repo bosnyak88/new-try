@@ -26,6 +26,7 @@ from syntaris.contracts.runtime import (
     ThreadSummaryView,
     TraceEventRecord,
     TurnResult,
+    OwnerIdentityProfile,
 )
 from syntaris.persistence.schema import SCHEMA_SQL, SCHEMA_VERSION
 from syntaris.orchestration.text_normalize import clean_display_text, normalize_text
@@ -320,6 +321,33 @@ class PersistenceStore:
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("DELETE FROM app_meta WHERE key = ?", ("pending_route",))
             conn.commit()
+
+    def get_owner_identity(self) -> OwnerIdentityProfile:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT key, value FROM app_meta WHERE key IN ('owner_name', 'owner_relation')"
+            ).fetchall()
+        values = {str(row["key"]): str(row["value"]) for row in rows}
+        return OwnerIdentityProfile(
+            owner_name=values.get("owner_name"),
+            owner_relation=values.get("owner_relation"),
+        )
+
+    def set_owner_identity(self, owner_name: str | None = None, owner_relation: str | None = None) -> OwnerIdentityProfile:
+        with sqlite3.connect(self.db_path) as conn:
+            if owner_name:
+                conn.execute(
+                    "INSERT OR REPLACE INTO app_meta(key, value) VALUES(?, ?)",
+                    ("owner_name", owner_name),
+                )
+            if owner_relation:
+                conn.execute(
+                    "INSERT OR REPLACE INTO app_meta(key, value) VALUES(?, ?)",
+                    ("owner_relation", owner_relation),
+                )
+            conn.commit()
+        return self.get_owner_identity()
 
     def get_session_status_view(self, default_thread_key: str, default_mode: str) -> SessionStatusView:
         state = self.resolve_or_create_active(default_thread_key=default_thread_key, default_mode=default_mode)

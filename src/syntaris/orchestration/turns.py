@@ -292,6 +292,12 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     execution_message = resolved.execution_message
     normalized_message = preprocess_turn_message(execution_message)
     interpretation = interpret_turn(normalized_message)
+    owner_identity = store.get_owner_identity()
+    if interpretation.personal_entry is not None:
+        owner_identity = store.set_owner_identity(
+            owner_name=interpretation.personal_entry.owner_name,
+            owner_relation=interpretation.personal_entry.owner_relation,
+        )
     recall_resolution = resolve_recall_request(context, interpretation)
     focus_view = build_thread_focus_view(
         context,
@@ -380,6 +386,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         synthesis=synthesis_plan,
         focus=focus_view.focus if focus_view.found else None,
         followup_target=followup_resolution.target_line,
+        owner_identity=owner_identity,
     )
 
     recap_trace = RecapTrace(recognized=False)
@@ -387,6 +394,9 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         kind=interpretation.kind.value,
         pattern_name=interpretation.pattern_name,
         clarification_reason=interpretation.clarification_reason,
+        personal_entry_kind=interpretation.personal_entry.kind.value if interpretation.personal_entry is not None else None,
+        owner_name=interpretation.personal_entry.owner_name if interpretation.personal_entry is not None else None,
+        owner_relation=interpretation.personal_entry.owner_relation if interpretation.personal_entry is not None else None,
     )
     recall_trace = RecallTrace(
         requested=interpretation.recall_request is not None,

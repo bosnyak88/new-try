@@ -135,3 +135,15 @@ Snapshot/focus retrieval now applies two gates before returning persisted artifa
 Line-level snapshot hygiene is enforced during artifact retrieval/build: a single dirty line is sufficient to trigger rebuild/writeback from canonicalized turn sources.
 
 Snapshot construction now applies anti-recursion flattening for generated recap-like assistant text before persistence to prevent transitive summary amplification in future recall/snapshot reuse.
+
+## REBUILD-016 deterministic personal-entry foundation
+
+A new deterministic interpretation path (`TurnInterpretationKind.PERSONAL_ENTRY`) handles greeting/intro/owner/return entry surfaces before ordinary fallback behavior.
+
+- personal entry kinds: `greeting`, `self_intro`, `owner_framing`, `return_entry`
+- interpretation emits explicit structured signal (`PersonalEntrySignal`) including optional explicit owner metadata
+- response planning renders compact Hungarian personal-entry responses with one next-step prompt at most
+- persistence stores only minimal explicit identity facts (`owner_name`, `owner_relation`) via `app_meta`
+- trace includes personal-entry metadata through `turn_interpreted` payload fields (`personal_entry_kind`, owner fields)
+
+This layer does not infer broad profile traits and does not claim unstored long-term memory.

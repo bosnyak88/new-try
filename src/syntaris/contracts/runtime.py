@@ -327,6 +327,7 @@ class SnapshotTrace:
 
 class TurnInterpretationKind(str, Enum):
     ORDINARY = "ordinary"
+    PERSONAL_ENTRY = "personal_entry"
     RECALL_CURRENT = "recall_current"
     RECALL_PREVIOUS = "recall_previous"
     RECALL_NAMED = "recall_named"
@@ -344,6 +345,20 @@ class RecallTargetKind(str, Enum):
     AMBIGUOUS = "ambiguous"
 
 
+class PersonalEntryKind(str, Enum):
+    GREETING = "greeting"
+    SELF_INTRO = "self_intro"
+    OWNER_FRAMING = "owner_framing"
+    RETURN_ENTRY = "return_entry"
+
+
+@dataclass(frozen=True)
+class PersonalEntrySignal:
+    kind: PersonalEntryKind
+    owner_name: str | None = None
+    owner_relation: str | None = None
+
+
 @dataclass(frozen=True)
 class RecallRequest:
     target: RecallTargetKind
@@ -356,6 +371,7 @@ class TurnInterpretation:
     pattern_name: str | None = None
     recall_request: RecallRequest | None = None
     clarification_reason: str | None = None
+    personal_entry: PersonalEntrySignal | None = None
 
 
 @dataclass(frozen=True)
@@ -446,6 +462,7 @@ class FollowupResolution:
 
 class ResponsePlanKind(str, Enum):
     ORDINARY = "ordinary"
+    PERSONAL_ENTRY = "personal_entry"
     RECALL = "recall"
     RESUME = "resume"
     CLARIFICATION = "clarification"
@@ -667,6 +684,9 @@ class TurnInterpretTrace:
     kind: str
     pattern_name: str | None = None
     clarification_reason: str | None = None
+    personal_entry_kind: str | None = None
+    owner_name: str | None = None
+    owner_relation: str | None = None
 
 
 @dataclass(frozen=True)
@@ -879,6 +899,12 @@ class TurnResult:
     reply_backend: str
     degraded: bool
     created_at: datetime
+
+
+@dataclass(frozen=True)
+class OwnerIdentityProfile:
+    owner_name: str | None = None
+    owner_relation: str | None = None
 
 
 @dataclass(frozen=True)

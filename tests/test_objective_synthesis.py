@@ -1,3 +1,5 @@
+import json
+
 from syntaris.contracts.runtime import (
     AppConfig,
     AppPaths,
@@ -140,3 +142,47 @@ def test_compare_mojibake_phrase_still_structured(tmp_path):
     events = {event.event_name: event.payload for event in trace.trace_events}
     assert '"kind": "compare_previous"' in events["turn_interpreted"]
     assert '"selected_strategy": "structured_answer"' in events["answer_strategy_selected"]
+
+
+def test_personal_entry_simple_greeting_is_hungarian_and_non_fallback(tmp_path):
+    runtime = _runtime(tmp_path)
+    result = talk_once(runtime, TalkRequest(message="szia"))
+
+    assert result.turn.assistant_reply.strip() != "Rendben."
+    assert "Szia" in result.turn.assistant_reply
+    assert "miben" in result.turn.assistant_reply.lower()
+
+
+def test_personal_entry_self_intro_acknowledges_name_without_fake_memory(tmp_path):
+    runtime = _runtime(tmp_path)
+    result = talk_once(runtime, TalkRequest(message="én Árpi vagyok"))
+
+    assert "Árpi" in result.turn.assistant_reply
+    assert "emlékszem" not in result.turn.assistant_reply.lower()
+    assert result.turn.assistant_reply.count("?") <= 1
+
+
+def test_personal_entry_creator_framing_and_return_route_are_distinct(tmp_path):
+    runtime = _runtime(tmp_path)
+
+    creator = talk_once(runtime, TalkRequest(message="én terveztem a rendszered"))
+    back = talk_once(runtime, TalkRequest(message="folytassuk innen"))
+
+    assert "tervezed" in creator.turn.assistant_reply or "fejleszted" in creator.turn.assistant_reply
+    assert "visszakapcsoltam" in back.turn.assistant_reply
+    assert creator.turn.assistant_reply != back.turn.assistant_reply
+
+
+def test_personal_entry_trace_and_identity_persistence(tmp_path):
+    runtime = _runtime(tmp_path)
+
+    talk_once(runtime, TalkRequest(message="szia syntaris én Árpi vagyok"))
+    trace = trace_last(runtime)
+    payload = {event.event_name: event.payload for event in trace.trace_events}["turn_interpreted"]
+    parsed = json.loads(payload)
+    assert parsed["kind"] == "personal_entry"
+    assert parsed["personal_entry_kind"] == "self_intro"
+    assert parsed["owner_name"] == "Árpi"
+
+    result = talk_once(runtime, TalkRequest(message="szia"))
+    assert "Árpi" in result.turn.assistant_reply

@@ -1,6 +1,6 @@
 # Syntaris (Greenfield Rebuild)
 
-Phase-0 runtime foundation with an explicit session/thread/mode conversational state layer plus deterministic pending-route clarification for suggestive routing phrases.
+Phase-0 runtime foundation with explicit session/thread/mode conversational state, deterministic routing/recall/snapshot/focus, and deterministic Hungarian-first personal-entry(owner-intro) handling.
 
 ## Current scope
 
@@ -17,6 +17,8 @@ The current repository contains:
 - state and latest-trace inspection from CLI
 - deterministic thread context-pack projection and inspection (`thread-view`)
 - deterministic thread recap projection/inspection (`thread-recap`) and recap-query responses in talk flows
+- deterministic personal-entry route for greetings / self-intro / owner-framing / return-entry phrases
+- minimal explicit owner identity persistence (`owner_name`, `owner_relation`) in `app_meta` when directly stated
 
 ## Quick start
 
@@ -143,3 +145,20 @@ Syntaris now applies one shared normalization policy for Hungarian-first text ha
 - recall-style assistant blobs are flattened for snapshot line construction (summary-of-summary anti-recursion) so `hol tartottunk?` and snapshot reuse stay compact
 
 - packaging smoke: `python -m pip install -e . --no-build-isolation`
+
+
+## Personal entry foundation (REBUILD-016)
+
+Syntaris now recognizes Hungarian-first personal entry phrases deterministically (without LLM dependency):
+- greeting (`szia`, `szia syntaris`)
+- explicit self-intro (`én Árpi vagyok`, `szia syntaris én Árpi vagyok`)
+- explicit owner/creator framing (`én terveztem a rendszered`, `Árpi vagyok, én fejlesztelek`)
+- return-entry (`folytassuk innen`, `vissza syntarisra`)
+
+Behavior goals:
+- compact natural Hungarian reply (not bare `Rendben.`)
+- one meaningful next-step prompt at most
+- no fake memory claims
+- if explicit owner name/relation is provided, it can be acknowledged and minimally persisted for subsequent greeting continuity
+
+This is intentionally not a full long-term profile graph; only explicitly stated identity facts are persisted.

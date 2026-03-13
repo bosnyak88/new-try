@@ -1,3 +1,13 @@
+## 0.15.0 - REBUILD-016 deterministic personal greeting / owner-intro / intake-entry foundation
+
+- Added explicit personal-entry contracts (`PersonalEntryKind`, `PersonalEntrySignal`, `TurnInterpretationKind.PERSONAL_ENTRY`, `ResponsePlanKind.PERSONAL_ENTRY`) plus minimal owner identity contract (`OwnerIdentityProfile`).
+- Added deterministic Hungarian-first interpretation for greeting/self-intro/owner-framing/return-entry phrases, including explicit owner name extraction for intro forms.
+- Added minimal explicit identity persistence in `app_meta` (`owner_name`, `owner_relation`) only when directly stated by the user.
+- Extended response planning with compact natural personal-entry replies (one next-step prompt at most), avoiding bare fallback outputs.
+- Extended `turn_interpreted` trace payload with personal-entry metadata (`personal_entry_kind`, `owner_name`, `owner_relation`).
+- Added deterministic tests for personal-entry behavior quality, intro acknowledgment, route distinction, trace visibility, and identity carry-over greeting continuity.
+- Updated README/architecture/bootstrap/operations/propagation docs for REBUILD-016 scope and non-overreach boundaries.
+
 ## 0.11.0 - REBUILD-011 snapshot-backed conversational recall/resume + response-plan foundation
 
 - Introduced first-class contracts: `TurnInterpretation`, `RecallRequest`, `RecallResolution`, `ResponsePlan`, `ResponsePlanSection`, and trace metadata contracts for interpretation/recall/plan.

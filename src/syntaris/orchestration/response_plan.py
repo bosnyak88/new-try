@@ -8,6 +8,8 @@ from syntaris.contracts.runtime import (
     DecompositionPlan,
     EvidencePack,
     ObjectiveFrame,
+    OwnerIdentityProfile,
+    PersonalEntryKind,
     RecallResolution,
     ResponsePlan,
     ResponsePlanKind,
@@ -49,7 +51,26 @@ def build_response_plan(
     synthesis: SynthesisPlan,
     focus: ThreadFocusPack | None = None,
     followup_target: str | None = None,
+    owner_identity: OwnerIdentityProfile | None = None,
 ) -> ResponsePlan:
+    if interpretation.kind.value == "personal_entry" and interpretation.personal_entry is not None:
+        signal = interpretation.personal_entry
+        name = signal.owner_name or (owner_identity.owner_name if owner_identity is not None else None)
+        display_name = f" {name}" if name else ""
+        if signal.kind == PersonalEntryKind.GREETING:
+            lines = [f"Szia{display_name}. Itt vagyok — miben segítsek most?"]
+        elif signal.kind == PersonalEntryKind.SELF_INTRO:
+            lines = [f"Szia{display_name}. Örülök, hogy így mutatkoztál be — innen miben legyen az első konkrét lépés?"]
+        elif signal.kind == PersonalEntryKind.OWNER_FRAMING:
+            lines = [f"Szia{display_name}. Értem, hogy te tervezed és fejleszted a rendszert. Folytassuk innen: ma mit tegyünk könnyebbé?"]
+        else:
+            lines = ["Rendben, visszakapcsoltam ide. Folytassuk innen — most beszélgessünk, vagy oldjunk meg egy konkrét feladatot?"]
+        return ResponsePlan(
+            kind=ResponsePlanKind.PERSONAL_ENTRY,
+            sections=[ResponsePlanSection(title="personal_entry", lines=lines)],
+            focus_used=focus is not None,
+        )
+
     if strategy.strategy == AnswerStrategy.CLARIFICATION:
         question = strategy.clarification_question.question if strategy.clarification_question else (recall.clarification_message or "Pontosíts kérlek.")
         return ResponsePlan(
@@ -121,3 +142,6 @@ def build_response_plan(
         sections=[ResponsePlanSection(title="ordinary", lines=ordinary_lines)],
         focus_used=focus is not None,
     )
+    OwnerIdentityProfile,
+    PersonalEntryKind,
+    PersonalEntryKind,

@@ -104,6 +104,9 @@ def build_turn_trace_events(
                     "kind": interpret_trace.kind,
                     "pattern_name": interpret_trace.pattern_name,
                     "clarification_reason": interpret_trace.clarification_reason,
+                    "personal_entry_kind": interpret_trace.personal_entry_kind,
+                    "owner_name": interpret_trace.owner_name,
+                    "owner_relation": interpret_trace.owner_relation,
                 },
             }
         )
