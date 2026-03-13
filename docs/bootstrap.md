@@ -1,136 +1,37 @@
 # Bootstrap and configuration
 
-## Runtime boundary
+## Runtime bootstrap truth
 
-`build_runtime()` constructs `RuntimeContext` from config sources only.
-It does not load `.env` implicitly.
+`build_runtime()` constructs `RuntimeContext` from config only.  
+`syntaris.cli` is the `.env` boundary via `load_repo_env()`.
 
-`syntaris.cli` remains the CLI boundary that calls `load_repo_env()` before runtime construction.
+## Config sections
 
-## Config keys
-
-- `app`: name/environment
-- `llm`: external llama runtime paths and host/port
-- `paths`: `data_dir`, `db_path`
-- `conversation`: `default_thread_key`, `default_mode`, `context_turn_window`
-- `reply`: backend config (`deterministic` or `llama-http`)
-- `trace`: trace flags
+- `[app]`: app name/environment
+- `[llm]`: external llama path/host/port settings
+- `[paths]`: `data_dir`, `db_path`
+- `[conversation]`: context/snapshot/recall/focus/reasoning/scoped-state knobs
+- `[reply]`: backend + timeout settings
+- `[trace]`: enable + level
+- `[time]`: timezone
 
 ## DB bootstrap flow
 
-`init-db`, talk, and loop flows call `PersistenceStore.initialize()`:
+`init-db` and runtime entrypoints call `PersistenceStore.initialize()`:
+1. create/open data dir and db
+2. apply schema + migrations
+3. persist `app_meta.schema_version=6`
+4. keep active/pending pointers in `app_meta`
 
-1. create `data_dir` (if missing)
-2. create/open `db_path`
-3. apply explicit SQLite schema
-4. migrate legacy REBUILD-002 schema when needed
-5. write schema metadata (`app_meta.schema_version=2`) and preserve active/previous thread pointers in `app_meta`
+Authoritative persisted model (v6):
+- conversation/runtime: `sessions`, `threads`, `turns`
+- derived artifacts: `thread_snapshots`, `thread_focus`
+- explicit claims + scoped state: `personal_claims`
+- observability: `trace_events`
+- lightweight runtime pointers: `app_meta`
 
-## Active state resolution
+## Environment/dependency truth
 
-On one-shot talk, live loop entry, and status:
-
-1. resolve active state from `app_meta` pointers
-2. if missing, create new session + default thread and set default mode
-3. apply thread/mode switches as requested and maintain previous-thread pointer whenever active thread changes
-4. persist resulting active pointers for subsequent turns
-
-
-## Routing bootstrap note
-
-No additional boot-time providers are required for REBUILD-005 routing. The deterministic phrase matcher runs inside orchestration using persisted active state plus known thread list from storage.
-
-
-- `app_meta.pending_route` stores deterministic pending-route proposals (held message + proposed thread + reason + metadata) until confirmation, rejection, or cancellation.
-
-
-## Recap bootstrap note
-
-No new providers or schema migrations are required for REBUILD-009 recap foundation. Recap views are projected from existing persisted thread turns through the context-pack loader, with the same bounded turn window (`conversation.context_turn_window` or explicit `--limit`).
-
-
-## Thread snapshot / handoff foundation
-
-Syntaris now persists deterministic thread snapshot packs via a shared snapshot module (`orchestration/thread_snapshot.py`).
-Snapshots are compact handoff packs built from the thread context window, excluding recap/control/pending turns by default.
-
-CLI inspection uses `thread-snapshot --current`, `thread-snapshot --previous`, or `thread-snapshot <thread_key>` with optional `--refresh` and `--limit`.
-Snapshots are also refreshed automatically when routing switches away from a thread so handoff state remains stable for later resume/recall work.
-
-## Conversation config additions (REBUILD-011)
-
-`[conversation]` now also supports:
-
-- `recall_line_limit` (default `3`): max snapshot lines rendered in recall/resume responses.
-- `recall_prefer_snapshot` (default `true`): keeps recall resolution snapshot-backed.
-- `response_followup_enabled` (default `true`): appends a short continuation question for recall/resume replies.
-
-Environment overrides:
-- `SYNTARIS_RECALL_LINE_LIMIT`
-- `SYNTARIS_RECALL_PREFER_SNAPSHOT`
-- `SYNTARIS_RESPONSE_FOLLOWUP_ENABLED`
-
-## Focus bootstrap notes
-
-`init-db` now creates `thread_focus` for deterministic active-focus persistence.
-Focus config knobs are available under `[conversation]`: `focus_turn_window`, `focus_line_limit`, `followup_resolution_enabled`.
-
-
-## Deliberation config
-
-REBUILD-013 adds shared deterministic comparison-pack and answer-strategy orchestration between interpretation/recall/focus resolution and response-plan rendering. Once/live/script remain on the same execution path. Trace now records `comparison_pack_built` and `answer_strategy_selected` for inspectability without exposing chain-of-thought.
-
-## REBUILD-014 config knobs
-
-Conversation config now includes optional deterministic reasoning controls:
-- `max_reasoning_units`
-- `max_evidence_items_per_unit`
-- `support_labeling_enabled`
-- `synthesis_include_next_step`
-
-These are loaded at bootstrap and apply uniformly to once/live/script shared execution.
-
-## Text normalization bootstrap note
-
-`init-db` now migrates `turns` with raw-text columns (`user_message_raw`, `assistant_reply_raw`) and backfills them from legacy rows to keep migration-safe auditability while enabling canonical persistence/display paths.
-
-Migration/backfill remains schema-safe; legacy artifact cleanup happens through deterministic runtime rebuild/writeback on access (not destructive migration).
-
-Operationally, no destructive migration is required for legacy snapshot/focus staleness; runtime freshness checks rebuild stale packs from canonical turn sources on first access.
-
-Runtime artifact hygiene now validates both freshness and line-level cleanliness, then rebuilds from canonicalized turn sources when either gate fails.
-
-Packaging acceptance note: editable install without build isolation is validated against the declared setuptools+wheel build requirements in `pyproject.toml`.
-
-Packaging smoke check:
-- `python -m pip install -e . --no-build-isolation`
-
-## REBUILD-016 propagation note
-
-Bootstrap/init flow does not require new tables or mandatory migrations for personal-entry support.
-Minimal explicit identity facts (`owner_name`, `owner_relation`) are stored in existing `app_meta` only when directly provided in user text.
-
-
-REBUILD-017 note: intake bridge and explicit teach-mode use existing schema; only minimal owner identity remains persisted in `app_meta`. Declared focus/direction statements are interpreted deterministically for session/thread shaping and trace visibility.
-
-
-## Determinisztikus időtudat (REBUILD-018)
-- Környezeti függőség-zárás: Windows célkörnyezetben a `tzdata` csomag deklarált projektfüggőség, így az időzóna-adatok bootstrap során reprodukálhatóan elérhetők.
-- A runtime közös, tesztelhető órát (`RuntimeContext.clock`) és explicit időzónát (`[time].timezone`) használ.
-- A rendszer daypart-érzékeny magyar köszönést ad (reggel/délelőtt/délután/este/éjjel).
-- Visszatérésnél a válaszok csak perzisztált turn-időbélyeg + aktuális helyi idő alapján jeleznek gap-et (nincs megfigyelés- vagy fake-memory állítás).
-- Relatív időkifejezések (`most`, `ma`, `tegnap`, `holnap`, `majd`) determinisztikusan kerülnek groundingra és trace-ben láthatók.
-- Scope-határ: ez még nem reminder/executor/rutin-tanulás.
-
-
-REBUILD-019 extends DB bootstrap with the `personal_claims` table for explicit deterministic claim persistence.
-
-## REBUILD-020 bootstrap/config additions
-
-`[conversation]` now supports deterministic scoped-state aging knobs:
-- `scoped_state_short_stale_minutes` (default `120`)
-- `scoped_state_same_day_stale_minutes` (default `480`)
-
-Environment overrides:
-- `SYNTARIS_SCOPED_STATE_SHORT_STALE_MINUTES`
-- `SYNTARIS_SCOPED_STATE_SAME_DAY_STALE_MINUTES`
+- Deterministic runtime does not require live llama server.
+- `tzdata` is declared dependency for reproducible timezone behavior on platforms that need it.
+- No manual rescue bootstrap step is required for REBUILD-018/020 baseline.

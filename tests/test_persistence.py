@@ -19,7 +19,7 @@ def test_initialize_creates_schema(tmp_path):
                 "SELECT name FROM sqlite_master WHERE type='table'"
             ).fetchall()
         }
-    assert {"app_meta", "sessions", "threads", "turns", "trace_events", "thread_snapshots", "thread_focus"}.issubset(names)
+    assert {"app_meta", "sessions", "threads", "turns", "trace_events", "thread_snapshots", "thread_focus", "personal_claims"}.issubset(names)
 
 
 def test_write_and_read_turn_and_trace(tmp_path):

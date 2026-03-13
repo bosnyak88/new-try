@@ -1,184 +1,52 @@
-## Architecture (REBUILD-009 deterministic thread recap/resume foundation)
+# Architecture (post-REBUILD-020 authoritative baseline)
 
-## Design principles
+## Design doctrine
 
-- Contract-first: loop/state/turn outputs are explicit dataclasses.
-- Structure-first: config/bootstrap/persistence/reply/orchestration/trace/CLI remain separated.
-- No monolithic pipeline: one reusable single-turn path is called by both CLI wrappers.
-- Routing is a dedicated orchestration layer, reused by once/live/script message execution.
+- Contract-first and layer-separated.
+- One shared turn orchestration path for once/live/script.
+- Hungarian-first deterministic behavior remains primary.
+- Deterministic fallback must work without live LLM.
+- No monolithic central brain file and no CLI orchestration smearing.
 
-## Conversation model
+## Layer map
 
-- **session**: top-level conversation container.
-- **thread**: named stream within one session (e.g. `default`, `work`).
-- **mode**: explicit turn metadata (currently free-form, default `chat`).
-- **active state**: persisted pointers for active session, active thread, active mode, and previous active thread.
-- **live loop state**: projected from active state every loop step.
+1. **Contracts** (`src/syntaris/contracts/runtime.py`)
+   - Runtime DTOs for routing, interpretation, memory queries, claim capture, scoped-state status, time context, response planning, and trace views.
+2. **Orchestration** (`src/syntaris/orchestration/`)
+   - `turns.py` executes the shared pipeline: route -> context/focus/snapshot/recall -> interpretation -> strategy/reasoning scaffold -> response plan -> render/persist/trace.
+3. **Persistence** (`src/syntaris/persistence/`)
+   - Schema v6 with `sessions`, `threads`, `turns`, `thread_snapshots`, `thread_focus`, `personal_claims`, `trace_events`, `app_meta`.
+4. **Reply** (`src/syntaris/reply/`)
+   - Adapter boundary plus deterministic plan renderer.
+5. **Trace** (`src/syntaris/trace/events.py`)
+   - Event stream reflecting route decision, interpretation, strategy, continuity, and capture actions.
+6. **CLI** (`src/syntaris/cli.py`)
+   - Thin command boundary; no business logic.
 
-## Layer overview
+## Personal-memory semantics
 
-1. `contracts/`
-   - `LoopAction`, `LoopCommand`, `LiveConversationState`, `LiveTurnOutput`, plus existing talk/session contracts.
-2. `orchestration/turns.py`
-   - single reusable `execute_turn()` orchestration path.
-3. `orchestration/talk.py`
-   - thin wrappers (`talk_once`, state helpers, trace-last).
-4. `orchestration/live_loop.py`
-   - loop command parsing, control routing, and repeated calls into `execute_turn()`.
-5. `persistence/`
-   - active state/session/thread/turn/trace persistence unchanged in shape.
-6. `trace/`
-   - turn trace enriched with execution source (`talk_once` vs `talk_live`) plus loop-level events.
-7. `cli.py`
-   - boundary routing only (`--once`, `--live`, `--script`).
+- Stable claims are persisted as explicit captures only.
+- Scoped state is persisted in the same `personal_claims` table with scope tags (`day`, `session`, `thread`).
+- Read path classifies scoped entries into `active/stale/expired` deterministically from timestamps/day boundary.
+- Corrections supersede older active values by claim kind + scope domain.
 
-## Live controls
+## Time and continuity semantics
 
-- `/kilep` (alias `/exit`) - exit loop
-- `/allapot` (alias `/status`) - compact status output
-- `/szal <thread_key>` (alias `/thread ...`) - switch active thread
-- `/mod <mode>` (alias `/mode ...`) - switch active mode
+- `RuntimeContext.clock` and `[time].timezone` are authoritative.
+- Continuity metadata (`gap_kind`, `continuity_class`, relative grounding) is computed in orchestration and surfaced in `response_plan_built` trace payloads.
 
-Control commands are not persisted as normal turns.
+## Trace contract intent
 
+Trace events are operationally honest and mapped to runtime decisions:
+- `route_decision_computed`: routing + state transition + pending resolution metadata.
+- `turn_interpreted`: interpretation kind, personal-entry/intake markers, memory query, claim-capture count, relative terms.
+- `response_plan_built`: final response kind plus time/continuity shaping metadata.
+- `explicit_claims_captured`: only emitted when actual captures persisted.
+- `thread_snapshot_refreshed` / `thread_focus_loaded`: artifact coherence visibility.
 
-## Routing layer
+## Explicit non-goals
 
-- `orchestration/routing.py` resolves deterministic route decisions before turn execution.
-- Actions: `CONTINUE_ACTIVE`, `SWITCH_EXISTING`, `CREATE_AND_SWITCH`, `SWITCH_PREVIOUS`, `NO_ROUTE_CHANGE`.
-- `execute_turn()` applies precedence: explicit request overrides first, then deterministic named routing, then deterministic previous-thread/topic-shift phrases, then continue active.
-- live slash commands stay explicit controls and are handled before natural routing phrases.
-
-
-## Pending-route clarification layer
-
-- Suggestive Hungarian-first phrases create persisted `pending_route` state instead of immediate switch.
-- The next turn resolves pending state deterministically: affirmative = switch and execute held message on proposed thread; negative = stay and execute held message on current thread; other input = cancel pending and process new input normally.
-- `talk --once`, `talk --live`, and `talk --script` share the same pre-turn route/pending resolution path in orchestration (`execute_turn`).
-
-
-## Thread context projection layer
-
-- Added a dedicated orchestration module (`orchestration/context_pack.py`) to build deterministic `ThreadContextPack` views.
-- The same projection path serves CLI inspection (`thread-view`) and turn-time context loading (`execute_turn`).
-- Projection remains bounded (`conversation.context_turn_window`, overrideable via `thread-view --limit`).
-- Context packs are raw-but-shaped: session/thread metadata + bounded recent persisted turns; no summarization, embeddings, or semantic recall.
-
-
-## Thread recap layer
-
-- `orchestration/recap.py` is a dedicated deterministic layer that maps `ThreadContextPack` => `ThreadRecapView`.
-- Shared recap builder is reused by CLI (`thread-recap`) and talk turn execution (`talk --once`, `talk --live`, `talk --script`).
-- Recap content is deterministic and bounded: thread metadata + recent turn lines from the context pack window.
-- Recap queries are recognized by explicit Hungarian-first phrase families (current/previous/named), with conservative normalization (`strip`, case-insensitive regex).
-- Recap is evaluated only after explicit overrides, live slash controls, pending resolution, and deterministic routing phrases.
-- Recap turns bypass the reply adapter but still persist a normal turn + trace with recap metadata (`recap_query_recognized`, `thread_recap_built`).
-
-
-## Thread snapshot / handoff foundation
-
-Syntaris now persists deterministic thread snapshot packs via a shared snapshot module (`orchestration/thread_snapshot.py`).
-Snapshots are compact handoff packs built from the thread context window, excluding recap/control/pending turns by default.
-
-CLI inspection uses `thread-snapshot --current`, `thread-snapshot --previous`, or `thread-snapshot <thread_key>` with optional `--refresh` and `--limit`.
-Snapshots are also refreshed automatically when routing switches away from a thread so handoff state remains stable for later resume/recall work.
-
-## REBUILD-011 shared conversational cognition layer
-
-Added three dedicated orchestration boundaries:
-
-1. `orchestration/turn_interpret.py`
-   - deterministic Hungarian-first interpretation (`ordinary`, recall current/previous/named, resume previous/named, clarification-needed).
-2. `orchestration/thread_recall.py`
-   - deterministic recall target resolution with precedence from interpretation request (`named > previous > current`) and snapshot-backed loading.
-3. `orchestration/response_plan.py`
-   - explicit plan building (`ordinary`, `recall`, `resume`, `clarification`) before final verbalization.
-
-`execute_turn()` now uses one shared path for once/live/script:
-route/pending -> interpretation -> recall resolution -> response plan -> rendering (`reply/plan_renderer.py`) -> persistence -> trace.
-
-This keeps reply generation modular: plan construction is orchestration logic; textual rendering is a reply-boundary concern.
-
-## REBUILD-012 active-focus foundation
-
-A dedicated `orchestration.thread_focus` module builds/loads/updates compact `ThreadFocusPack` state, and `orchestration.followup_resolution` resolves shorthand follow-up phrases deterministically.
-Response planning consumes focus state via contract fields (`focus_used`, follow-up target) instead of hidden prompt logic.
-Persistence is explicit in `thread_focus` table, separate from snapshots.
-
-
-## Deliberation layer
-
-REBUILD-013 adds shared deterministic comparison-pack and answer-strategy orchestration between interpretation/recall/focus resolution and response-plan rendering. Once/live/script remain on the same execution path. Trace now records `comparison_pack_built` and `answer_strategy_selected` for inspectability without exposing chain-of-thought.
-
-## REBUILD-014 reasoning scaffold
-
-Turn orchestration now contains explicit modules between answer-strategy and response planning:
-
-- `objective_frame`: classify objective kind and detect multi-part intent.
-- `question_decompose`: produce deterministic ordered reasoning units.
-- `evidence_pack`: assign grounded evidence to units and support labels.
-- `answer_synthesis`: compile a sectioned synthesis plan.
-
-`response_plan` remains a consumer of these artifacts; it does not recompute decomposition/synthesis decisions.
-This preserves contract boundaries and avoids a monolithic central turn-brain file.
-
-REBUILD-014 normalization hardening now preprocesses turn text early in shared turn orchestration before interpretation/deliberation/objective framing so explicit recall/compare intents remain deterministic even under diacritic/mojibake degradation.
-
-## REBUILD-015 text hygiene propagation
-
-The architecture now separates **raw text preservation** from **canonical/display text**. Normalization is centralized in `orchestration/text_normalize.py` and reused by orchestration, persistence, snapshot/focus, rendering, and trace formatting to prevent layer-local drift.
-
-REBUILD-015 follow-up: persisted derived artifacts are read without pre-clean masking so hygiene checks can trigger real snapshot/focus rebuild+writeback (not detect-only), including previous-thread retrieval paths.
-
-Snapshot/focus retrieval now applies two gates before returning persisted artifacts: (1) dirty-text hygiene gate and (2) stale-head freshness gate, both feeding deterministic rebuild/writeback from canonical turn sources.
-
-Line-level snapshot hygiene is enforced during artifact retrieval/build: a single dirty line is sufficient to trigger rebuild/writeback from canonicalized turn sources.
-
-Snapshot construction now applies anti-recursion flattening for generated recap-like assistant text before persistence to prevent transitive summary amplification in future recall/snapshot reuse.
-
-## REBUILD-016/017 deterministic personal-entry + intake foundation
-
-A new deterministic interpretation path (`TurnInterpretationKind.PERSONAL_ENTRY`) handles greeting/intro/owner/return entry surfaces plus owner-aware intake directions (personal chat, concrete help, focus setting, resume) before ordinary fallback behavior.
-
-- personal entry kinds: `greeting`, `self_intro`, `owner_framing`, `return_entry`, `personal_chat_intake`, `concrete_help_intake`, `focus_setting_intake`, `resume_intake`
-- interpretation emits explicit structured signal (`PersonalEntrySignal`) including optional explicit owner metadata
-- response planning renders compact Hungarian personal-entry responses with one next-step prompt at most
-- persistence stores only minimal explicit identity facts (`owner_name`, `owner_relation`) via `app_meta`
-- trace includes personal-entry metadata through `turn_interpreted` payload fields (`personal_entry_kind`, owner fields, declared focus/direction when explicit)
-
-This layer does not infer broad profile traits and does not claim unstored long-term memory.
-
-
-## Determinisztikus időtudat (REBUILD-018)
-- UTC-időbélyegekhez a runtime beépített `datetime.timezone.utc`-t használ, így az UTC útvonal nem függ külső tz-adatcsomagtól.
-- A runtime közös, tesztelhető órát (`RuntimeContext.clock`) és explicit időzónát (`[time].timezone`) használ.
-- A rendszer daypart-érzékeny magyar köszönést ad (reggel/délelőtt/délután/este/éjjel).
-- Visszatérésnél a válaszok csak perzisztált turn-időbélyeg + aktuális helyi idő alapján jeleznek gap-et (nincs megfigyelés- vagy fake-memory állítás).
-- Relatív időkifejezések (`most`, `ma`, `tegnap`, `holnap`, `majd`) determinisztikusan kerülnek groundingra és trace-ben láthatók.
-- Scope-határ: ez még nem reminder/executor/rutin-tanulás.
-
-
-## REBUILD-019 memory substrate
-- `turn_interpret` now identifies explicit claim capture candidates and explicit-memory question intents.
-- `persistence.store` persists claims in `personal_claims` with active/superseded state and stable vs thread scope classes.
-- `response_plan` renders grounded Hungarian answers from persisted explicit claims/scoped state only.
-- `trace.events` emits `explicit_claims_captured` when deterministic claim capture is applied.
-
-## REBUILD-020 propagation: deterministic scoped-state substrate
-
-- `contracts/runtime.py`
-  - Added explicit scope classes (`stable`, `day`, `session`, `thread`) and scoped-state status (`active`, `stale`, `expired`).
-  - Added continuity-class metadata on time context.
-  - Extended personal-memory DTO to expose scoped-state view + active-state status fields.
-- `persistence/store.py`
-  - Kept single `personal_claims` table; no schema chaos.
-  - Capture path now supersedes by claim-kind+scope boundary (thread-bound for thread scope, global for day/session/stable).
-  - Read path classifies temporary scoped claims deterministically by timestamp/day boundary and exposes active/stale/expired.
-- `orchestration`
-  - Turn interpretation captures explicit temporary direction/focus statements into correct scope classes.
-  - Response planning uses scoped-state status for grounded focus/direction/active-state answers and continuity-aware resume phrasing.
-  - Time-context now includes explicit continuity class for deterministic session-boundary shaping.
-- `trace`
-  - `response_plan_built` includes continuity metadata (`continuity_class`) for explainable runtime behavior.
-
-Design boundary preserved: no monolithic central brain, no CLI-smearing, no routine-learning graph engine.
+- executor/tool orchestration,
+- routine learning,
+- broad inferred profile graph,
+- hidden CoT exposure.
