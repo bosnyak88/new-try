@@ -541,8 +541,18 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         blocker_text=workframe_state.blocker_text,
         next_step_status=workframe_state.next_step_status.value,
         next_step_line_count=len(workframe_state.next_step_lines),
+        missing_info_status=workframe_state.missing_info_status.value,
+        missing_info_count=len(workframe_state.missing_info_lines),
+        open_question_status=workframe_state.open_question_status.value,
+        open_question_count=len(workframe_state.open_question_lines),
+        assumption_status=workframe_state.assumption_status.value,
+        assumption_count=len(workframe_state.assumption_lines),
+        decision_state=workframe_state.decision_state.value,
+        decision_count=len(workframe_state.decision_lines),
+        evidence_gap_status=workframe_state.evidence_gap_status.value,
+        evidence_gap_count=len(workframe_state.evidence_gap_lines),
         query_family=workframe_queries.family,
-        uncertainty_marked=workframe_updates.uncertainty_marked or (workframe_queries.family == "uncertainty_query") or (response_plan.kind.value == "uncertainty_labeled"),
+        uncertainty_marked=workframe_updates.uncertainty_marked or (workframe_queries.family in {"uncertainty_query", "decision_readiness_query"}) or (response_plan.kind.value == "uncertainty_labeled"),
     )
 
     if response_plan.kind.value in {"recall", "resume", "clarification"} or any(section.lines for section in response_plan.sections):

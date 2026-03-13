@@ -66,4 +66,4 @@ level = "info"
 timezone = "Europe/Budapest"
 
 
-# REBUILD-023 note: workframe/objective/blocker/next-step inference is deterministic and Hungarian-first.
+# REBUILD-024 note: workframe + decision-readiness (missing-info/open-question/assumption/decision/evidence-gap) inference is deterministic and Hungarian-first.

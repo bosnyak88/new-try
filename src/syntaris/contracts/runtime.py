@@ -682,6 +682,42 @@ class WorkframeNextStepStatus(str, Enum):
     MULTIPLE = "multiple_plausible"
 
 
+class MissingInfoStatus(str, Enum):
+    EXPLICIT = "missing_info_explicit"
+    IMPLIED = "missing_info_implied"
+    NONE = "no_missing_info_established"
+    RESOLVED = "missing_info_resolved"
+
+
+class OpenQuestionStatus(str, Enum):
+    EXPLICIT = "explicit_open_question"
+    IMPLIED = "implied_open_question"
+    ANSWERED = "answered_question"
+    NONE = "no_open_question_established"
+
+
+class AssumptionStatus(str, Enum):
+    ASSUMPTION = "assumption"
+    INFERRED = "inferred_possibility"
+    SUPPORTED = "supported_claim"
+    UNKNOWN = "unknown_or_not_established"
+
+
+class DecisionState(str, Enum):
+    NEEDED = "decision_needed"
+    BLOCKED_BY_MISSING_INFO = "decision_blocked_by_missing_info"
+    PROPOSED = "decision_proposed"
+    MADE = "decision_made"
+    NONE = "no_decision_established"
+
+
+class EvidenceGapStatus(str, Enum):
+    EXPLICIT = "evidence_gap_explicit"
+    IMPLIED = "evidence_gap_implied"
+    SUFFICIENT = "evidence_sufficient"
+    UNKNOWN = "evidence_unknown"
+
+
 @dataclass(frozen=True)
 class WorkframeState:
     workframe: WorkframeKind
@@ -691,6 +727,16 @@ class WorkframeState:
     blocker_text: str | None
     next_step_status: WorkframeNextStepStatus
     next_step_lines: list[str] = field(default_factory=list)
+    missing_info_status: MissingInfoStatus = MissingInfoStatus.NONE
+    missing_info_lines: list[str] = field(default_factory=list)
+    open_question_status: OpenQuestionStatus = OpenQuestionStatus.NONE
+    open_question_lines: list[str] = field(default_factory=list)
+    assumption_status: AssumptionStatus = AssumptionStatus.UNKNOWN
+    assumption_lines: list[str] = field(default_factory=list)
+    decision_state: DecisionState = DecisionState.NONE
+    decision_lines: list[str] = field(default_factory=list)
+    evidence_gap_status: EvidenceGapStatus = EvidenceGapStatus.UNKNOWN
+    evidence_gap_lines: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -702,6 +748,16 @@ class WorkframeTrace:
     blocker_text: str | None
     next_step_status: str
     next_step_line_count: int
+    missing_info_status: str
+    missing_info_count: int
+    open_question_status: str
+    open_question_count: int
+    assumption_status: str
+    assumption_count: int
+    decision_state: str
+    decision_count: int
+    evidence_gap_status: str
+    evidence_gap_count: int
     query_family: str | None = None
     uncertainty_marked: bool = False
 

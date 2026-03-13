@@ -16,3 +16,6 @@
 Use `trace-last` to confirm `workframe_state_derived` is emitted after turns that ask for blocker/next-step/plan semantics.
 
 - REBUILD-023 uncertainty audit: `trace-last` -> `workframe_state_derived` now includes `query_family` and `uncertainty_marked` to verify certainty-split and tentative proposal handling.
+
+## Operational check (REBUILD-024)
+Use `trace-last` and inspect `workframe_state_derived` for: `missing_info_status`, `open_question_status`, `assumption_status`, `decision_state`, `evidence_gap_status` plus count fields. This is the authoritative runtime audit surface for decision readiness.

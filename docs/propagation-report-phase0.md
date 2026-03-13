@@ -26,3 +26,6 @@ Contracts, orchestration, persistence semantics, reply surface, trace semantics,
 
 ## REBUILD-023 propagation note
 Reviewed core contracts/orchestration/reply/trace/CLI/tests/docs for workframe, objective, blocker, and next-step alignment. Added deterministic workframe derivation and trace event; no schema migration required in this pass.
+
+## REBUILD-024 propagation note
+Reviewed and propagated contracts/orchestration/reply/trace/tests/docs/config for missing-info, open-question, assumption/evidence, and decision-needed semantics. No schema migration was required; persistence remains context-first while snapshot/focus keep aligned derived workframe state.

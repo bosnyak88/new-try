@@ -34,3 +34,8 @@ Current baseline intentionally does **not** include:
 - Runtime derives a deterministic **workframe state** (chat/work/planning/recall/capture) from natural Hungarian turns.
 - Answers about blocker/next-step/plan now surface objective state, blocker state, and next-step uncertainty explicitly.
 - Trace now includes `workframe_state_derived` for honest post-turn audit.
+
+## REBUILD-024 baseline
+- Workframe now carries an explicit decision-readiness layer: `missing_info`, `open_question`, `assumption`, `decision_state`, `evidence_gap`.
+- Natural Hungarian queries like `mi hiányzik még?`, `milyen nyitott kérdések vannak?`, `milyen döntést kell meghozni?` map to deterministic structured answers.
+- `workframe_state_derived` trace payload includes all decision-readiness statuses and counts, so uncertainty and readiness are auditable instead of hidden in wording.
