@@ -104,12 +104,23 @@ def _memory_query_kind(normalized: str) -> MemoryQueryKind | None:
         return MemoryQueryKind.RELATIONSHIP
     if normalized in {"mi a szereped", "mi a szereped?"}:
         return MemoryQueryKind.SYSTEM_ROLE
-    if normalized in {"mi a mostani fokusz", "mi a mostani fokusz?", "mirol akartam most beszelni", "mirol akartam most beszelni?"}:
+    if normalized in {"mi a mostani fokusz", "mi a mostani fokusz?"}:
         return MemoryQueryKind.CURRENT_FOCUS
+    if normalized in {"mirol akartam most beszelni", "mirol akartam most beszelni?"}:
+        return MemoryQueryKind.CURRENT_DIRECTION
+    if normalized in {
+        "mi maradt aktiv mostanrol",
+        "mi maradt aktiv mostanrol?",
+        "meg ez a fokusz",
+        "meg ez a fokusz?",
+        "ma meg mindig ez van fokuszban",
+        "ma meg mindig ez van fokuszban?",
+    }:
+        return MemoryQueryKind.ACTIVE_STATE
     return None
 
 
-def _claim_captures(owner_name: str | None, owner_framing: bool, system_role: str | None, declared_focus: str | None, declared_direction: str | None) -> list[ClaimCapture]:
+def _claim_captures(owner_name: str | None, owner_framing: bool, system_role: str | None, declared_focus: str | None, declared_direction: str | None, declared_chat_day: bool) -> list[ClaimCapture]:
     captures: list[ClaimCapture] = []
     if owner_name is not None:
         captures.append(ClaimCapture(kind=ClaimKind.OWNER_NAME, value=owner_name, scope=ClaimScope.STABLE))
@@ -118,7 +129,9 @@ def _claim_captures(owner_name: str | None, owner_framing: bool, system_role: st
     if system_role is not None:
         captures.append(ClaimCapture(kind=ClaimKind.SYSTEM_ROLE, value=system_role, scope=ClaimScope.STABLE))
     if declared_focus is not None:
-        captures.append(ClaimCapture(kind=ClaimKind.CURRENT_FOCUS, value=declared_focus, scope=ClaimScope.THREAD))
+        captures.append(ClaimCapture(kind=ClaimKind.CURRENT_FOCUS, value=declared_focus, scope=ClaimScope.DAY))
+    if declared_chat_day:
+        captures.append(ClaimCapture(kind=ClaimKind.CURRENT_DIRECTION, value="beszélgetés", scope=ClaimScope.SESSION))
     if declared_direction is not None:
         captures.append(ClaimCapture(kind=ClaimKind.CURRENT_DIRECTION, value=declared_direction, scope=ClaimScope.THREAD))
     return captures
@@ -158,6 +171,8 @@ def interpret_turn(message: str) -> TurnInterpretation:
         declared_direction = "munka"
     elif "ma az adminra fokuszaljunk" in normalized:
         declared_direction = "admin"
+    elif "most valami konkret segitseg kell" in normalized:
+        declared_direction = "konkrét segítség"
 
     memory_query = _memory_query_kind(normalized)
     correction_name_claim = normalized.startswith("javitas:") or normalized.startswith("javítás:") or "nem igy hivnak" in normalized
@@ -167,7 +182,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
         for phrase in ("folytassuk a syntarist", "menjunk tovabb innen", "vegyuk fel innen a fonalat")
     )
 
-    captures = _claim_captures(owner_name, owner_framing, system_role, declared_focus, declared_direction)
+    captures = _claim_captures(owner_name, owner_framing, system_role, declared_focus, declared_direction, personal_chat_intake)
 
     if owner_framing:
         return TurnInterpretation(
@@ -209,6 +224,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
             kind=TurnInterpretationKind.PERSONAL_ENTRY,
             pattern_name="personal_entry_personal_chat_intake",
             personal_entry=PersonalEntrySignal(kind=PersonalEntryKind.PERSONAL_CHAT_INTAKE),
+            claim_capture=captures,
             relative_time_terms=relative_terms,
         )
 
@@ -220,6 +236,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
                 kind=PersonalEntryKind.CONCRETE_HELP_INTAKE,
                 declared_direction="concrete_help",
             ),
+            claim_capture=captures,
             relative_time_terms=relative_terms,
         )
 

@@ -187,3 +187,23 @@ This is intentionally not a full long-term profile graph; only explicitly stated
 - Session/thread-scoped declarations (e.g. current focus/direction) are stored separately from stable claims.
 - Answers to self-report questions are grounded only in explicit captured facts; no inferred profile expansion and no fake memory claims.
 - Corrections supersede older active values for the same claim kind/scope.
+
+## Deterministic time-scoped active state foundation (REBUILD-020)
+
+Syntaris now separates **stable explicit claims** from **temporary scoped state** with deterministic lifecycle handling.
+
+- Stable: `owner_name`, `owner_relation`, `system_role`.
+- Temporary scoped state:
+  - day-scoped (`a mai fókusz ...`)
+  - session-scoped (`ma beszélgetni szeretnék`)
+  - thread-scoped (`most a munkáról akarok beszélni`)
+- Temporary scoped state is evaluated as `active` / `stale` / `expired` based on deterministic timestamps and day/session boundaries.
+- `mi a mostani fókusz?`, `miről akartam most beszélni?`, `mi maradt aktív mostanról?` now answer from scoped state with honest expiry wording.
+- Return/resume wording is continuity-aware (`same-session`, short-gap same-day, long-gap same-day, cross-day) without fake-surveillance claims.
+- Trace now carries continuity metadata for response planning (`continuity_class`).
+
+Scope guardrails remain unchanged:
+- this is not routine learning,
+- not reminders/tasks,
+- not executor/tooling,
+- and not broad autonomous profile inference.

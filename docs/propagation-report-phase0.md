@@ -159,3 +159,22 @@ Guardrails kept:
 
 ## REBUILD-019 propagation
 Reviewed and updated contracts, interpretation, persistence schema/store, response planning, trace, CLI-validated behavior, docs, and regression tests for controlled explicit personal memory.
+
+## REBUILD-020 propagation pass
+
+- Reviewed/updated layers:
+  - contracts (`runtime.py`)
+  - orchestration (`turn_interpret.py`, `response_plan.py`, `time_context.py`, `turns.py`)
+  - persistence (`store.py`; schema reused intentionally)
+  - trace (`trace/events.py`)
+  - config (`loader.py`, `config/syntaris.example.toml`)
+  - docs (`README.md`, architecture/bootstrap/operations/this report)
+  - tests (`test_personal_memory.py`, `test_time_awareness.py`)
+- Intentionally unchanged:
+  - CLI command surface and command wiring (behavior propagated through shared orchestration, no boundary leakage).
+  - reply backend adapter architecture (deterministic+live fallback behavior unchanged).
+- Outcome:
+  - deterministic time-scoped active state foundation in place,
+  - stable-vs-temporary separation preserved,
+  - continuity-aware return shaping improved,
+  - no fake-memory/surveillance overclaim introduced.

@@ -12,6 +12,7 @@ from syntaris.contracts.runtime import (
     OwnerIdentityProfile,
     PersonalMemoryView,
     MemoryQueryKind,
+    ScopedStateStatus,
     PersonalEntryKind,
     RecallResolution,
     ResponsePlan,
@@ -66,6 +67,16 @@ def _gap_phrase(gap_kind: str, gap_minutes: int | None) -> str | None:
     return None
 
 
+def _continuity_resume_line(gap_kind: str) -> str:
+    if gap_kind in {"immediate", "short"}:
+        return "Látom a mostani irányt, onnan folytathatjuk."
+    if gap_kind == "same_day_long":
+        return "A mai előzmény még megvan, de megerősítheted, maradjon-e ez az irány."
+    if gap_kind == "cross_day":
+        return "A tegnapi irányt nem kezelem automatikusan aktívnak, de vissza tudjuk venni, ha kéred."
+    return "Innen tudunk továbblépni."
+
+
 def _personal_entry_lines(signal: PersonalEntryKind, display_name: str, focus: str | None, direction: str | None, time_context: TimeContext | None = None) -> list[str]:
     if signal == PersonalEntryKind.GREETING:
         greet = _daypart_greeting(time_context.daypart.value) if time_context is not None else "Szia"
@@ -85,7 +96,8 @@ def _personal_entry_lines(signal: PersonalEntryKind, display_name: str, focus: s
             return [f"Rendben, most a {clean_display_text(direction)} irányra állunk rá. Melyik konkrét ponttal kezdjük?"]
         return ["Rendben, fókuszra álltunk. Melyik konkrét ponttal kezdjük?"]
     if signal == PersonalEntryKind.RESUME_INTAKE:
-        return ["Oké, vegyük fel innen a fonalat. Melyik részről folytassuk először?"]
+        lead = _continuity_resume_line(time_context.gap_kind.value) if time_context is not None else "Innen tudunk továbblépni."
+        return [f"Oké, vegyük fel innen a fonalat. {lead}"]
     if signal == PersonalEntryKind.RETURN_ENTRY:
         gap = _gap_phrase(time_context.gap_kind.value, time_context.gap_minutes) if time_context is not None else None
         base = f"Jó újra itt{display_name}."
@@ -96,6 +108,13 @@ def _personal_entry_lines(signal: PersonalEntryKind, display_name: str, focus: s
 
 
 def _memory_query_lines(query: MemoryQueryKind, memory: PersonalMemoryView) -> list[str]:
+    def status_label(status: ScopedStateStatus | None) -> str:
+        if status == ScopedStateStatus.ACTIVE:
+            return "aktív"
+        if status == ScopedStateStatus.STALE:
+            return "már csak részben aktív"
+        return "lejárt"
+
     if query == MemoryQueryKind.WHO_AM_I:
         if memory.owner_name:
             return [f"A megadott adataid alapján {memory.owner_name} vagy."]
@@ -109,11 +128,34 @@ def _memory_query_lines(query: MemoryQueryKind, memory: PersonalMemoryView) -> l
             return [f"A kimondott szerepem: {memory.system_role}."]
         return ["A szerepemről még nincs egyértelmű, explicit állításod eltárolva."]
     if query == MemoryQueryKind.CURRENT_FOCUS:
+        if memory.current_focus and memory.current_focus_status == ScopedStateStatus.ACTIVE:
+            return [f"A mostani fókusz aktívan: {clean_display_text(memory.current_focus)}."]
+        if memory.current_direction and memory.current_direction_status == ScopedStateStatus.ACTIVE:
+            return [f"A mostani irány aktívan: {clean_display_text(memory.current_direction)}."]
         if memory.current_focus:
-            return [f"A mostani fókusznak ezt mondtad: {clean_display_text(memory.current_focus)}."]
+            return [f"A legutóbbi fókusz: {clean_display_text(memory.current_focus)}, de ez most {status_label(memory.current_focus_status)}."]
         if memory.current_direction:
-            return [f"Most erre az irányra álltunk: {clean_display_text(memory.current_direction)}."]
+            return [f"A legutóbbi irány: {clean_display_text(memory.current_direction)}, de ez most {status_label(memory.current_direction_status)}."]
         return ["Mostani fókuszt még nem állítottál be explicit módon."]
+    if query == MemoryQueryKind.CURRENT_DIRECTION:
+        if memory.current_direction and memory.current_direction_status == ScopedStateStatus.ACTIVE:
+            return [f"Most erről akartál beszélni: {clean_display_text(memory.current_direction)}."]
+        if memory.current_direction:
+            return [f"Legutóbb erről akartál beszélni: {clean_display_text(memory.current_direction)}, de ez most {status_label(memory.current_direction_status)}."]
+        return ["Mostani beszélgetési irányt még nem adtál meg explicit módon."]
+    if query == MemoryQueryKind.ACTIVE_STATE:
+        relevant = memory.scoped_state.recent_items
+        if relevant:
+            lines = ["Mostanról ennyi maradt releváns:"]
+            for item in relevant[:3]:
+                lines.append(
+                    f"• {item.kind.value.replace('_', ' ')}: {clean_display_text(item.value)} ({status_label(item.status)})"
+                )
+            return lines
+        if memory.scoped_state.items:
+            latest = memory.scoped_state.items[0]
+            return [f"A legutóbbi ideiglenes állapot ({clean_display_text(latest.value)}) már nem aktív."]
+        return ["Most nincs aktív ideiglenes fókusz vagy irány rögzítve."]
 
     lines: list[str] = []
     if memory.owner_name:
@@ -124,9 +166,9 @@ def _memory_query_lines(query: MemoryQueryKind, memory: PersonalMemoryView) -> l
     if memory.system_role:
         lines.append(f"• Szerep (explicit): {memory.system_role}")
     if memory.current_focus:
-        lines.append(f"• Mostani fókusz (szál-szintű): {clean_display_text(memory.current_focus)}")
+        lines.append(f"• Mostani fókusz ({status_label(memory.current_focus_status)}): {clean_display_text(memory.current_focus)}")
     elif memory.current_direction:
-        lines.append(f"• Mostani irány (szál-szintű): {clean_display_text(memory.current_direction)}")
+        lines.append(f"• Mostani irány ({status_label(memory.current_direction_status)}): {clean_display_text(memory.current_direction)}")
     return lines or ["Még nincs olyan explicit állításod eltárolva, amit biztos tényként vissza tudok mondani."]
 
 
