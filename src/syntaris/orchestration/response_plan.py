@@ -78,7 +78,7 @@ def _continuity_resume_line(gap_kind: str) -> str:
     return "Innen tudunk továbblépni."
 
 
-def _personal_entry_lines(signal: PersonalEntryKind, display_name: str, focus: str | None, direction: str | None, time_context: TimeContext | None = None) -> list[str]:
+def _personal_entry_lines(signal: PersonalEntryKind, display_name: str, focus: str | None, direction: str | None, time_context: TimeContext | None = None, workframe_state: WorkframeState | None = None) -> list[str]:
     if signal == PersonalEntryKind.GREETING:
         greet = _daypart_greeting(time_context.daypart.value) if time_context is not None else "Szia"
         return [f"{greet}{display_name}. Miben segítsek most?"]
@@ -87,7 +87,7 @@ def _personal_entry_lines(signal: PersonalEntryKind, display_name: str, focus: s
     if signal == PersonalEntryKind.OWNER_FRAMING:
         return [f"Szia{display_name}. Értem, hogy te tervezed és fejleszted a rendszert. Mi legyen a mai konkrét fókusz?"]
     if signal == PersonalEntryKind.PERSONAL_CHAT_INTAKE:
-        return [f"Rendben{display_name}, beszélgessünk. Mi az, ami most leginkább foglalkoztat?"]
+        return [f"Rendben{display_name}, most beszélgető módra váltunk. Mi az, ami most leginkább foglalkoztat?"]
     if signal == PersonalEntryKind.CONCRETE_HELP_INTAKE:
         return ["Rendben, menjünk konkrétan ezen: írd le röviden, hol akadtál el, és onnan lépünk tovább."]
     if signal == PersonalEntryKind.FOCUS_SETTING_INTAKE:
@@ -98,10 +98,18 @@ def _personal_entry_lines(signal: PersonalEntryKind, display_name: str, focus: s
         return ["Rendben, fókuszra álltunk. Melyik konkrét ponttal kezdjük?"]
     if signal == PersonalEntryKind.RESUME_INTAKE:
         lead = _continuity_resume_line(time_context.gap_kind.value) if time_context is not None else "Innen tudunk továbblépni."
+        if workframe_state is not None and workframe_state.objective_status.value == "active" and workframe_state.objective_text:
+            return [f"Oké, vegyük fel innen a fonalat. {lead} Aktív célként ezt látom: {clean_display_text(workframe_state.objective_text)}."]
         return [f"Oké, vegyük fel innen a fonalat. {lead}"]
     if signal == PersonalEntryKind.RETURN_ENTRY:
         gap = _gap_phrase(time_context.gap_kind.value, time_context.gap_minutes) if time_context is not None else None
         base = f"Jó újra itt{display_name}."
+        if workframe_state is not None and workframe_state.objective_status.value == "active" and workframe_state.objective_text:
+            objective = clean_display_text(workframe_state.objective_text)
+            blocker = f" Fő blokkernél ezt látom: {clean_display_text(workframe_state.blocker_text)}." if workframe_state.blocker_text else ""
+            if gap:
+                return [f"{base} {gap} Folytathatjuk a korábbi munkát: {objective}.{blocker}"]
+            return [f"{base} Folytathatjuk a korábbi munkát: {objective}.{blocker}"]
         if gap:
             return [f"{base} {gap} Mivel folytassuk?"]
         return [f"{base} Mivel folytassuk?"]
@@ -264,6 +272,7 @@ def build_response_plan(
     has_previous_thread: bool = False,
     workframe_state: WorkframeState | None = None,
     workframe_queries: object | None = None,
+    workframe_updates: object | None = None,
 ) -> ResponsePlan:
     if interpretation.memory_query is not None and personal_memory is not None:
         return ResponsePlan(
@@ -276,12 +285,33 @@ def build_response_plan(
         signal = interpretation.personal_entry
         name = signal.owner_name or (owner_identity.owner_name if owner_identity is not None else None)
         display_name = f" {name}" if name else ""
-        lines = _personal_entry_lines(signal.kind, display_name, signal.declared_focus, signal.declared_direction, time_context)
+        lines = _personal_entry_lines(signal.kind, display_name, signal.declared_focus, signal.declared_direction, time_context, workframe_state)
         return ResponsePlan(
             kind=ResponsePlanKind.PERSONAL_ENTRY,
             sections=[ResponsePlanSection(title="personal_entry", lines=lines)],
             focus_used=focus is not None,
         )
+
+
+    if workframe_state is not None and workframe_updates is not None:
+        if getattr(workframe_updates, "declares_work", False):
+            lines = ["Rendben, ezt most aktív munkaszálként kezelem."]
+            if workframe_state.objective_status.value == "active" and workframe_state.objective_text:
+                lines.append(f"Aktív cél: {clean_display_text(workframe_state.objective_text)}.")
+            else:
+                lines.append("Aktív cél még nincs kimondva, ezt pontosíthatjuk.")
+            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="workframe_update", lines=lines)], focus_used=focus is not None)
+        if getattr(workframe_updates, "declares_objective", False):
+            if workframe_state.objective_status.value == "active" and workframe_state.objective_text:
+                lines = [f"Rendben, az aktív célt rögzítem: {clean_display_text(workframe_state.objective_text)}."]
+            else:
+                lines = ["Értettem, célról beszélünk, de még pontosítás kell az aktív cél rögzítéséhez."]
+            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="objective_update", lines=lines)], focus_used=focus is not None)
+        if getattr(workframe_updates, "declares_chat", False):
+            lines = ["Rendben, most beszélgető módra váltunk."]
+            if workframe_state.objective_status.value == "active" and workframe_state.objective_text:
+                lines.append(f"A korábbi aktív célt megőrzöm háttér-kontinuitásnak: {clean_display_text(workframe_state.objective_text)}.")
+            return ResponsePlan(kind=ResponsePlanKind.PERSONAL_ENTRY, sections=[ResponsePlanSection(title="chat_update", lines=lines)], focus_used=focus is not None)
 
     if interpretation.claim_capture:
         return ResponsePlan(

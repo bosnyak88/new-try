@@ -3,7 +3,14 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from syntaris.contracts.runtime import ThreadContextTurn, WorkframeBlockerStatus, WorkframeKind, WorkframeNextStepStatus, WorkframeObjectiveStatus, WorkframeState
+from syntaris.contracts.runtime import (
+    ThreadContextTurn,
+    WorkframeBlockerStatus,
+    WorkframeKind,
+    WorkframeNextStepStatus,
+    WorkframeObjectiveStatus,
+    WorkframeState,
+)
 from syntaris.orchestration.text_normalize import normalize_hungarian_for_match
 
 
@@ -19,28 +26,49 @@ class WorkframeQuerySignals:
     asks_plan: bool = False
 
 
+@dataclass(frozen=True)
+class WorkframeUpdateSignals:
+    declares_work: bool = False
+    declares_objective: bool = False
+    declares_chat: bool = False
+    resume_here: bool = False
+
+
 def detect_query_signals(message: str) -> WorkframeQuerySignals:
     n = normalize_hungarian_for_match(message).strip()
     simple = " es " not in n and "," not in n
     return WorkframeQuerySignals(
-        asks_blocker=simple and n in {"mi a fo problema", "mi a fo problema?", "miben akadtunk el", "miben akadtunk el?", "mi blokkol most", "mi blokkol most?"},
+        asks_blocker=simple
+        and n in {"mi a fo problema", "mi a fo problema?", "miben akadtunk el", "miben akadtunk el?", "mi blokkol most", "mi blokkol most?"},
         asks_next_step=simple and n in {"mit kell most tenni", "mit kell most tenni?", "mi a kovetkezo lepes", "mi a kovetkezo lepes?"},
         asks_plan=simple and n in {"irj egy rovid tervet", "irj egy rovid tervet?", "rovid tervet", "rovid tervet?"},
     )
 
 
+def detect_update_signals(message: str) -> WorkframeUpdateSignals:
+    n = normalize_hungarian_for_match(message).strip()
+    return WorkframeUpdateSignals(
+        declares_work=any(phrase in n for phrase in ("most ezen dolgozunk", "ezen dolgozunk most", "most ezen a feladaton dolgozunk")),
+        declares_objective=_OBJECTIVE_ACTIVE.search(n) is not None,
+        declares_chat=any(phrase in n for phrase in ("most csak beszelgetunk", "most csak dumalunk", "most inkabb beszelgetunk")),
+        resume_here=(n == "folytassuk innen"),
+    )
+
+
 def _detect_workframe(message: str, current: WorkframeKind) -> WorkframeKind:
     n = normalize_hungarian_for_match(message)
+    if any(phrase in n for phrase in ("most csak beszelgetunk", "csak beszelgetunk", "beszelgessunk", "szia syntaris", "szia")):
+        return WorkframeKind.CHAT
     if any(phrase in n for phrase in ("hol tartottunk", "elozo szalon mi volt", "emlekezz")):
         return WorkframeKind.RECALL
     if any(phrase in n for phrase in ("rovid terv", "kovetkezo lepes", "tervezzunk", "mit kell most tenni")):
         return WorkframeKind.PLANNING
     if any(phrase in n for phrase in ("jegyezd meg", "rogzitsd", "irasban hagyjuk", "mentsd el")):
         return WorkframeKind.CAPTURE
-    if any(phrase in n for phrase in ("csak beszelgetunk", "beszelgessunk", "szia syntaris", "szia")):
-        return WorkframeKind.CHAT
-    if any(phrase in n for phrase in ("dolgozunk", "ticket", "feladat", "c el", "cel most")):
+    if any(phrase in n for phrase in ("most ezen dolgozunk", "dolgozunk", "ticket", "feladat", "cel most", "a cel most")):
         return WorkframeKind.WORK
+    if "folytassuk innen" in n:
+        return current
     return current
 
 

@@ -48,7 +48,7 @@ from syntaris.orchestration.evidence_pack import build_evidence_pack
 from syntaris.orchestration.answer_synthesis import build_synthesis_plan
 from syntaris.orchestration.text_normalize import preprocess_turn_message
 from syntaris.orchestration.response_plan import build_response_plan
-from syntaris.orchestration.workframe_state import derive_workframe_state, detect_query_signals
+from syntaris.orchestration.workframe_state import derive_workframe_state, detect_query_signals, detect_update_signals
 from syntaris.orchestration.time_context import build_time_context
 from syntaris.orchestration.routing import resolve_route_decision
 from syntaris.persistence import PersistenceStore
@@ -340,8 +340,15 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     comparison_pack = build_comparison_pack(context, deliberation_input)
     strategy_selection = select_answer_strategy(context, comparison_pack)
     objective = frame_objective(normalized_message, strategy_selection)
-    workframe_state = derive_workframe_state(context_load.pack.recent_turns, normalized_message)
+    semantic_context = store.build_thread_context_pack(
+        thread_id=resolved.state_after.thread_id,
+        mode=resolved.state_after.mode,
+        turn_window=max(context_load.pack.turn_count, 1),
+    )
+    semantic_turns = semantic_context.recent_turns if semantic_context is not None else context_load.pack.recent_turns
+    workframe_state = derive_workframe_state(semantic_turns, normalized_message)
     workframe_queries = detect_query_signals(normalized_message)
+    workframe_updates = detect_update_signals(normalized_message)
     decomposition = build_decomposition_plan(normalized_message, objective)
     max_units = max(1, context.config.conversation.max_reasoning_units)
     decomposition = type(decomposition)(units=decomposition.units[:max_units], multi_part=decomposition.multi_part)
@@ -407,6 +414,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         has_previous_thread=resolved.state_after.previous_thread_id is not None,
         workframe_state=workframe_state,
         workframe_queries=workframe_queries,
+        workframe_updates=workframe_updates,
     )
 
     recap_trace = RecapTrace(recognized=False)

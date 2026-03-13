@@ -182,6 +182,15 @@ def _thread_snapshot_payload(view) -> dict[str, object]:
             "previous_thread_id": snapshot.previous_thread_id,
             "previous_thread_key": snapshot.previous_thread_key,
             "snapshot_text": snapshot.snapshot_text,
+            "workframe_state": {
+                "workframe": snapshot.workframe_state.workframe.value,
+                "objective_status": snapshot.workframe_state.objective_status.value,
+                "objective_text": snapshot.workframe_state.objective_text,
+                "blocker_status": snapshot.workframe_state.blocker_status.value,
+                "blocker_text": snapshot.workframe_state.blocker_text,
+                "next_step_status": snapshot.workframe_state.next_step_status.value,
+                "next_step_lines": snapshot.workframe_state.next_step_lines,
+            } if snapshot.workframe_state else None,
             "snapshot_lines": [
                 {
                     "turn_id": line.turn_id,
@@ -464,6 +473,15 @@ def _thread_focus_payload(view):
             "filtered_control_turn_count": view.focus.source_metadata.filtered_control_turn_count,
         },
         "focus_lines": [{"key": line.key, "text": line.text} for line in view.focus.focus_lines],
+        "workframe_state": {
+            "workframe": view.focus.workframe_state.workframe.value,
+            "objective_status": view.focus.workframe_state.objective_status.value,
+            "objective_text": view.focus.workframe_state.objective_text,
+            "blocker_status": view.focus.workframe_state.blocker_status.value,
+            "blocker_text": view.focus.workframe_state.blocker_text,
+            "next_step_status": view.focus.workframe_state.next_step_status.value,
+            "next_step_lines": view.focus.workframe_state.next_step_lines,
+        } if view.focus.workframe_state else None,
     }
     return payload
 

@@ -15,6 +15,7 @@ from syntaris.contracts.runtime import (
 from syntaris.orchestration.thread_snapshot import _is_control_turn, _is_pending_turn, _is_recap_turn
 from syntaris.persistence import PersistenceStore
 from syntaris.orchestration.text_normalize import clean_display_text, contains_degraded_text
+from syntaris.orchestration.workframe_state import derive_workframe_state
 
 
 def _resolve_limit(context: RuntimeContext, limit: int | None) -> int:
@@ -68,6 +69,9 @@ def build_thread_focus_pack(context: RuntimeContext, thread_id: int, mode: str, 
             max_lines=max(1, context.config.conversation.focus_line_limit),
         )
 
+    semantic_pack = store.build_thread_context_pack(thread_id=thread_id, mode=mode, turn_window=max(context_pack.turn_count, 1))
+    semantic_turns = semantic_pack.recent_turns if semantic_pack is not None else context_pack.recent_turns
+
     metadata = FocusSourceMetadata(
         source_turn_count=len(context_pack.recent_turns),
         included_turn_count=1 if selected is not None else 0,
@@ -84,6 +88,7 @@ def build_thread_focus_pack(context: RuntimeContext, thread_id: int, mode: str, 
         focus_source_turn_count=len(context_pack.recent_turns),
         focus_lines=focus_lines,
         source_metadata=metadata,
+        workframe_state=derive_workframe_state(semantic_turns, ""),
     )
 
 
@@ -99,6 +104,8 @@ def _focus_has_dirty_text(focus: ThreadFocusPack) -> bool:
 
 
 def _focus_is_stale(store: PersistenceStore, focus: ThreadFocusPack) -> bool:
+    if focus.workframe_state is None:
+        return True
     turn_count, last_turn_id = store.get_thread_turn_head(focus.thread_id)
     if focus.last_turn_id != last_turn_id:
         return True

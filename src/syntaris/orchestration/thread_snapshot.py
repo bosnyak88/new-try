@@ -15,6 +15,7 @@ from syntaris.contracts.runtime import (
 from syntaris.orchestration.recap import match_recap_query
 from syntaris.persistence import PersistenceStore
 from syntaris.orchestration.text_normalize import clean_display_text, contains_degraded_text, flatten_generated_summary_text
+from syntaris.orchestration.workframe_state import derive_workframe_state
 
 _CONTROL_PREFIXES = ("/",)
 _AFFIRMATIVE = {"igen", "oké", "mehet", "arra", "igen arra"}
@@ -97,6 +98,9 @@ def build_thread_snapshot_pack(context: RuntimeContext, thread_id: int, mode: st
         filtered_pending_turn_count=filtered_pending,
         filtered_control_turn_count=filtered_control,
     )
+    semantic_pack = store.build_thread_context_pack(thread_id=thread_id, mode=mode, turn_window=max(context_pack.turn_count, 1))
+    semantic_turns = semantic_pack.recent_turns if semantic_pack is not None else context_pack.recent_turns
+
     provisional = ThreadSnapshotPack(
         session_id=context_pack.session_id,
         thread_id=context_pack.thread_id,
@@ -110,6 +114,7 @@ def build_thread_snapshot_pack(context: RuntimeContext, thread_id: int, mode: st
         snapshot_text="",
         previous_thread_id=context_pack.previous_thread_id,
         previous_thread_key=context_pack.previous_thread_key,
+        workframe_state=derive_workframe_state(semantic_turns, ""),
     )
     return ThreadSnapshotPack(**{**provisional.__dict__, "snapshot_text": _build_snapshot_text(provisional)})
 
@@ -134,6 +139,8 @@ def _snapshot_has_dirty_text(snapshot: ThreadSnapshotPack) -> bool:
 
 
 def _snapshot_is_stale(store: PersistenceStore, snapshot: ThreadSnapshotPack) -> bool:
+    if snapshot.workframe_state is None:
+        return True
     turn_count, last_turn_id = store.get_thread_turn_head(snapshot.thread_id)
     if snapshot.turn_count != turn_count:
         return True
