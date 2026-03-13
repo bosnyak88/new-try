@@ -156,6 +156,31 @@ def _memory_query_lines(query: MemoryQueryKind, memory: PersonalMemoryView) -> l
             latest = memory.scoped_state.items[0]
             return [f"A legutóbbi ideiglenes állapot ({clean_display_text(latest.value)}) már nem aktív."]
         return ["Most nincs aktív ideiglenes fókusz vagy irány rögzítve."]
+    if query == MemoryQueryKind.WHAT_INFERRED:
+        return ["Rólad jelenleg nem tartok fenn külön, bizonyított következtetés-listát; amit biztosnak mondok, az explicit állításból jön."]
+    if query == MemoryQueryKind.TEMPORARY_VS_CERTAIN:
+        lines: list[str] = ["Szétválasztva:"]
+        if memory.owner_name or memory.owner_relation or memory.system_role:
+            lines.append("• Biztos (stabil, explicit):")
+            if memory.owner_name:
+                lines.append(f"  - név: {memory.owner_name}")
+            if memory.owner_relation:
+                lines.append(f"  - kapcsolat: {memory.owner_relation}")
+            if memory.system_role:
+                lines.append(f"  - szerep: {memory.system_role}")
+        else:
+            lines.append("• Biztos (stabil, explicit): még nincs.")
+
+        if memory.scoped_state.recent_items:
+            lines.append("• Ideiglenes (idővel elévül):")
+            for item in memory.scoped_state.recent_items[:3]:
+                lines.append(f"  - {item.kind.value.replace('_', ' ')}: {clean_display_text(item.value)} ({status_label(item.status)})")
+        elif memory.scoped_state.items:
+            lines.append("• Ideiglenes: volt ilyen, de már lejárt.")
+        else:
+            lines.append("• Ideiglenes: jelenleg nincs.")
+        lines.append("• Feltételezés/inferencia: nincs külön biztosként kezelt tétel.")
+        return lines
 
     lines: list[str] = []
     if memory.owner_name:
@@ -188,7 +213,10 @@ def _claim_capture_lines(interpretation: TurnInterpretation) -> list[str]:
     if ClaimKind.CURRENT_FOCUS in by_kind:
         return [f"Rögzítettem a mostani fókuszt: {clean_display_text(by_kind[ClaimKind.CURRENT_FOCUS])}."]
     if ClaimKind.CURRENT_DIRECTION in by_kind:
-        return [f"Rögzítettem a mostani irányt: {clean_display_text(by_kind[ClaimKind.CURRENT_DIRECTION])}."]
+        direction_value = by_kind[ClaimKind.CURRENT_DIRECTION]
+        if direction_value.startswith("állapot:"):
+            return [f"Jelezted az ideiglenes állapotodat, ezt most így kezelem: {clean_display_text(direction_value)}."]
+        return [f"Rögzítettem a mostani irányt: {clean_display_text(direction_value)}."]
 
     return ["Rögzítettem az explicit állításodat."]
 
@@ -208,6 +236,7 @@ def build_response_plan(
     owner_identity: OwnerIdentityProfile | None = None,
     personal_memory: PersonalMemoryView | None = None,
     time_context: TimeContext | None = None,
+    has_previous_thread: bool = False,
 ) -> ResponsePlan:
     if interpretation.memory_query is not None and personal_memory is not None:
         return ResponsePlan(
@@ -231,6 +260,13 @@ def build_response_plan(
         return ResponsePlan(
             kind=ResponsePlanKind.ORDINARY,
             sections=[ResponsePlanSection(title="claim_capture", lines=_claim_capture_lines(interpretation))],
+            focus_used=focus is not None,
+        )
+
+    if interpretation.kind.value == "compare_previous" and not has_previous_thread:
+        return ResponsePlan(
+            kind=ResponsePlanKind.CLARIFICATION,
+            sections=[ResponsePlanSection(title="compare_previous_missing", lines=["Még nincs előző szál, ezért nem tudok megalapozott összehasonlítást adni."])],
             focus_used=focus is not None,
         )
 

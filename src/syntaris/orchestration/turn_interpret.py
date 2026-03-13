@@ -55,7 +55,6 @@ _AMBIGUOUS_RESUME_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 
 _OWNER_NAME_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"(?:^|\s)én\s+([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű]+)\s+vagyok(?:\s|$)", re.IGNORECASE),
-    re.compile(r"(?:^|\s)([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű]+)\s+vagyok(?:\s|$)", re.IGNORECASE),
     re.compile(r"(?:^|\s)(?:javitas[:\s]+)?a\s+nevem\s+([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű]+)(?:\s|$)", re.IGNORECASE),
 )
 
@@ -72,6 +71,15 @@ def _extract_owner_name(text: str) -> str | None:
 def _extract_declared_focus(normalized: str) -> str | None:
     if "a mai fokusz a " in normalized:
         return normalized.split("a mai fokusz a ", maxsplit=1)[1].strip(" .!?") or None
+    return None
+
+
+def _extract_temporary_state(normalized: str) -> str | None:
+    match = re.search(r"\bmost\s+([a-záéíóöőúüű]+)\s+vagyok\b", normalized, re.IGNORECASE)
+    if match:
+        value = match.group(1).strip()
+        if value and value not in {"en"}:
+            return f"állapot: {value}"
     return None
 
 
@@ -117,10 +125,17 @@ def _memory_query_kind(normalized: str) -> MemoryQueryKind | None:
         "ma meg mindig ez van fokuszban?",
     }:
         return MemoryQueryKind.ACTIVE_STATE
+    if normalized in {"mi csak feltetelezes rolam", "mi csak feltetelezes rolam?"}:
+        return MemoryQueryKind.WHAT_INFERRED
+    if normalized in {
+        "ebbol mi ideiglenes es mi biztos",
+        "ebbol mi ideiglenes es mi biztos?",
+    }:
+        return MemoryQueryKind.TEMPORARY_VS_CERTAIN
     return None
 
 
-def _claim_captures(owner_name: str | None, owner_framing: bool, system_role: str | None, declared_focus: str | None, declared_direction: str | None, declared_chat_day: bool) -> list[ClaimCapture]:
+def _claim_captures(owner_name: str | None, owner_framing: bool, system_role: str | None, declared_focus: str | None, declared_direction: str | None, temporary_state: str | None, declared_chat_day: bool) -> list[ClaimCapture]:
     captures: list[ClaimCapture] = []
     if owner_name is not None:
         captures.append(ClaimCapture(kind=ClaimKind.OWNER_NAME, value=owner_name, scope=ClaimScope.STABLE))
@@ -134,6 +149,8 @@ def _claim_captures(owner_name: str | None, owner_framing: bool, system_role: st
         captures.append(ClaimCapture(kind=ClaimKind.CURRENT_DIRECTION, value="beszélgetés", scope=ClaimScope.SESSION))
     if declared_direction is not None:
         captures.append(ClaimCapture(kind=ClaimKind.CURRENT_DIRECTION, value=declared_direction, scope=ClaimScope.THREAD))
+    if temporary_state is not None:
+        captures.append(ClaimCapture(kind=ClaimKind.CURRENT_DIRECTION, value=temporary_state, scope=ClaimScope.THREAD))
     return captures
 
 
@@ -165,6 +182,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
         for phrase in ("segits a timesheetben", "dolgozzunk a syntarison", "nezzuk meg ezt a problemat", "most valami konkret segitseg kell")
     )
     declared_focus = _extract_declared_focus(normalized)
+    temporary_state = _extract_temporary_state(normalized)
     system_role = _extract_system_role(normalized)
     declared_direction: str | None = None
     if "most a munkarol akarok beszelni" in normalized:
@@ -182,7 +200,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
         for phrase in ("folytassuk a syntarist", "menjunk tovabb innen", "vegyuk fel innen a fonalat")
     )
 
-    captures = _claim_captures(owner_name, owner_framing, system_role, declared_focus, declared_direction, personal_chat_intake)
+    captures = _claim_captures(owner_name, owner_framing, system_role, declared_focus, declared_direction, temporary_state, personal_chat_intake)
 
     if owner_framing:
         return TurnInterpretation(

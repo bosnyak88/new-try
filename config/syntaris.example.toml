@@ -17,6 +17,7 @@ data_dir = "./.syntaris"
 db_path = "./.syntaris/runtime.db"
 
 [conversation]
+# Post-022 semantics: stable explicit claims are distinct from temporary scoped state.
 default_thread_key = "default"
 default_mode = "chat"
 context_turn_window = 5

@@ -16,6 +16,14 @@ from syntaris.persistence import PersistenceStore
 _CLARIFY_MESSAGE = "Nem egyértelmű, melyik szálra gondolsz. Írd meg: jelenlegi, előző, vagy a szál nevét."
 
 
+def _no_previous_thread(target: RecallTargetKind) -> RecallResolution:
+    return RecallResolution(
+        target=target,
+        resolved=False,
+        clarification_message="Még nincs előző szál, ezért nincs mit visszaidézni onnan.",
+    )
+
+
 def _clarify(target: RecallTargetKind) -> RecallResolution:
     return RecallResolution(
         target=target,
@@ -45,7 +53,7 @@ def resolve_recall_request(context: RuntimeContext, interpretation: TurnInterpre
         )
     elif request.target == RecallTargetKind.PREVIOUS:
         if active.previous_thread_id is None:
-            return _clarify(RecallTargetKind.PREVIOUS)
+            return _no_previous_thread(RecallTargetKind.PREVIOUS)
         view = build_thread_snapshot_view(
             context,
             ThreadSnapshotRequest(target=SnapshotTarget.PREVIOUS, source="talk_recall_previous"),
