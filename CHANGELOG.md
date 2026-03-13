@@ -1,3 +1,13 @@
+## 0.16.0 - REBUILD-017 owner-aware intake bridge + minimal explicit teach-mode foundation
+
+- Extended deterministic personal-entry contracts with explicit intake kinds: personal-chat, concrete-help, focus-setting, and resume-intake.
+- Extended personal-entry signal/trace metadata with grounded explicit declarations (`declared_focus`, `declared_direction`) when directly stated by the user.
+- Added deterministic Hungarian-first intake interpretation for natural follow-up turns (`ma beszélgetni szeretnék`, `segíts a timesheetben`, `a mai fókusz a syntaris`, `folytassuk a syntarist`).
+- Updated response planning so intake directions render distinct compact Hungarian replies with at most one next-step question (no bare fallback).
+- Preserved minimal persistence scope: only explicit stable identity (`owner_name`, `owner_relation`) is persisted; volatile focus/direction remains conversational shaping metadata.
+- Added deterministic tests for intake-bridge sequence quality and trace propagation.
+- Updated README/architecture/bootstrap/operations/propagation report for REBUILD-017 full-system propagation notes.
+
 ## 0.15.0 - REBUILD-016 deterministic personal greeting / owner-intro / intake-entry foundation
 
 - Added explicit personal-entry contracts (`PersonalEntryKind`, `PersonalEntrySignal`, `TurnInterpretationKind.PERSONAL_ENTRY`, `ResponsePlanKind.PERSONAL_ENTRY`) plus minimal owner identity contract (`OwnerIdentityProfile`).

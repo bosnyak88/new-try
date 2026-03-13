@@ -397,6 +397,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         personal_entry_kind=interpretation.personal_entry.kind.value if interpretation.personal_entry is not None else None,
         owner_name=interpretation.personal_entry.owner_name if interpretation.personal_entry is not None else None,
         owner_relation=interpretation.personal_entry.owner_relation if interpretation.personal_entry is not None else None,
+        declared_focus=interpretation.personal_entry.declared_focus if interpretation.personal_entry is not None else None,
+        declared_direction=interpretation.personal_entry.declared_direction if interpretation.personal_entry is not None else None,
     )
     recall_trace = RecallTrace(
         requested=interpretation.recall_request is not None,

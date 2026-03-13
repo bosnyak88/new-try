@@ -186,3 +186,40 @@ def test_personal_entry_trace_and_identity_persistence(tmp_path):
 
     result = talk_once(runtime, TalkRequest(message="szia"))
     assert "Árpi" in result.turn.assistant_reply
+
+
+def test_intake_bridge_personal_chat_and_help_and_focus_and_resume_are_distinct(tmp_path):
+    runtime = _runtime(tmp_path)
+
+    intro = talk_once(runtime, TalkRequest(message="szia syntaris én Árpi vagyok"))
+    chat = talk_once(runtime, TalkRequest(message="ma beszélgetni szeretnék"))
+    help_turn = talk_once(runtime, TalkRequest(message="segíts a timesheetben"))
+    focus = talk_once(runtime, TalkRequest(message="a mai fókusz a syntaris"))
+    resume = talk_once(runtime, TalkRequest(message="folytassuk a syntarist"))
+
+    assert intro.turn.assistant_reply.strip() != "Rendben."
+    assert chat.turn.assistant_reply.strip() != "Rendben."
+    assert help_turn.turn.assistant_reply.strip() != "Rendben."
+    assert focus.turn.assistant_reply.strip() != "Rendben."
+    assert resume.turn.assistant_reply.strip() != "Rendben."
+
+    assert "foglalkoztat" in chat.turn.assistant_reply.lower()
+    assert "elakadt" in help_turn.turn.assistant_reply.lower() or "konkrét" in help_turn.turn.assistant_reply.lower()
+    assert "fókusz" in focus.turn.assistant_reply.lower()
+    assert "folytassuk" in resume.turn.assistant_reply.lower() or "fonalat" in resume.turn.assistant_reply.lower()
+
+    for reply in (chat.turn.assistant_reply, help_turn.turn.assistant_reply, focus.turn.assistant_reply, resume.turn.assistant_reply):
+        assert reply.count("?") <= 1
+
+
+def test_focus_direction_intake_captured_in_trace(tmp_path):
+    runtime = _runtime(tmp_path)
+    talk_once(runtime, TalkRequest(message="most a munkáról akarok beszélni"))
+
+    trace = trace_last(runtime)
+    payload = {event.event_name: event.payload for event in trace.trace_events}["turn_interpreted"]
+    parsed = json.loads(payload)
+
+    assert parsed["kind"] == "personal_entry"
+    assert parsed["personal_entry_kind"] == "focus_setting_intake"
+    assert parsed["declared_direction"] == "munka"

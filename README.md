@@ -147,18 +147,27 @@ Syntaris now applies one shared normalization policy for Hungarian-first text ha
 - packaging smoke: `python -m pip install -e . --no-build-isolation`
 
 
-## Personal entry foundation (REBUILD-016)
+## Owner-aware intake bridge (REBUILD-017)
 
 Syntaris now recognizes Hungarian-first personal entry phrases deterministically (without LLM dependency):
 - greeting (`szia`, `szia syntaris`)
 - explicit self-intro (`én Árpi vagyok`, `szia syntaris én Árpi vagyok`)
 - explicit owner/creator framing (`én terveztem a rendszered`, `Árpi vagyok, én fejlesztelek`)
 - return-entry (`folytassuk innen`, `vissza syntarisra`)
+- personal-chat intake (`ma beszélgetni szeretnék`, `csak beszélgessünk`)
+- concrete-help intake (`segíts a timesheetben`, `dolgozzunk a syntarison`)
+- focus-setting intake (`a mai fókusz a syntaris`, `most a munkáról akarok beszélni`)
+- resume-intake (`folytassuk a syntarist`, `menjünk tovább innen`)
 
 Behavior goals:
 - compact natural Hungarian reply (not bare `Rendben.`)
 - one meaningful next-step prompt at most
 - no fake memory claims
 - if explicit owner name/relation is provided, it can be acknowledged and minimally persisted for subsequent greeting continuity
+- explicit declared focus/direction is recognized for the active turn (trace-visible), without overclaiming long-term memory
 
-This is intentionally not a full long-term profile graph; only explicitly stated identity facts are persisted.
+Persistence scope remains minimal and explicit:
+- persisted in `app_meta`: `owner_name`, `owner_relation`
+- session/thread conversational shaping only: declared intake direction and current focus statements
+
+This is intentionally not a full long-term profile graph; only explicitly stated minimal identity facts are persisted.

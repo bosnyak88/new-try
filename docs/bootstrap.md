@@ -109,3 +109,6 @@ Packaging smoke check:
 
 Bootstrap/init flow does not require new tables or mandatory migrations for personal-entry support.
 Minimal explicit identity facts (`owner_name`, `owner_relation`) are stored in existing `app_meta` only when directly provided in user text.
+
+
+REBUILD-017 note: intake bridge and explicit teach-mode use existing schema; only minimal owner identity remains persisted in `app_meta`. Declared focus/direction statements are interpreted deterministically for session/thread shaping and trace visibility.

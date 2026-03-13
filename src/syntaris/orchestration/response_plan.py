@@ -39,6 +39,28 @@ def _direct_should_use_synthesis(objective: ObjectiveFrame, decomposition: Decom
     return any(unit.objective_kind.value in target_kinds for unit in decomposition.units)
 
 
+def _personal_entry_lines(signal: PersonalEntryKind, display_name: str, focus: str | None, direction: str | None) -> list[str]:
+    if signal == PersonalEntryKind.GREETING:
+        return [f"Szia{display_name}. Itt vagyok — miben segítsek most?"]
+    if signal == PersonalEntryKind.SELF_INTRO:
+        return [f"Szia{display_name}. Örülök, hogy így mutatkoztál be — miben induljunk el most?"]
+    if signal == PersonalEntryKind.OWNER_FRAMING:
+        return [f"Szia{display_name}. Értem, hogy te tervezed és fejleszted a rendszert. Mi legyen a mai konkrét fókusz?"]
+    if signal == PersonalEntryKind.PERSONAL_CHAT_INTAKE:
+        return [f"Rendben{display_name}, beszélgessünk. Mi az, ami most leginkább foglalkoztat?"]
+    if signal == PersonalEntryKind.CONCRETE_HELP_INTAKE:
+        return ["Rendben, menjünk konkrétan ezen: írd le röviden, hol akadtál el, és onnan lépünk tovább."]
+    if signal == PersonalEntryKind.FOCUS_SETTING_INTAKE:
+        if focus:
+            return [f"Jó irány, a mai fókusz legyen {clean_display_text(focus)}. Mi legyen az első konkrét lépés?"]
+        if direction:
+            return [f"Rendben, most a {clean_display_text(direction)} irányra állunk rá. Melyik konkrét ponttal kezdjük?"]
+        return ["Rendben, fókuszra álltunk. Melyik konkrét ponttal kezdjük?"]
+    if signal == PersonalEntryKind.RESUME_INTAKE:
+        return ["Oké, vegyük fel innen a fonalat. Melyik részről folytassuk először?"]
+    return ["Rendben, visszakapcsoltam ide. Folytassuk innen — most beszélgessünk, vagy oldjunk meg egy konkrét feladatot?"]
+
+
 def build_response_plan(
     context: RuntimeContext,
     interpretation: TurnInterpretation,
@@ -57,14 +79,7 @@ def build_response_plan(
         signal = interpretation.personal_entry
         name = signal.owner_name or (owner_identity.owner_name if owner_identity is not None else None)
         display_name = f" {name}" if name else ""
-        if signal.kind == PersonalEntryKind.GREETING:
-            lines = [f"Szia{display_name}. Itt vagyok — miben segítsek most?"]
-        elif signal.kind == PersonalEntryKind.SELF_INTRO:
-            lines = [f"Szia{display_name}. Örülök, hogy így mutatkoztál be — innen miben legyen az első konkrét lépés?"]
-        elif signal.kind == PersonalEntryKind.OWNER_FRAMING:
-            lines = [f"Szia{display_name}. Értem, hogy te tervezed és fejleszted a rendszert. Folytassuk innen: ma mit tegyünk könnyebbé?"]
-        else:
-            lines = ["Rendben, visszakapcsoltam ide. Folytassuk innen — most beszélgessünk, vagy oldjunk meg egy konkrét feladatot?"]
+        lines = _personal_entry_lines(signal.kind, display_name, signal.declared_focus, signal.declared_direction)
         return ResponsePlan(
             kind=ResponsePlanKind.PERSONAL_ENTRY,
             sections=[ResponsePlanSection(title="personal_entry", lines=lines)],
@@ -142,6 +157,3 @@ def build_response_plan(
         sections=[ResponsePlanSection(title="ordinary", lines=ordinary_lines)],
         focus_used=focus is not None,
     )
-    OwnerIdentityProfile,
-    PersonalEntryKind,
-    PersonalEntryKind,

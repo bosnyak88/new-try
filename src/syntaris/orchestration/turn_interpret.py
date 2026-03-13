@@ -64,6 +64,12 @@ def _extract_owner_name(text: str) -> str | None:
     return None
 
 
+def _extract_declared_focus(normalized: str) -> str | None:
+    if "a mai fokusz a " in normalized:
+        return normalized.split("a mai fokusz a ", maxsplit=1)[1].strip(" .!?") or None
+    return None
+
+
 def interpret_turn(message: str) -> TurnInterpretation:
     text = message.strip()
     raw_lower = text.lower()
@@ -85,6 +91,23 @@ def interpret_turn(message: str) -> TurnInterpretation:
     )
     greeting = normalized in {"szia", "szia syntaris", "szia szintaris"} or normalized.startswith("szia syntaris ")
 
+    personal_chat_intake = any(phrase in normalized for phrase in ("ma beszelgetni szeretnek", "csak beszelgessunk", "ma inkabb csak dumalnek"))
+    concrete_help_intake = any(
+        phrase in normalized
+        for phrase in ("segits a timesheetben", "dolgozzunk a syntarison", "nezzuk meg ezt a problemat", "most valami konkret segitseg kell")
+    )
+    declared_focus = _extract_declared_focus(normalized)
+    declared_direction: str | None = None
+    if "most a munkarol akarok beszelni" in normalized:
+        declared_direction = "munka"
+    elif "ma az adminra fokuszaljunk" in normalized:
+        declared_direction = "admin"
+
+    resume_intake = any(
+        phrase in normalized
+        for phrase in ("folytassuk a syntarist", "menjunk tovabb innen", "vegyuk fel innen a fonalat")
+    )
+
     if owner_framing:
         return TurnInterpretation(
             kind=TurnInterpretationKind.PERSONAL_ENTRY,
@@ -101,6 +124,41 @@ def interpret_turn(message: str) -> TurnInterpretation:
             kind=TurnInterpretationKind.PERSONAL_ENTRY,
             pattern_name="personal_entry_self_intro",
             personal_entry=PersonalEntrySignal(kind=PersonalEntryKind.SELF_INTRO, owner_name=owner_name),
+        )
+
+    if declared_focus is not None or declared_direction is not None:
+        return TurnInterpretation(
+            kind=TurnInterpretationKind.PERSONAL_ENTRY,
+            pattern_name="personal_entry_focus_setting",
+            personal_entry=PersonalEntrySignal(
+                kind=PersonalEntryKind.FOCUS_SETTING_INTAKE,
+                declared_focus=declared_focus,
+                declared_direction=declared_direction,
+            ),
+        )
+
+    if personal_chat_intake:
+        return TurnInterpretation(
+            kind=TurnInterpretationKind.PERSONAL_ENTRY,
+            pattern_name="personal_entry_personal_chat_intake",
+            personal_entry=PersonalEntrySignal(kind=PersonalEntryKind.PERSONAL_CHAT_INTAKE),
+        )
+
+    if concrete_help_intake:
+        return TurnInterpretation(
+            kind=TurnInterpretationKind.PERSONAL_ENTRY,
+            pattern_name="personal_entry_concrete_help_intake",
+            personal_entry=PersonalEntrySignal(
+                kind=PersonalEntryKind.CONCRETE_HELP_INTAKE,
+                declared_direction="concrete_help",
+            ),
+        )
+
+    if resume_intake:
+        return TurnInterpretation(
+            kind=TurnInterpretationKind.PERSONAL_ENTRY,
+            pattern_name="personal_entry_resume_intake",
+            personal_entry=PersonalEntrySignal(kind=PersonalEntryKind.RESUME_INTAKE),
         )
 
     if return_entry:
