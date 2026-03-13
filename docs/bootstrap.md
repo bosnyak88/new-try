@@ -10,3 +10,7 @@
 - `[time].timezone`
 
 These control temporary-state lifecycle and continuity classification.
+
+
+## Deterministic fallback and workframe
+Bootstrap remains deterministic-first. Workframe derivation does not require a live LLM endpoint, and trace exposes `workframe_state_derived` in fallback mode as well.

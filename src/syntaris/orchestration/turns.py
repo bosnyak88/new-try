@@ -30,6 +30,7 @@ from syntaris.contracts.runtime import (
     FocusTarget,
     ThreadFocusRequest,
     TalkRequest,
+    WorkframeTrace,
     TurnInput,
     TurnResult,
 )
@@ -47,6 +48,7 @@ from syntaris.orchestration.evidence_pack import build_evidence_pack
 from syntaris.orchestration.answer_synthesis import build_synthesis_plan
 from syntaris.orchestration.text_normalize import preprocess_turn_message
 from syntaris.orchestration.response_plan import build_response_plan
+from syntaris.orchestration.workframe_state import derive_workframe_state, detect_query_signals, detect_update_signals
 from syntaris.orchestration.time_context import build_time_context
 from syntaris.orchestration.routing import resolve_route_decision
 from syntaris.persistence import PersistenceStore
@@ -338,6 +340,16 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     comparison_pack = build_comparison_pack(context, deliberation_input)
     strategy_selection = select_answer_strategy(context, comparison_pack)
     objective = frame_objective(normalized_message, strategy_selection)
+    semantic_context = store.build_thread_context_pack(
+        thread_id=resolved.state_after.thread_id,
+        mode=resolved.state_after.mode,
+        turn_window=max(context_load.pack.turn_count, 1),
+    )
+    semantic_turns = semantic_context.recent_turns if semantic_context is not None else context_load.pack.recent_turns
+    workframe_state = derive_workframe_state(semantic_turns, normalized_message)
+    historical_workframe_state = derive_workframe_state(semantic_turns, "")
+    workframe_queries = detect_query_signals(normalized_message)
+    workframe_updates = detect_update_signals(normalized_message)
     decomposition = build_decomposition_plan(normalized_message, objective)
     max_units = max(1, context.config.conversation.max_reasoning_units)
     decomposition = type(decomposition)(units=decomposition.units[:max_units], multi_part=decomposition.multi_part)
@@ -401,6 +413,10 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         personal_memory=personal_memory,
         time_context=time_context,
         has_previous_thread=resolved.state_after.previous_thread_id is not None,
+        workframe_state=workframe_state,
+        workframe_queries=workframe_queries,
+        workframe_updates=workframe_updates,
+        historical_workframe_state=historical_workframe_state,
     )
 
     recap_trace = RecapTrace(recognized=False)
@@ -517,6 +533,17 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         section_keys=[section.key for section in synthesis_plan.sections],
         partial=synthesis_plan.partial,
     )
+    workframe_trace = WorkframeTrace(
+        workframe=workframe_state.workframe.value,
+        objective_status=workframe_state.objective_status.value,
+        objective_text=workframe_state.objective_text,
+        blocker_status=workframe_state.blocker_status.value,
+        blocker_text=workframe_state.blocker_text,
+        next_step_status=workframe_state.next_step_status.value,
+        next_step_line_count=len(workframe_state.next_step_lines),
+        query_family=workframe_queries.family,
+        uncertainty_marked=workframe_updates.uncertainty_marked or (workframe_queries.family == "uncertainty_query") or (response_plan.kind.value == "uncertainty_labeled"),
+    )
 
     if response_plan.kind.value in {"recall", "resume", "clarification"} or any(section.lines for section in response_plan.sections):
         planned_text = render_response_plan(response_plan)
@@ -559,6 +586,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             decomposition_trace=decomposition_trace,
             evidence_trace=evidence_trace,
             synthesis_trace=synthesis_trace,
+            workframe_trace=workframe_trace,
             claim_capture_trace=claim_trace,
         )
         store.create_trace_events(
@@ -627,6 +655,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         followup_trace=followup_trace,
         comparison_trace=comparison_trace,
         answer_strategy_trace=answer_strategy_trace,
+        workframe_trace=workframe_trace,
     )
     store.create_trace_events(
         session_id=turn.session_id,

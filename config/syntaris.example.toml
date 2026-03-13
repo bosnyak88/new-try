@@ -64,3 +64,6 @@ level = "info"
 
 [time]
 timezone = "Europe/Budapest"
+
+
+# REBUILD-023 note: workframe/objective/blocker/next-step inference is deterministic and Hungarian-first.

@@ -36,3 +36,9 @@
 ## 0.5.0 - REBUILD-016 personal-entry/owner-intro foundation
 
 - Added deterministic greeting/self-intro/owner framing interpretation path.
+
+
+## Unreleased
+- Added deterministic REBUILD-023 workframe baseline (mode/objective/blocker/next-step derivation) with trace visibility via `workframe_state_derived`.
+
+- REBUILD-023 follow-up: separated explicit blocker declaration from hedged blocker/next-step/objective proposal semantics; certainty-split responses now keep tentative inputs out of certain facts, with aligned trace uncertainty flags.

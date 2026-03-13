@@ -24,3 +24,15 @@
 - `turn_interpreted`: includes personal-entry kind, memory query, relative-time terms.
 - `explicit_claims_captured`: includes items plus stable/temporary/strengthened counters.
 - `response_plan_built`: includes response kind and continuity metadata.
+
+
+## Post-023 workframe model
+The authoritative model is `WorkframeState` with:
+- workframe kind
+- objective status/text
+- blocker status/text
+- next-step status/lines
+
+This model is derived in orchestration and propagated to response planning and trace.
+
+- Workframe update signals now distinguish explicit blocker declaration vs hedged blocker/objective/next-step proposals to keep state-write certainty discipline consistent with response and trace layers.

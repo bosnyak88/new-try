@@ -131,6 +131,7 @@ class ActiveConversationState:
     last_turn_id: int | None = None
     previous_thread_id: int | None = None
     previous_thread_key: str | None = None
+    workframe_state: WorkframeState | None = None
     pending_route: PendingRouteStatusView | None = None
 
 
@@ -252,6 +253,7 @@ class ThreadContextPack:
     recent_turns: list[ThreadContextTurn]
     previous_thread_id: int | None = None
     previous_thread_key: str | None = None
+    workframe_state: WorkframeState | None = None
 
 
 @dataclass(frozen=True)
@@ -314,6 +316,7 @@ class ThreadSnapshotPack:
     snapshot_text: str
     previous_thread_id: int | None = None
     previous_thread_key: str | None = None
+    workframe_state: WorkframeState | None = None
 
 
 @dataclass(frozen=True)
@@ -547,6 +550,7 @@ class ThreadFocusPack:
     focus_source_turn_count: int
     focus_lines: list[FocusLine]
     source_metadata: FocusSourceMetadata
+    workframe_state: WorkframeState | None = None
 
 
 @dataclass(frozen=True)
@@ -646,6 +650,60 @@ class AnswerStrategy(str, Enum):
     CLARIFICATION = "clarification"
     UNCERTAINTY_LABELED_ANSWER = "uncertainty_labeled_answer"
 
+
+
+
+class WorkframeKind(str, Enum):
+    CHAT = "chat"
+    WORK = "work"
+    PLANNING = "planning"
+    RECALL = "recall"
+    CAPTURE = "capture"
+
+
+class WorkframeObjectiveStatus(str, Enum):
+    NONE = "none"
+    ACTIVE = "active"
+    PROPOSED = "proposed"
+    UNRELATED_CONTEXT = "related_context"
+
+
+class WorkframeBlockerStatus(str, Enum):
+    NONE = "none"
+    EXPLICIT = "explicit"
+    IMPLIED = "implied"
+    UNKNOWN = "uncertainty_or_missing_info"
+
+
+class WorkframeNextStepStatus(str, Enum):
+    NONE = "none"
+    GROUNDED = "grounded"
+    SUGGESTED = "suggested"
+    MULTIPLE = "multiple_plausible"
+
+
+@dataclass(frozen=True)
+class WorkframeState:
+    workframe: WorkframeKind
+    objective_status: WorkframeObjectiveStatus
+    objective_text: str | None
+    blocker_status: WorkframeBlockerStatus
+    blocker_text: str | None
+    next_step_status: WorkframeNextStepStatus
+    next_step_lines: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class WorkframeTrace:
+    workframe: str
+    objective_status: str
+    objective_text: str | None
+    blocker_status: str
+    blocker_text: str | None
+    next_step_status: str
+    next_step_line_count: int
+    query_family: str | None = None
+    uncertainty_marked: bool = False
 
 class ObjectiveKind(str, Enum):
     EXPLAIN = "explain"
@@ -1005,6 +1063,7 @@ class LiveConversationState:
     last_turn_id: int | None
     previous_thread_id: int | None = None
     previous_thread_key: str | None = None
+    workframe_state: WorkframeState | None = None
     pending_route: PendingRouteStatusView | None = None
 
 
@@ -1028,6 +1087,7 @@ class SessionStatusView:
     last_turn_id: int | None
     previous_thread_id: int | None = None
     previous_thread_key: str | None = None
+    workframe_state: WorkframeState | None = None
     pending_route: PendingRouteStatusView | None = None
 
 

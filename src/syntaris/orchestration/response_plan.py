@@ -23,6 +23,7 @@ from syntaris.contracts.runtime import (
     ThreadFocusPack,
     TimeContext,
     TurnInterpretation,
+    WorkframeState,
 )
 
 
@@ -77,7 +78,7 @@ def _continuity_resume_line(gap_kind: str) -> str:
     return "Innen tudunk továbblépni."
 
 
-def _personal_entry_lines(signal: PersonalEntryKind, display_name: str, focus: str | None, direction: str | None, time_context: TimeContext | None = None) -> list[str]:
+def _personal_entry_lines(signal: PersonalEntryKind, display_name: str, focus: str | None, direction: str | None, time_context: TimeContext | None = None, workframe_state: WorkframeState | None = None) -> list[str]:
     if signal == PersonalEntryKind.GREETING:
         greet = _daypart_greeting(time_context.daypart.value) if time_context is not None else "Szia"
         return [f"{greet}{display_name}. Miben segítsek most?"]
@@ -86,7 +87,7 @@ def _personal_entry_lines(signal: PersonalEntryKind, display_name: str, focus: s
     if signal == PersonalEntryKind.OWNER_FRAMING:
         return [f"Szia{display_name}. Értem, hogy te tervezed és fejleszted a rendszert. Mi legyen a mai konkrét fókusz?"]
     if signal == PersonalEntryKind.PERSONAL_CHAT_INTAKE:
-        return [f"Rendben{display_name}, beszélgessünk. Mi az, ami most leginkább foglalkoztat?"]
+        return [f"Rendben{display_name}, most beszélgető módra váltunk. Mi az, ami most leginkább foglalkoztat?"]
     if signal == PersonalEntryKind.CONCRETE_HELP_INTAKE:
         return ["Rendben, menjünk konkrétan ezen: írd le röviden, hol akadtál el, és onnan lépünk tovább."]
     if signal == PersonalEntryKind.FOCUS_SETTING_INTAKE:
@@ -97,10 +98,18 @@ def _personal_entry_lines(signal: PersonalEntryKind, display_name: str, focus: s
         return ["Rendben, fókuszra álltunk. Melyik konkrét ponttal kezdjük?"]
     if signal == PersonalEntryKind.RESUME_INTAKE:
         lead = _continuity_resume_line(time_context.gap_kind.value) if time_context is not None else "Innen tudunk továbblépni."
+        if workframe_state is not None and workframe_state.objective_status.value == "active" and workframe_state.objective_text:
+            return [f"Oké, vegyük fel innen a fonalat. {lead} Aktív célként ezt látom: {clean_display_text(workframe_state.objective_text)}."]
         return [f"Oké, vegyük fel innen a fonalat. {lead}"]
     if signal == PersonalEntryKind.RETURN_ENTRY:
         gap = _gap_phrase(time_context.gap_kind.value, time_context.gap_minutes) if time_context is not None else None
         base = f"Jó újra itt{display_name}."
+        if workframe_state is not None and workframe_state.objective_status.value == "active" and workframe_state.objective_text:
+            objective = clean_display_text(workframe_state.objective_text)
+            blocker = f" Fő blokkernél ezt látom: {clean_display_text(workframe_state.blocker_text)}." if workframe_state.blocker_text else ""
+            if gap:
+                return [f"{base} {gap} Folytathatjuk a korábbi munkát: {objective}.{blocker}"]
+            return [f"{base} Folytathatjuk a korábbi munkát: {objective}.{blocker}"]
         if gap:
             return [f"{base} {gap} Mivel folytassuk?"]
         return [f"{base} Mivel folytassuk?"]
@@ -221,6 +230,74 @@ def _claim_capture_lines(interpretation: TurnInterpretation) -> list[str]:
     return ["Rögzítettem az explicit állításodat."]
 
 
+
+def _workframe_lines(workframe_state: WorkframeState) -> list[str]:
+    lines: list[str] = [f"Munkakeret: {workframe_state.workframe.value}."]
+    if workframe_state.objective_status.value == "active" and workframe_state.objective_text:
+        lines.append(f"Aktív cél: {clean_display_text(workframe_state.objective_text)}.")
+    elif workframe_state.objective_status.value == "proposed" and workframe_state.objective_text:
+        lines.append(f"Javasolt cél: {clean_display_text(workframe_state.objective_text)} (még nem végleges).")
+    elif workframe_state.objective_status.value in {"none", "related_context"}:
+        lines.append("Aktív cél: nincs még egyértelműen rögzítve.")
+
+    if workframe_state.blocker_status.value in {"explicit", "implied"} and workframe_state.blocker_text:
+        prefix = "Fő blokkert" if workframe_state.blocker_status.value == "explicit" else "Lehetséges blokkert"
+        lines.append(f"{prefix} látok: {clean_display_text(workframe_state.blocker_text)}.")
+    elif workframe_state.blocker_status.value in {"uncertainty_or_missing_info", "none"}:
+        lines.append("Fő blokkert nem látok biztosan rögzítve.")
+
+    if workframe_state.next_step_lines:
+        lines.append("Következő lépés:")
+        for step in workframe_state.next_step_lines:
+            lines.append(f"- {clean_display_text(step)}")
+    elif workframe_state.next_step_status.value == "none":
+        lines.append("Következő lépés: még nincs megalapozottan rögzítve.")
+    return lines
+
+
+
+def _history_lines(state: WorkframeState) -> list[str]:
+    lines: list[str] = ["Korábbi állapot alapján:"]
+    if state.objective_status.value == "active" and state.objective_text:
+        lines.append(f"- Aktív cél: {clean_display_text(state.objective_text)}")
+    else:
+        lines.append("- Aktív cél: korábban sem volt biztosan rögzítve.")
+    if state.blocker_text:
+        lines.append(f"- Fő probléma: {clean_display_text(state.blocker_text)}")
+    else:
+        lines.append("- Fő probléma: nem volt egyértelműen rögzítve.")
+    if state.next_step_lines:
+        lines.append(f"- Következő lépés: {clean_display_text(state.next_step_lines[0])}")
+    else:
+        lines.append("- Következő lépés: nem volt megalapozottan rögzítve.")
+    return lines
+
+
+def _certainty_lines(state: WorkframeState) -> list[str]:
+    sure: list[str] = []
+    uncertain: list[str] = []
+    if state.objective_status.value == "active" and state.objective_text:
+        sure.append(f"Aktív cél: {clean_display_text(state.objective_text)}")
+    elif state.objective_status.value == "proposed" and state.objective_text:
+        uncertain.append(f"Cél-javaslat: {clean_display_text(state.objective_text)}")
+
+    if state.blocker_status.value == "explicit" and state.blocker_text:
+        sure.append(f"Blokker: {clean_display_text(state.blocker_text)}")
+    elif state.blocker_text:
+        uncertain.append(f"Lehetséges blokker: {clean_display_text(state.blocker_text)}")
+
+    if state.next_step_status.value in {"grounded"} and state.next_step_lines:
+        sure.append(f"Következő lépés: {clean_display_text(state.next_step_lines[0])}")
+    elif state.next_step_lines:
+        uncertain.append(f"Javasolt következő lépés: {clean_display_text(state.next_step_lines[0])}")
+
+    lines = ["Ami biztos:"]
+    lines.extend([f"• {item}" for item in sure] or ["• Nincs biztosan rögzített állítás."])
+    lines.append("Ami nyitott:")
+    lines.append("Ami inkább javaslat/feltételezés:")
+    lines.extend([f"• {item}" for item in uncertain] or ["• Jelenleg nincs külön javaslatként megjelölt tétel."])
+    return lines
+
 def build_response_plan(
     context: RuntimeContext,
     interpretation: TurnInterpretation,
@@ -237,6 +314,10 @@ def build_response_plan(
     personal_memory: PersonalMemoryView | None = None,
     time_context: TimeContext | None = None,
     has_previous_thread: bool = False,
+    workframe_state: WorkframeState | None = None,
+    workframe_queries: object | None = None,
+    workframe_updates: object | None = None,
+    historical_workframe_state: WorkframeState | None = None,
 ) -> ResponsePlan:
     if interpretation.memory_query is not None and personal_memory is not None:
         return ResponsePlan(
@@ -245,16 +326,84 @@ def build_response_plan(
             focus_used=focus is not None,
         )
 
+    if workframe_state is not None and workframe_queries is not None:
+        if getattr(workframe_queries, "asks_current_objective", False):
+            lines = [f"A mostani cél: {clean_display_text(workframe_state.objective_text)}."] if workframe_state.objective_status.value == "active" and workframe_state.objective_text else ["Most nincs egyértelműen rögzített aktív cél."]
+            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="current_objective", lines=lines)], focus_used=focus is not None)
+        if getattr(workframe_queries, "asks_current_work", False):
+            lines = [f"Mostani munkakeret: {workframe_state.workframe.value}."]
+            if workframe_state.objective_status.value == "active" and workframe_state.objective_text:
+                lines.append(f"Aktív cél: {clean_display_text(workframe_state.objective_text)}.")
+            else:
+                lines.append("Aktív cél még nincs egyértelműen rögzítve.")
+            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="current_work", lines=lines)], focus_used=focus is not None)
+        if getattr(workframe_queries, "asks_current_posture", False):
+            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="current_posture", lines=[f"Mostani munkakeret: {workframe_state.workframe.value}."])], focus_used=focus is not None)
+        if getattr(workframe_queries, "asks_current_blocker", False):
+            lines = [f"Mostani fő probléma: {clean_display_text(workframe_state.blocker_text)}."] if workframe_state.blocker_text else ["Most nincs egyértelműen rögzített fő probléma."]
+            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="current_blocker", lines=lines)], focus_used=focus is not None)
+        if getattr(workframe_queries, "asks_current_next_step", False):
+            lines = [f"Mostani következő lépés: {clean_display_text(workframe_state.next_step_lines[0])}"] if workframe_state.next_step_lines else ["Most nincs megalapozottan rögzített következő lépés."]
+            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="current_next_step", lines=lines)], focus_used=focus is not None)
+        if any((getattr(workframe_queries, "asks_history_objective", False), getattr(workframe_queries, "asks_history_blocker", False), getattr(workframe_queries, "asks_history_next_step", False))):
+            state = historical_workframe_state or workframe_state
+            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="historical_state", lines=_history_lines(state))], focus_used=focus is not None)
+        if getattr(workframe_queries, "asks_certainty_split", False) or getattr(workframe_queries, "asks_next_step_certainty", False):
+            return ResponsePlan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="certainty_split", lines=_certainty_lines(workframe_state))], focus_used=focus is not None)
+
     if interpretation.kind.value == "personal_entry" and interpretation.personal_entry is not None:
         signal = interpretation.personal_entry
         name = signal.owner_name or (owner_identity.owner_name if owner_identity is not None else None)
         display_name = f" {name}" if name else ""
-        lines = _personal_entry_lines(signal.kind, display_name, signal.declared_focus, signal.declared_direction, time_context)
+        lines = _personal_entry_lines(signal.kind, display_name, signal.declared_focus, signal.declared_direction, time_context, workframe_state)
         return ResponsePlan(
             kind=ResponsePlanKind.PERSONAL_ENTRY,
             sections=[ResponsePlanSection(title="personal_entry", lines=lines)],
             focus_used=focus is not None,
         )
+
+
+    if workframe_state is not None and workframe_updates is not None:
+        if getattr(workframe_updates, "declares_work", False):
+            lines = ["Rendben, ezt most aktív munkaszálként kezelem."]
+            if workframe_state.objective_status.value == "active" and workframe_state.objective_text:
+                lines.append(f"Aktív cél: {clean_display_text(workframe_state.objective_text)}.")
+            else:
+                lines.append("Aktív cél még nincs kimondva, ezt pontosíthatjuk.")
+            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="workframe_update", lines=lines)], focus_used=focus is not None)
+        if getattr(workframe_updates, "declares_objective", False):
+            if workframe_state.objective_status.value == "active" and workframe_state.objective_text:
+                lines = [f"Rendben, az aktív célt rögzítem: {clean_display_text(workframe_state.objective_text)}."]
+            else:
+                lines = ["Értettem, célról beszélünk, de még pontosítás kell az aktív cél rögzítéséhez."]
+            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="objective_update", lines=lines)], focus_used=focus is not None)
+        if getattr(workframe_updates, "declares_chat", False):
+            lines = ["Rendben, most beszélgető módra váltunk."]
+            if workframe_state.objective_status.value == "active" and workframe_state.objective_text:
+                lines.append(f"A korábbi aktív célt megőrzöm háttér-kontinuitásnak: {clean_display_text(workframe_state.objective_text)}.")
+            return ResponsePlan(kind=ResponsePlanKind.PERSONAL_ENTRY, sections=[ResponsePlanSection(title="chat_update", lines=lines)], focus_used=focus is not None)
+        if getattr(workframe_updates, "declares_blocker_explicit", False):
+            lines = ["Rendben, ezt explicit fő blokkert állításként rögzítem."]
+            if workframe_state.blocker_text:
+                lines.append(f"Fő blokker: {clean_display_text(workframe_state.blocker_text)}.")
+            if workframe_state.objective_status.value == "active" and workframe_state.objective_text:
+                lines.append(f"Aktív cél változatlanul: {clean_display_text(workframe_state.objective_text)}.")
+            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="blocker_update", lines=lines)], focus_used=focus is not None)
+        if getattr(workframe_updates, "hedged_blocker", False):
+            lines = ["Ezt lehetséges blokkerként kezelem, még nem biztos állításként."]
+            if workframe_state.blocker_text:
+                lines.append(f"Jelölt blokker: {clean_display_text(workframe_state.blocker_text)}.")
+            return ResponsePlan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="hedged_blocker", lines=lines)], focus_used=focus is not None)
+        if getattr(workframe_updates, "hedged_objective", False):
+            lines = ["Értem, ez egy lehetséges cél-javaslat, még nem végleges aktív cél."]
+            if workframe_state.objective_text:
+                lines.append(f"Javasolt cél: {clean_display_text(workframe_state.objective_text)}.")
+            return ResponsePlan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="hedged_objective", lines=lines)], focus_used=focus is not None)
+        if getattr(workframe_updates, "hedged_next_step", False):
+            lines = ["Ezt javasolt következő lépésként kezelem, nem biztos döntésként."]
+            if workframe_state.next_step_lines:
+                lines.append(f"Lehetséges következő lépés: {clean_display_text(workframe_state.next_step_lines[0])}")
+            return ResponsePlan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="hedged_next_step", lines=lines)], focus_used=focus is not None)
 
     if interpretation.claim_capture:
         return ResponsePlan(
@@ -262,6 +411,13 @@ def build_response_plan(
             sections=[ResponsePlanSection(title="claim_capture", lines=_claim_capture_lines(interpretation))],
             focus_used=focus is not None,
         )
+    if workframe_state is not None and workframe_queries is not None and (getattr(workframe_queries, "asks_blocker", False) or getattr(workframe_queries, "asks_next_step", False) or getattr(workframe_queries, "asks_plan", False)):
+        return ResponsePlan(
+            kind=ResponsePlanKind.STRUCTURED,
+            sections=[ResponsePlanSection(title="workframe", lines=_workframe_lines(workframe_state))],
+            focus_used=focus is not None,
+        )
+
 
     if interpretation.kind.value == "compare_previous" and not has_previous_thread:
         return ResponsePlan(

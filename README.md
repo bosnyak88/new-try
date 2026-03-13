@@ -28,3 +28,9 @@ Current baseline intentionally does **not** include:
 - reminder/task engine,
 - broad profile graph (BioGraph),
 - overcapturing implicit personal ontology from one casual sentence.
+
+
+## REBUILD-023 baseline
+- Runtime derives a deterministic **workframe state** (chat/work/planning/recall/capture) from natural Hungarian turns.
+- Answers about blocker/next-step/plan now surface objective state, blocker state, and next-step uncertainty explicitly.
+- Trace now includes `workframe_state_derived` for honest post-turn audit.
