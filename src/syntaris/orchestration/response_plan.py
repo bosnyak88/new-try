@@ -3,6 +3,7 @@ from __future__ import annotations
 from syntaris.orchestration.text_normalize import clean_display_text
 from syntaris.contracts.runtime import (
     AnswerStrategy,
+    ClaimKind,
     AnswerStrategySelection,
     ComparisonPack,
     DecompositionPlan,
@@ -101,7 +102,7 @@ def _memory_query_lines(query: MemoryQueryKind, memory: PersonalMemoryView) -> l
         return ["Ezt még nem tudom biztosan, mert nem mondtad ki egyértelműen a neved."]
     if query == MemoryQueryKind.RELATIONSHIP:
         if memory.owner_relation == "creator":
-            return ["Amit biztosan tudok: te tervezed/építed ezt a rendszert, én pedig a személyes társ-rendszeredként segítek."]
+            return ["Amit biztosan tudok: azt mondtad, hogy te tervezted ezt a rendszert."]
         return ["A kapcsolatunkról még csak annyit tudok biztosan, amit explicit mondtál — ezt még nem rögzítettük."]
     if query == MemoryQueryKind.SYSTEM_ROLE:
         if memory.system_role:
@@ -127,6 +128,27 @@ def _memory_query_lines(query: MemoryQueryKind, memory: PersonalMemoryView) -> l
     elif memory.current_direction:
         lines.append(f"• Mostani irány (szál-szintű): {clean_display_text(memory.current_direction)}")
     return lines or ["Még nincs olyan explicit állításod eltárolva, amit biztos tényként vissza tudok mondani."]
+
+
+def _claim_capture_lines(interpretation: TurnInterpretation) -> list[str]:
+    captures = interpretation.claim_capture
+    by_kind = {item.kind: item.value for item in captures}
+
+    if interpretation.pattern_name == "claim_correction" and ClaimKind.OWNER_NAME in by_kind:
+        return [f"Köszönöm a javítást, a nevedet {clean_display_text(by_kind[ClaimKind.OWNER_NAME])} néven rögzítettem."]
+
+    if ClaimKind.SYSTEM_ROLE in by_kind:
+        return [f"Rögzítettem: a szerepemnek ezt mondtad — {clean_display_text(by_kind[ClaimKind.SYSTEM_ROLE])}."]
+    if ClaimKind.OWNER_NAME in by_kind:
+        return [f"Rendben, rögzítettem a nevedet: {clean_display_text(by_kind[ClaimKind.OWNER_NAME])}."]
+    if ClaimKind.OWNER_RELATION in by_kind and by_kind[ClaimKind.OWNER_RELATION] == "creator":
+        return ["Rögzítettem: azt mondtad, hogy te tervezted a rendszeremet."]
+    if ClaimKind.CURRENT_FOCUS in by_kind:
+        return [f"Rögzítettem a mostani fókuszt: {clean_display_text(by_kind[ClaimKind.CURRENT_FOCUS])}."]
+    if ClaimKind.CURRENT_DIRECTION in by_kind:
+        return [f"Rögzítettem a mostani irányt: {clean_display_text(by_kind[ClaimKind.CURRENT_DIRECTION])}."]
+
+    return ["Rögzítettem az explicit állításodat."]
 
 
 def build_response_plan(
@@ -160,6 +182,13 @@ def build_response_plan(
         return ResponsePlan(
             kind=ResponsePlanKind.PERSONAL_ENTRY,
             sections=[ResponsePlanSection(title="personal_entry", lines=lines)],
+            focus_used=focus is not None,
+        )
+
+    if interpretation.claim_capture:
+        return ResponsePlan(
+            kind=ResponsePlanKind.ORDINARY,
+            sections=[ResponsePlanSection(title="claim_capture", lines=_claim_capture_lines(interpretation))],
             focus_used=focus is not None,
         )
 

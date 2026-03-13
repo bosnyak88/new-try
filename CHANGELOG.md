@@ -3,6 +3,8 @@
 - Added grounded memory-query answers in Hungarian ("ki vagyok?", "mit tudsz rólam biztosan?", "mi a kapcsolatunk?", "mi a szereped?", "mi a mostani fókusz?").
 - Added minimal correction/supersession path by replacing active claim values of the same kind/scope.
 - Added persistence table `personal_claims`, trace event `explicit_claims_captured`, and regression coverage for memory capture/query/correction.
+- Follow-up hardening: explicit claim-capture/correction turns now return grounded Hungarian acknowledgements (no bare `Rendben.`).
+- Follow-up grounding fix: relationship and role answers are strictly separated (`owner_relation` vs `system_role`) and avoid unspoken role overclaim.
 
 ## REBUILD-018 — deterministic time-awareness / session continuity foundation
 

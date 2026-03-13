@@ -182,3 +182,5 @@ Expected: natural Hungarian, no bare `Rendben.`, one compact next-step prompt at
 ## Explicit-memory operational checks
 Use `talk --once` with: `én Árpi vagyok`, `ki vagyok?`, `én terveztem a rendszered`, `mi a kapcsolatunk?`, `a mai fókusz a syntaris`, `mi a mostani fókusz?`, `mit tudsz rólam biztosan?`.
 Use `trace-last` to confirm `explicit_claims_captured` appears after capture turns.
+
+- Expected after REBUILD-019 follow-up: no bare `Rendben.` on explicit claim/correction capture turns (`ez az én személyes rendszerem`, `javítás: a nevem ...`).

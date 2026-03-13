@@ -160,6 +160,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
         declared_direction = "admin"
 
     memory_query = _memory_query_kind(normalized)
+    correction_name_claim = normalized.startswith("javitas:") or normalized.startswith("javítás:") or "nem igy hivnak" in normalized
 
     resume_intake = any(
         phrase in normalized
@@ -325,6 +326,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
     if captures:
         return TurnInterpretation(
             kind=TurnInterpretationKind.ORDINARY,
+            pattern_name="claim_correction" if correction_name_claim else "claim_capture",
             claim_capture=captures,
             relative_time_terms=relative_terms,
         )
