@@ -59,3 +59,11 @@ Full review across:
 - Reminder/task engine
 - Broad profile graph / BioGraph
 - Autonomous long-term inferred personal ontology
+
+## REBUILD-021 follow-up (import-boundary cleanup)
+
+- Root cause: `persistence.store` imported `syntaris.orchestration.text_normalize`, which triggers `syntaris.orchestration` package import first.
+- Previous `orchestration/__init__.py` eagerly imported `talk` module, which imports modules that import `syntaris.persistence` package, causing `PersistenceStore` lookup from partially initialized package.
+- Boundary fix: made `orchestration/__init__.py` side-effect free (no eager re-export chain).
+- Added deterministic regression tests to verify isolated and cross-order imports for persistence/orchestration modules.
+- No user-facing runtime behavior was intentionally changed.

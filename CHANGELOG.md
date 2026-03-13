@@ -7,6 +7,8 @@
 - Removed stale doc semantics (schema-v2 framing, app_meta-only owner-memory claim, partial command/trace framing).
 - Added explicit propagation report for REBUILD-021 with changed vs intentionally unchanged layer accounting.
 - Hardened regression expectations for persistence schema truth by asserting `personal_claims` table presence in bootstrap test.
+- REBUILD-021 follow-up: removed orchestration package eager re-exports to break persistence/orchestration import cycle during isolated persistence test loading.
+- Added import-boundary regressions for persistence-first and orchestration-first import orders (`tests/test_import_boundaries.py`).
 
 ## 0.9.0 - REBUILD-020 deterministic scoped-state baseline
 
