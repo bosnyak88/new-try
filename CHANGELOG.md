@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- REBUILD-022: full-system personal cognitive baseline propagation pass.
+- Added explicit memory-query semantics for inferred/temporary-vs-certain answers.
+- Extended trace capture payload with stable/temporary/strengthened counters.
+- Updated docs and propagation report to post-022 authoritative semantics.
+
 - REBUILD-021: full-system post-020 architecture sync/propagation audit.
 - Synchronized architecture/bootstrap/operations/README docs to the authoritative post-020 runtime model.
 - Removed stale doc semantics (schema-v2 framing, app_meta-only owner-memory claim, partial command/trace framing).

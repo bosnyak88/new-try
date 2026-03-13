@@ -386,6 +386,8 @@ class MemoryQueryKind(str, Enum):
     CURRENT_FOCUS = "current_focus"
     CURRENT_DIRECTION = "current_direction"
     ACTIVE_STATE = "active_state"
+    WHAT_INFERRED = "what_inferred"
+    TEMPORARY_VS_CERTAIN = "temporary_vs_certain"
 
 
 class RecallTargetKind(str, Enum):
@@ -831,6 +833,9 @@ class TurnInterpretTrace:
 class ClaimCaptureTrace:
     captured: bool
     items: list[str] = field(default_factory=list)
+    stable_count: int = 0
+    temporary_count: int = 0
+    strengthened_count: int = 0
 
 
 @dataclass(frozen=True)

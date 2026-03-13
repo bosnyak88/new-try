@@ -168,3 +168,42 @@ def test_active_state_question_honestly_reports_recent_or_expired(tmp_path):
     clock.advance(days=2)
     expired = talk_once(runtime, TalkRequest(message="mi maradt aktív mostanról?"))
     assert "már nem aktív" in expired.turn.assistant_reply.lower()
+
+
+def test_inferred_and_temporary_vs_certain_queries_are_honest(tmp_path):
+    runtime = _runtime(tmp_path)
+    talk_once(runtime, TalkRequest(message="én Árpi vagyok"))
+    talk_once(runtime, TalkRequest(message="a mai fókusz a syntaris"))
+
+    inferred = talk_once(runtime, TalkRequest(message="mi csak feltételezés rólam?"))
+    assert "nem tartok fenn" in inferred.turn.assistant_reply.lower() or "explicit" in inferred.turn.assistant_reply.lower()
+
+    split = talk_once(runtime, TalkRequest(message="ebből mi ideiglenes és mi biztos?"))
+    lower = split.turn.assistant_reply.lower()
+    assert "biztos" in lower
+    assert "ideiglenes" in lower
+
+
+def test_claim_capture_trace_includes_scope_counters(tmp_path):
+    runtime = _runtime(tmp_path)
+    talk_once(runtime, TalkRequest(message="én Árpi vagyok"))
+    trace = trace_last(runtime)
+    payload = {event.event_name: event.payload for event in trace.trace_events}["explicit_claims_captured"]
+    parsed = json.loads(payload)
+    assert parsed["stable_count"] >= 1
+    assert parsed["temporary_count"] == 0
+
+    talk_once(runtime, TalkRequest(message="a mai fókusz a syntaris"))
+    trace2 = trace_last(runtime)
+    payload2 = {event.event_name: event.payload for event in trace2.trace_events}["explicit_claims_captured"]
+    parsed2 = json.loads(payload2)
+    assert parsed2["temporary_count"] >= 1
+
+
+def test_casual_state_sentence_does_not_override_owner_name(tmp_path):
+    runtime = _runtime(tmp_path)
+    talk_once(runtime, TalkRequest(message="én Árpi vagyok"))
+    talk_once(runtime, TalkRequest(message="most fáradt vagyok"))
+    result = talk_once(runtime, TalkRequest(message="ki vagyok?"))
+    assert "Árpi" in result.turn.assistant_reply
+    assert "Fáradt" not in result.turn.assistant_reply

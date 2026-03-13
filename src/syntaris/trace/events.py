@@ -213,6 +213,9 @@ def build_turn_trace_events(
                 "payload": {
                     "captured": claim_capture_trace.captured,
                     "items": claim_capture_trace.items,
+                    "stable_count": claim_capture_trace.stable_count,
+                    "temporary_count": claim_capture_trace.temporary_count,
+                    "strengthened_count": claim_capture_trace.strengthened_count,
                 },
             }
         )

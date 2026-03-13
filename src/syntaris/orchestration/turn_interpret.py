@@ -55,7 +55,6 @@ _AMBIGUOUS_RESUME_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 
 _OWNER_NAME_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"(?:^|\s)én\s+([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű]+)\s+vagyok(?:\s|$)", re.IGNORECASE),
-    re.compile(r"(?:^|\s)([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű]+)\s+vagyok(?:\s|$)", re.IGNORECASE),
     re.compile(r"(?:^|\s)(?:javitas[:\s]+)?a\s+nevem\s+([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű]+)(?:\s|$)", re.IGNORECASE),
 )
 
@@ -117,6 +116,13 @@ def _memory_query_kind(normalized: str) -> MemoryQueryKind | None:
         "ma meg mindig ez van fokuszban?",
     }:
         return MemoryQueryKind.ACTIVE_STATE
+    if normalized in {"mi csak feltetelezes rolam", "mi csak feltetelezes rolam?"}:
+        return MemoryQueryKind.WHAT_INFERRED
+    if normalized in {
+        "ebbol mi ideiglenes es mi biztos",
+        "ebbol mi ideiglenes es mi biztos?",
+    }:
+        return MemoryQueryKind.TEMPORARY_VS_CERTAIN
     return None
 
 

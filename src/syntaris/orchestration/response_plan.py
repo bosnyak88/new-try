@@ -156,6 +156,31 @@ def _memory_query_lines(query: MemoryQueryKind, memory: PersonalMemoryView) -> l
             latest = memory.scoped_state.items[0]
             return [f"A legutóbbi ideiglenes állapot ({clean_display_text(latest.value)}) már nem aktív."]
         return ["Most nincs aktív ideiglenes fókusz vagy irány rögzítve."]
+    if query == MemoryQueryKind.WHAT_INFERRED:
+        return ["Rólad jelenleg nem tartok fenn külön, bizonyított következtetés-listát; amit biztosnak mondok, az explicit állításból jön."]
+    if query == MemoryQueryKind.TEMPORARY_VS_CERTAIN:
+        lines: list[str] = ["Szétválasztva:"]
+        if memory.owner_name or memory.owner_relation or memory.system_role:
+            lines.append("• Biztos (stabil, explicit):")
+            if memory.owner_name:
+                lines.append(f"  - név: {memory.owner_name}")
+            if memory.owner_relation:
+                lines.append(f"  - kapcsolat: {memory.owner_relation}")
+            if memory.system_role:
+                lines.append(f"  - szerep: {memory.system_role}")
+        else:
+            lines.append("• Biztos (stabil, explicit): még nincs.")
+
+        if memory.scoped_state.recent_items:
+            lines.append("• Ideiglenes (idővel elévül):")
+            for item in memory.scoped_state.recent_items[:3]:
+                lines.append(f"  - {item.kind.value.replace('_', ' ')}: {clean_display_text(item.value)} ({status_label(item.status)})")
+        elif memory.scoped_state.items:
+            lines.append("• Ideiglenes: volt ilyen, de már lejárt.")
+        else:
+            lines.append("• Ideiglenes: jelenleg nincs.")
+        lines.append("• Feltételezés/inferencia: nincs külön biztosként kezelt tétel.")
+        return lines
 
     lines: list[str] = []
     if memory.owner_name:

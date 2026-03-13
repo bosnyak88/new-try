@@ -427,9 +427,28 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         refreshed_snapshot=recall_resolution.refreshed_snapshot,
         clarification_emitted=response_plan.kind.value == "clarification",
     )
+    stable_count = sum(1 for item in interpretation.claim_capture if item.scope.value == "stable")
+    temporary_count = sum(1 for item in interpretation.claim_capture if item.scope.value != "stable")
+    strengthened_count = 0
+    if interpretation.claim_capture:
+        for item in interpretation.claim_capture:
+            if item.scope.value == "stable":
+                current_val = None
+                if item.kind.value == "owner_name":
+                    current_val = personal_memory.owner_name if personal_memory is not None else None
+                elif item.kind.value == "owner_relation":
+                    current_val = personal_memory.owner_relation if personal_memory is not None else None
+                elif item.kind.value == "system_role":
+                    current_val = personal_memory.system_role if personal_memory is not None else None
+                if current_val is not None and current_val == item.value:
+                    strengthened_count += 1
+
     claim_trace = ClaimCaptureTrace(
         captured=bool(interpretation.claim_capture),
         items=[f"{item.scope.value}:{item.kind.value}={item.value}" for item in interpretation.claim_capture],
+        stable_count=stable_count,
+        temporary_count=temporary_count,
+        strengthened_count=strengthened_count,
     )
 
     plan_trace = ResponsePlanTrace(
