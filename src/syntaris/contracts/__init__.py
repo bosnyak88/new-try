@@ -89,6 +89,12 @@ from syntaris.contracts.runtime import (
     TurnInterpretationKind,
     TurnInterpretTrace,
     TurnResult,
+    WorkframeKind,
+    WorkframeObjectiveStatus,
+    WorkframeBlockerStatus,
+    WorkframeNextStepStatus,
+    WorkframeState,
+    WorkframeTrace,
 )
 
 __all__ = [
@@ -182,4 +188,10 @@ __all__ = [
     "TurnInterpretationKind",
     "TurnInterpretTrace",
     "TurnResult",
+    "WorkframeKind",
+    "WorkframeObjectiveStatus",
+    "WorkframeBlockerStatus",
+    "WorkframeNextStepStatus",
+    "WorkframeState",
+    "WorkframeTrace",
 ]

@@ -1,5 +1,5 @@
 from syntaris.orchestration.text_normalize import clean_display_text
-from syntaris.contracts.runtime import ActiveConversationState, AnswerStrategyTrace, ClaimCaptureTrace, ComparisonPackTrace, ContextLoadResult, DecompositionTrace, EvidencePackTrace, FollowupTrace, ObjectiveFrameTrace, RecapTrace, RecallTrace, ResponsePlanTrace, RouteDecision, RuntimeContext, SnapshotTrace, SynthesisTrace, ThreadFocusTrace, TurnInterpretTrace, TurnResult
+from syntaris.contracts.runtime import ActiveConversationState, AnswerStrategyTrace, ClaimCaptureTrace, ComparisonPackTrace, ContextLoadResult, DecompositionTrace, EvidencePackTrace, FollowupTrace, ObjectiveFrameTrace, RecapTrace, RecallTrace, ResponsePlanTrace, RouteDecision, RuntimeContext, SnapshotTrace, SynthesisTrace, ThreadFocusTrace, TurnInterpretTrace, TurnResult, WorkframeTrace
 
 
 def build_boot_trace(context: RuntimeContext) -> dict[str, str | bool]:
@@ -32,6 +32,7 @@ def build_turn_trace_events(
     evidence_trace: EvidencePackTrace | None = None,
     synthesis_trace: SynthesisTrace | None = None,
     claim_capture_trace: ClaimCaptureTrace | None = None,
+    workframe_trace: WorkframeTrace | None = None,
 ) -> list[dict[str, object]]:
     events = [
         {
@@ -205,6 +206,23 @@ def build_turn_trace_events(
             }
         )
 
+
+
+    if workframe_trace is not None:
+        events.append(
+            {
+                "event_name": "workframe_state_derived",
+                "payload": {
+                    "workframe": workframe_trace.workframe,
+                    "objective_status": workframe_trace.objective_status,
+                    "objective_text": clean_display_text(workframe_trace.objective_text) if workframe_trace.objective_text else None,
+                    "blocker_status": workframe_trace.blocker_status,
+                    "blocker_text": clean_display_text(workframe_trace.blocker_text) if workframe_trace.blocker_text else None,
+                    "next_step_status": workframe_trace.next_step_status,
+                    "next_step_line_count": workframe_trace.next_step_line_count,
+                },
+            }
+        )
 
     if claim_capture_trace is not None and claim_capture_trace.captured:
         events.append(

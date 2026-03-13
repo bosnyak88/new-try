@@ -23,6 +23,7 @@ from syntaris.contracts.runtime import (
     ThreadFocusPack,
     TimeContext,
     TurnInterpretation,
+    WorkframeState,
 )
 
 
@@ -221,6 +222,30 @@ def _claim_capture_lines(interpretation: TurnInterpretation) -> list[str]:
     return ["Rögzítettem az explicit állításodat."]
 
 
+
+def _workframe_lines(workframe_state: WorkframeState) -> list[str]:
+    lines: list[str] = [f"Munkakeret: {workframe_state.workframe.value}."]
+    if workframe_state.objective_status.value == "active" and workframe_state.objective_text:
+        lines.append(f"Aktív cél: {clean_display_text(workframe_state.objective_text)}.")
+    elif workframe_state.objective_status.value == "proposed" and workframe_state.objective_text:
+        lines.append(f"Javasolt cél: {clean_display_text(workframe_state.objective_text)} (még nem végleges).")
+    elif workframe_state.objective_status.value in {"none", "related_context"}:
+        lines.append("Aktív cél: nincs még egyértelműen rögzítve.")
+
+    if workframe_state.blocker_status.value in {"explicit", "implied"} and workframe_state.blocker_text:
+        prefix = "Fő blokkert" if workframe_state.blocker_status.value == "explicit" else "Lehetséges blokkert"
+        lines.append(f"{prefix} látok: {clean_display_text(workframe_state.blocker_text)}.")
+    elif workframe_state.blocker_status.value in {"uncertainty_or_missing_info", "none"}:
+        lines.append("Fő blokkert nem látok biztosan rögzítve.")
+
+    if workframe_state.next_step_lines:
+        lines.append("Következő lépés:")
+        for step in workframe_state.next_step_lines:
+            lines.append(f"- {clean_display_text(step)}")
+    elif workframe_state.next_step_status.value == "none":
+        lines.append("Következő lépés: még nincs megalapozottan rögzítve.")
+    return lines
+
 def build_response_plan(
     context: RuntimeContext,
     interpretation: TurnInterpretation,
@@ -237,6 +262,8 @@ def build_response_plan(
     personal_memory: PersonalMemoryView | None = None,
     time_context: TimeContext | None = None,
     has_previous_thread: bool = False,
+    workframe_state: WorkframeState | None = None,
+    workframe_queries: object | None = None,
 ) -> ResponsePlan:
     if interpretation.memory_query is not None and personal_memory is not None:
         return ResponsePlan(
@@ -262,6 +289,13 @@ def build_response_plan(
             sections=[ResponsePlanSection(title="claim_capture", lines=_claim_capture_lines(interpretation))],
             focus_used=focus is not None,
         )
+    if workframe_state is not None and workframe_queries is not None and (getattr(workframe_queries, "asks_blocker", False) or getattr(workframe_queries, "asks_next_step", False) or getattr(workframe_queries, "asks_plan", False)):
+        return ResponsePlan(
+            kind=ResponsePlanKind.STRUCTURED,
+            sections=[ResponsePlanSection(title="workframe", lines=_workframe_lines(workframe_state))],
+            focus_used=focus is not None,
+        )
+
 
     if interpretation.kind.value == "compare_previous" and not has_previous_thread:
         return ResponsePlan(

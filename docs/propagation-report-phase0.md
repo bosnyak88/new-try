@@ -22,3 +22,7 @@ Contracts, orchestration, persistence semantics, reply surface, trace semantics,
 - executor/tool workflows,
 - BioGraph/profile graph,
 - architecture redesign.
+
+
+## REBUILD-023 propagation note
+Reviewed core contracts/orchestration/reply/trace/CLI/tests/docs for workframe, objective, blocker, and next-step alignment. Added deterministic workframe derivation and trace event; no schema migration required in this pass.

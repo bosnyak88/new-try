@@ -24,3 +24,13 @@
 - `turn_interpreted`: includes personal-entry kind, memory query, relative-time terms.
 - `explicit_claims_captured`: includes items plus stable/temporary/strengthened counters.
 - `response_plan_built`: includes response kind and continuity metadata.
+
+
+## Post-023 workframe model
+The authoritative model is `WorkframeState` with:
+- workframe kind
+- objective status/text
+- blocker status/text
+- next-step status/lines
+
+This model is derived in orchestration and propagated to response planning and trace.

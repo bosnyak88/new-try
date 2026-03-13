@@ -10,3 +10,7 @@
 - Certainty split: `mit tudsz rólam biztosan?`, `mi csak feltételezés rólam?`, `ebből mi ideiglenes és mi biztos?`
 - Continuity and recall: `hol tartottunk?`, `az előző szálon mi volt?`, `hasonlítsd össze a mostanit az előző szállal`
 - State artifacts: `thread-snapshot --current|--previous`, `thread-focus --current|--previous`, `trace-last`
+
+
+## Operational check (REBUILD-023)
+Use `trace-last` to confirm `workframe_state_derived` is emitted after turns that ask for blocker/next-step/plan semantics.
