@@ -350,6 +350,10 @@ class PersonalEntryKind(str, Enum):
     SELF_INTRO = "self_intro"
     OWNER_FRAMING = "owner_framing"
     RETURN_ENTRY = "return_entry"
+    PERSONAL_CHAT_INTAKE = "personal_chat_intake"
+    CONCRETE_HELP_INTAKE = "concrete_help_intake"
+    FOCUS_SETTING_INTAKE = "focus_setting_intake"
+    RESUME_INTAKE = "resume_intake"
 
 
 @dataclass(frozen=True)
@@ -357,6 +361,8 @@ class PersonalEntrySignal:
     kind: PersonalEntryKind
     owner_name: str | None = None
     owner_relation: str | None = None
+    declared_focus: str | None = None
+    declared_direction: str | None = None
 
 
 @dataclass(frozen=True)
@@ -687,6 +693,8 @@ class TurnInterpretTrace:
     personal_entry_kind: str | None = None
     owner_name: str | None = None
     owner_relation: str | None = None
+    declared_focus: str | None = None
+    declared_direction: str | None = None
 
 
 @dataclass(frozen=True)

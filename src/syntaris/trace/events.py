@@ -107,6 +107,8 @@ def build_turn_trace_events(
                     "personal_entry_kind": interpret_trace.personal_entry_kind,
                     "owner_name": interpret_trace.owner_name,
                     "owner_relation": interpret_trace.owner_relation,
+                    "declared_focus": interpret_trace.declared_focus,
+                    "declared_direction": interpret_trace.declared_direction,
                 },
             }
         )

@@ -136,14 +136,14 @@ Line-level snapshot hygiene is enforced during artifact retrieval/build: a singl
 
 Snapshot construction now applies anti-recursion flattening for generated recap-like assistant text before persistence to prevent transitive summary amplification in future recall/snapshot reuse.
 
-## REBUILD-016 deterministic personal-entry foundation
+## REBUILD-016/017 deterministic personal-entry + intake foundation
 
-A new deterministic interpretation path (`TurnInterpretationKind.PERSONAL_ENTRY`) handles greeting/intro/owner/return entry surfaces before ordinary fallback behavior.
+A new deterministic interpretation path (`TurnInterpretationKind.PERSONAL_ENTRY`) handles greeting/intro/owner/return entry surfaces plus owner-aware intake directions (personal chat, concrete help, focus setting, resume) before ordinary fallback behavior.
 
-- personal entry kinds: `greeting`, `self_intro`, `owner_framing`, `return_entry`
+- personal entry kinds: `greeting`, `self_intro`, `owner_framing`, `return_entry`, `personal_chat_intake`, `concrete_help_intake`, `focus_setting_intake`, `resume_intake`
 - interpretation emits explicit structured signal (`PersonalEntrySignal`) including optional explicit owner metadata
 - response planning renders compact Hungarian personal-entry responses with one next-step prompt at most
 - persistence stores only minimal explicit identity facts (`owner_name`, `owner_relation`) via `app_meta`
-- trace includes personal-entry metadata through `turn_interpreted` payload fields (`personal_entry_kind`, owner fields)
+- trace includes personal-entry metadata through `turn_interpreted` payload fields (`personal_entry_kind`, owner fields, declared focus/direction when explicit)
 
 This layer does not infer broad profile traits and does not claim unstored long-term memory.

@@ -137,3 +137,13 @@ Guardrails kept:
 - no fake-memory claims
 - no broad profile inference
 - no menu-style interrogation
+
+
+## REBUILD-017 owner-aware intake bridge propagation
+
+- contracts: extended personal-entry signal with explicit intake kinds and optional declared focus/direction fields
+- orchestration: deterministic HU-first intake interpretation for personal chat / concrete help / focus setting / resume directions
+- reply/renderer: direction-specific compact intake responses with at most one natural next-step question
+- persistence: unchanged minimal identity persistence (`owner_name`, `owner_relation`) only; no broad profile graph added
+- trace: `turn_interpreted` now carries explicit declared focus/direction metadata when present
+- tests: added deterministic regression coverage for intake bridge sequences and trace metadata

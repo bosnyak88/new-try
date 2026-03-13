@@ -159,3 +159,12 @@ Expected:
 - no bare `Rendben.` full reply
 - no fake-memory overclaim
 - one compact next-step question at most
+
+
+## Owner-aware intake quick checks (REBUILD-017)
+- `python -m syntaris.cli ... talk --once "ma beszélgetni szeretnék"`
+- `python -m syntaris.cli ... talk --once "segíts a timesheetben"`
+- `python -m syntaris.cli ... talk --once "a mai fókusz a syntaris"`
+- `python -m syntaris.cli ... talk --once "folytassuk a syntarist"`
+
+Expected: natural Hungarian, no bare `Rendben.`, one compact next-step prompt at most.

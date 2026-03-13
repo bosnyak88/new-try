@@ -1328,3 +1328,33 @@ def test_cli_personal_entry_owner_intro_and_return_flow(tmp_path, monkeypatch, c
     trace = json.loads(capsys.readouterr().out)
     payload_by_event = {event["event_name"]: event["payload"] for event in trace["trace_events"]}
     assert '"kind": "personal_entry"' in payload_by_event["turn_interpreted"]
+
+
+def test_cli_owner_aware_intake_bridge_sequences(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    sequence = [
+        "szia syntaris én Árpi vagyok",
+        "ma beszélgetni szeretnék",
+        "segíts a timesheetben",
+        "a mai fókusz a syntaris",
+        "folytassuk a syntarist",
+    ]
+
+    replies = []
+    for message in sequence:
+        monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", message])
+        cli.main()
+        out = json.loads(capsys.readouterr().out)
+        replies.append(out["reply"])
+        assert out["reply"].strip() != "Rendben."
+        assert "[fallback]" not in out["reply"]
+        assert out["reply"].count("?") <= 1
+
+    assert "foglalkoztat" in replies[1].lower()
+    assert "timesheet" in replies[2].lower() or "konkrét" in replies[2].lower()
+    assert "fókusz" in replies[3].lower()
+    assert "fonalat" in replies[4].lower() or "folytassuk" in replies[4].lower()
