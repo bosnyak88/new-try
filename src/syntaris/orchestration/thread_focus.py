@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 from syntaris.contracts.runtime import (
     FocusLine,
@@ -80,7 +80,7 @@ def build_thread_focus_pack(context: RuntimeContext, thread_id: int, mode: str, 
         thread_id=context_pack.thread_id,
         thread_key=context_pack.thread_key,
         last_turn_id=context_pack.last_turn_id,
-        focus_updated_at=datetime.now(timezone.utc),
+        focus_updated_at=context.clock.now(),
         focus_source_turn_count=len(context_pack.recent_turns),
         focus_lines=focus_lines,
         source_metadata=metadata,

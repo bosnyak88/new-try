@@ -147,3 +147,11 @@ Guardrails kept:
 - persistence: unchanged minimal identity persistence (`owner_name`, `owner_relation`) only; no broad profile graph added
 - trace: `turn_interpreted` now carries explicit declared focus/direction metadata when present
 - tests: added deterministic regression coverage for intake bridge sequences and trace metadata
+
+
+## Determinisztikus időtudat (REBUILD-018)
+- A runtime közös, tesztelhető órát (`RuntimeContext.clock`) és explicit időzónát (`[time].timezone`) használ.
+- A rendszer daypart-érzékeny magyar köszönést ad (reggel/délelőtt/délután/este/éjjel).
+- Visszatérésnél a válaszok csak perzisztált turn-időbélyeg + aktuális helyi idő alapján jeleznek gap-et (nincs megfigyelés- vagy fake-memory állítás).
+- Relatív időkifejezések (`most`, `ma`, `tegnap`, `holnap`, `majd`) determinisztikusan kerülnek groundingra és trace-ben láthatók.
+- Scope-határ: ez még nem reminder/executor/rutin-tanulás.

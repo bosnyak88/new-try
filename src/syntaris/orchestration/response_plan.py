@@ -17,6 +17,7 @@ from syntaris.contracts.runtime import (
     RuntimeContext,
     SynthesisPlan,
     ThreadFocusPack,
+    TimeContext,
     TurnInterpretation,
 )
 
@@ -39,9 +40,33 @@ def _direct_should_use_synthesis(objective: ObjectiveFrame, decomposition: Decom
     return any(unit.objective_kind.value in target_kinds for unit in decomposition.units)
 
 
-def _personal_entry_lines(signal: PersonalEntryKind, display_name: str, focus: str | None, direction: str | None) -> list[str]:
+def _daypart_greeting(daypart: str) -> str:
+    mapping = {
+        "reggel": "Jó reggelt",
+        "delelott": "Szép délelőttöt",
+        "delutan": "Szép délutánt",
+        "este": "Jó estét",
+        "ejjel": "Jó estét",
+    }
+    return mapping.get(daypart, "Szia")
+
+
+def _gap_phrase(gap_kind: str, gap_minutes: int | None) -> str | None:
+    if gap_kind == "short":
+        return "Pár perce beszéltünk utoljára."
+    if gap_kind == "same_day_long":
+        if gap_minutes is not None and gap_minutes >= 120:
+            return "Eltelt pár óra a legutóbbi üzenet óta."
+        return "Eltelt egy kis idő a legutóbbi üzenet óta."
+    if gap_kind == "cross_day":
+        return "Tegnap óta nem folytattuk."
+    return None
+
+
+def _personal_entry_lines(signal: PersonalEntryKind, display_name: str, focus: str | None, direction: str | None, time_context: TimeContext | None = None) -> list[str]:
     if signal == PersonalEntryKind.GREETING:
-        return [f"Szia{display_name}. Itt vagyok — miben segítsek most?"]
+        greet = _daypart_greeting(time_context.daypart.value) if time_context is not None else "Szia"
+        return [f"{greet}{display_name}. Miben segítsek most?"]
     if signal == PersonalEntryKind.SELF_INTRO:
         return [f"Szia{display_name}. Örülök, hogy így mutatkoztál be — miben induljunk el most?"]
     if signal == PersonalEntryKind.OWNER_FRAMING:
@@ -58,6 +83,12 @@ def _personal_entry_lines(signal: PersonalEntryKind, display_name: str, focus: s
         return ["Rendben, fókuszra álltunk. Melyik konkrét ponttal kezdjük?"]
     if signal == PersonalEntryKind.RESUME_INTAKE:
         return ["Oké, vegyük fel innen a fonalat. Melyik részről folytassuk először?"]
+    if signal == PersonalEntryKind.RETURN_ENTRY:
+        gap = _gap_phrase(time_context.gap_kind.value, time_context.gap_minutes) if time_context is not None else None
+        base = f"Jó újra itt{display_name}."
+        if gap:
+            return [f"{base} {gap} Mivel folytassuk?"]
+        return [f"{base} Mivel folytassuk?"]
     return ["Rendben, visszakapcsoltam ide. Folytassuk innen — most beszélgessünk, vagy oldjunk meg egy konkrét feladatot?"]
 
 
@@ -74,12 +105,13 @@ def build_response_plan(
     focus: ThreadFocusPack | None = None,
     followup_target: str | None = None,
     owner_identity: OwnerIdentityProfile | None = None,
+    time_context: TimeContext | None = None,
 ) -> ResponsePlan:
     if interpretation.kind.value == "personal_entry" and interpretation.personal_entry is not None:
         signal = interpretation.personal_entry
         name = signal.owner_name or (owner_identity.owner_name if owner_identity is not None else None)
         display_name = f" {name}" if name else ""
-        lines = _personal_entry_lines(signal.kind, display_name, signal.declared_focus, signal.declared_direction)
+        lines = _personal_entry_lines(signal.kind, display_name, signal.declared_focus, signal.declared_direction, time_context)
         return ResponsePlan(
             kind=ResponsePlanKind.PERSONAL_ENTRY,
             sections=[ResponsePlanSection(title="personal_entry", lines=lines)],
@@ -132,7 +164,13 @@ def build_response_plan(
                     sections=sections,
                     focus_used=focus is not None,
                 )
-        lines = [f"Rendben, innen folytatjuk: {clean_display_text(followup_target)}"] if followup_target else ["Rendben."]
+        if followup_target:
+            lines = [f"Rendben, innen folytatjuk: {clean_display_text(followup_target)}"]
+        elif interpretation.relative_time_terms:
+            joined = ", ".join(interpretation.relative_time_terms)
+            lines = [f"Értem az időhivatkozásokat ({clean_display_text(joined)}). Mondd, pontosan mire fókuszáljunk."]
+        else:
+            lines = ["Rendben."]
         return ResponsePlan(
             kind=ResponsePlanKind.ORDINARY,
             sections=[ResponsePlanSection(title="ordinary", lines=lines)],

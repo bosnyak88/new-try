@@ -171,3 +171,12 @@ Persistence scope remains minimal and explicit:
 - session/thread conversational shaping only: declared intake direction and current focus statements
 
 This is intentionally not a full long-term profile graph; only explicitly stated minimal identity facts are persisted.
+
+
+## Determinisztikus időtudat (REBUILD-018)
+- Telepítési igazság: Windows alatt a `tzdata` Python-függőség deklarált (pyproject), így a REBUILD-018 időzóna-feloldás nem igényel külön kézi rescue lépést.
+- A runtime közös, tesztelhető órát (`RuntimeContext.clock`) és explicit időzónát (`[time].timezone`) használ.
+- A rendszer daypart-érzékeny magyar köszönést ad (reggel/délelőtt/délután/este/éjjel).
+- Visszatérésnél a válaszok csak perzisztált turn-időbélyeg + aktuális helyi idő alapján jeleznek gap-et (nincs megfigyelés- vagy fake-memory állítás).
+- Relatív időkifejezések (`most`, `ma`, `tegnap`, `holnap`, `majd`) determinisztikusan kerülnek groundingra és trace-ben láthatók.
+- Scope-határ: ez még nem reminder/executor/rutin-tanulás.

@@ -1,3 +1,13 @@
+## REBUILD-018 — deterministic time-awareness / session continuity foundation
+
+- Follow-up zárás: timezone/bootstrap függőségi rés lezárva (`tzdata` deklarált Windows-függőség), UTC útvonal `timezone.utc`-re keményítve, dokumentáció és tesztek igazítva.
+- Added a shared deterministic time context (`RuntimeContext.clock` + timezone config) used by orchestration-level reply shaping.
+- Added Hungarian daypart-aware greeting behavior (`reggel`, `délelőtt`, `délután`, `este`, `éjjel`).
+- Added grounded session-gap continuity handling for immediate/short/same-day/cross-day returns.
+- Added deterministic grounding for common relative-time terms (`most`, `ma`, `tegnap`, `holnap`, `majd`, plus `ma reggel`/`ma délután`).
+- Extended trace output with time-awareness metadata (daypart, gap class, relative-term grounding).
+- Added regression tests for deterministic time behavior while preserving owner-aware entry and existing capabilities.
+
 ## 0.16.0 - REBUILD-017 owner-aware intake bridge + minimal explicit teach-mode foundation
 
 - Extended deterministic personal-entry contracts with explicit intake kinds: personal-chat, concrete-help, focus-setting, and resume-intake.

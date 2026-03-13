@@ -750,6 +750,17 @@ class PersistenceStore:
                 threads=threads,
             )
 
+
+    def read_last_turn_at(self, thread_id: int) -> datetime | None:
+        with sqlite3.connect(self.db_path) as conn:
+            row = conn.execute(
+                "SELECT created_at FROM turns WHERE thread_id = ? ORDER BY turn_id DESC LIMIT 1",
+                (thread_id,),
+            ).fetchone()
+            if row is None or row[0] is None:
+                return None
+            return datetime.fromisoformat(str(row[0]))
+
     def create_turn(
         self,
         session_id: int,
@@ -760,8 +771,9 @@ class PersistenceStore:
         assistant_reply: str,
         reply_backend: str,
         degraded: bool,
+        created_at: datetime | None = None,
     ) -> TurnResult:
-        created_at = utc_now()
+        created_at = created_at or utc_now()
         with sqlite3.connect(self.db_path) as conn:
             turn_count = int(
                 conn.execute(

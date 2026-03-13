@@ -109,6 +109,7 @@ def build_turn_trace_events(
                     "owner_relation": interpret_trace.owner_relation,
                     "declared_focus": interpret_trace.declared_focus,
                     "declared_direction": interpret_trace.declared_direction,
+                    "relative_time_terms": interpret_trace.relative_time_terms,
                 },
             }
         )
@@ -140,6 +141,9 @@ def build_turn_trace_events(
                     "section_count": response_plan_trace.section_count,
                     "clarification_emitted": response_plan_trace.clarification_emitted,
                     "focus_used": response_plan_trace.focus_used,
+                    "daypart": response_plan_trace.daypart,
+                    "gap_kind": response_plan_trace.gap_kind,
+                    "relative_grounding": response_plan_trace.relative_grounding,
                 },
             }
         )

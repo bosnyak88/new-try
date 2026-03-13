@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Syntaris greenfield phase-0 foundation"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["tomli>=2.0"]
+dependencies = ["tomli>=2.0", "tzdata>=2024.1; platform_system == 'Windows'"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]

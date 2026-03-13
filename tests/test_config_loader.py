@@ -40,3 +40,12 @@ def test_env_overrides_deliberation_flags(monkeypatch):
     assert config.conversation.max_comparison_candidates == 4
     assert config.conversation.clarification_prefer_when_close is False
     assert config.conversation.uncertainty_labeling_enabled is True
+
+
+def test_timezone_config_loaded_and_overridable(monkeypatch):
+    config = load_app_config("config/syntaris.example.toml")
+    assert config.time.timezone == "Europe/Budapest"
+
+    monkeypatch.setenv("SYNTARIS_TIMEZONE", "Europe/Berlin")
+    overridden = load_app_config("config/syntaris.example.toml")
+    assert overridden.time.timezone == "Europe/Berlin"

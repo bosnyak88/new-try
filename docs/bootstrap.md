@@ -112,3 +112,12 @@ Minimal explicit identity facts (`owner_name`, `owner_relation`) are stored in e
 
 
 REBUILD-017 note: intake bridge and explicit teach-mode use existing schema; only minimal owner identity remains persisted in `app_meta`. Declared focus/direction statements are interpreted deterministically for session/thread shaping and trace visibility.
+
+
+## Determinisztikus időtudat (REBUILD-018)
+- Környezeti függőség-zárás: Windows célkörnyezetben a `tzdata` csomag deklarált projektfüggőség, így az időzóna-adatok bootstrap során reprodukálhatóan elérhetők.
+- A runtime közös, tesztelhető órát (`RuntimeContext.clock`) és explicit időzónát (`[time].timezone`) használ.
+- A rendszer daypart-érzékeny magyar köszönést ad (reggel/délelőtt/délután/este/éjjel).
+- Visszatérésnél a válaszok csak perzisztált turn-időbélyeg + aktuális helyi idő alapján jeleznek gap-et (nincs megfigyelés- vagy fake-memory állítás).
+- Relatív időkifejezések (`most`, `ma`, `tegnap`, `holnap`, `majd`) determinisztikusan kerülnek groundingra és trace-ben láthatók.
+- Scope-határ: ez még nem reminder/executor/rutin-tanulás.
