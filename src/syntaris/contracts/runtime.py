@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Protocol, runtime_checkable
-from zoneinfo import ZoneInfo
 
 
 class ModeKind(str, Enum):
@@ -68,7 +67,7 @@ class Clock(Protocol):
 
 class SystemClock:
     def now(self) -> datetime:
-        return datetime.now(ZoneInfo("UTC"))
+        return datetime.now(timezone.utc)
 
 
 @dataclass(frozen=True)

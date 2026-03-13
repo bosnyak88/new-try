@@ -150,6 +150,7 @@ This layer does not infer broad profile traits and does not claim unstored long-
 
 
 ## Determinisztikus időtudat (REBUILD-018)
+- UTC-időbélyegekhez a runtime beépített `datetime.timezone.utc`-t használ, így az UTC útvonal nem függ külső tz-adatcsomagtól.
 - A runtime közös, tesztelhető órát (`RuntimeContext.clock`) és explicit időzónát (`[time].timezone`) használ.
 - A rendszer daypart-érzékeny magyar köszönést ad (reggel/délelőtt/délután/este/éjjel).
 - Visszatérésnél a válaszok csak perzisztált turn-időbélyeg + aktuális helyi idő alapján jeleznek gap-et (nincs megfigyelés- vagy fake-memory állítás).

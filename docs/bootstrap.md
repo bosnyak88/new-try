@@ -115,6 +115,7 @@ REBUILD-017 note: intake bridge and explicit teach-mode use existing schema; onl
 
 
 ## Determinisztikus időtudat (REBUILD-018)
+- Környezeti függőség-zárás: Windows célkörnyezetben a `tzdata` csomag deklarált projektfüggőség, így az időzóna-adatok bootstrap során reprodukálhatóan elérhetők.
 - A runtime közös, tesztelhető órát (`RuntimeContext.clock`) és explicit időzónát (`[time].timezone`) használ.
 - A rendszer daypart-érzékeny magyar köszönést ad (reggel/délelőtt/délután/este/éjjel).
 - Visszatérésnél a válaszok csak perzisztált turn-időbélyeg + aktuális helyi idő alapján jeleznek gap-et (nincs megfigyelés- vagy fake-memory állítás).

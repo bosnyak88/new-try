@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from syntaris.contracts.runtime import (
     DaypartKind,
@@ -18,11 +18,21 @@ class RelativeTerms:
     terms: list[str]
 
 
+def _resolve_zoneinfo(timezone_name: str) -> ZoneInfo:
+    try:
+        return ZoneInfo(timezone_name)
+    except ZoneInfoNotFoundError as exc:
+        raise RuntimeError(
+            f"Időzóna-adat nem elérhető ehhez: {timezone_name}. "
+            "Ellenőrizd a rendszer tzadatát vagy a Python tzdata csomagot."
+        ) from exc
+
+
 def resolve_now_local(context: RuntimeContext) -> datetime:
     now_utc = context.clock.now()
-    tz = ZoneInfo(context.config.time.timezone)
+    tz = _resolve_zoneinfo(context.config.time.timezone)
     if now_utc.tzinfo is None:
-        now_utc = now_utc.replace(tzinfo=ZoneInfo("UTC"))
+        now_utc = now_utc.replace(tzinfo=timezone.utc)
     return now_utc.astimezone(tz)
 
 
@@ -82,7 +92,7 @@ def build_time_context(
     relative_terms: list[str] | None = None,
 ) -> TimeContext:
     now_local = resolve_now_local(context)
-    last_local = last_turn_at.astimezone(ZoneInfo(context.config.time.timezone)) if last_turn_at is not None else None
+    last_local = last_turn_at.astimezone(_resolve_zoneinfo(context.config.time.timezone)) if last_turn_at is not None else None
     gap_kind, gap_minutes = resolve_gap_kind(now_local, last_local)
     grounded = ground_relative_terms(now_local, relative_terms or [])
     return TimeContext(

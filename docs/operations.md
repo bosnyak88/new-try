@@ -171,6 +171,7 @@ Expected: natural Hungarian, no bare `Rendben.`, one compact next-step prompt at
 
 
 ## Determinisztikus időtudat (REBUILD-018)
+- REBUILD-018 üzemeltetési megjegyzés: Windowson a `tzdata` projektfüggőség automatikusan települ, ezért nincs külön kézi `pip install tzdata` operátori lépés.
 - A runtime közös, tesztelhető órát (`RuntimeContext.clock`) és explicit időzónát (`[time].timezone`) használ.
 - A rendszer daypart-érzékeny magyar köszönést ad (reggel/délelőtt/délután/este/éjjel).
 - Visszatérésnél a válaszok csak perzisztált turn-időbélyeg + aktuális helyi idő alapján jeleznek gap-et (nincs megfigyelés- vagy fake-memory állítás).

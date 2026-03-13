@@ -1,5 +1,6 @@
 ## REBUILD-018 — deterministic time-awareness / session continuity foundation
 
+- Follow-up zárás: timezone/bootstrap függőségi rés lezárva (`tzdata` deklarált Windows-függőség), UTC útvonal `timezone.utc`-re keményítve, dokumentáció és tesztek igazítva.
 - Added a shared deterministic time context (`RuntimeContext.clock` + timezone config) used by orchestration-level reply shaping.
 - Added Hungarian daypart-aware greeting behavior (`reggel`, `délelőtt`, `délután`, `este`, `éjjel`).
 - Added grounded session-gap continuity handling for immediate/short/same-day/cross-day returns.
