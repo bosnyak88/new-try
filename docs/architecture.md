@@ -156,3 +156,10 @@ This layer does not infer broad profile traits and does not claim unstored long-
 - Visszatérésnél a válaszok csak perzisztált turn-időbélyeg + aktuális helyi idő alapján jeleznek gap-et (nincs megfigyelés- vagy fake-memory állítás).
 - Relatív időkifejezések (`most`, `ma`, `tegnap`, `holnap`, `majd`) determinisztikusan kerülnek groundingra és trace-ben láthatók.
 - Scope-határ: ez még nem reminder/executor/rutin-tanulás.
+
+
+## REBUILD-019 memory substrate
+- `turn_interpret` now identifies explicit claim capture candidates and explicit-memory question intents.
+- `persistence.store` persists claims in `personal_claims` with active/superseded state and stable vs thread scope classes.
+- `response_plan` renders grounded Hungarian answers from persisted explicit claims/scoped state only.
+- `trace.events` emits `explicit_claims_captured` when deterministic claim capture is applied.

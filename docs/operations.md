@@ -177,3 +177,10 @@ Expected: natural Hungarian, no bare `Rendben.`, one compact next-step prompt at
 - Visszatérésnél a válaszok csak perzisztált turn-időbélyeg + aktuális helyi idő alapján jeleznek gap-et (nincs megfigyelés- vagy fake-memory állítás).
 - Relatív időkifejezések (`most`, `ma`, `tegnap`, `holnap`, `majd`) determinisztikusan kerülnek groundingra és trace-ben láthatók.
 - Scope-határ: ez még nem reminder/executor/rutin-tanulás.
+
+
+## Explicit-memory operational checks
+Use `talk --once` with: `én Árpi vagyok`, `ki vagyok?`, `én terveztem a rendszered`, `mi a kapcsolatunk?`, `a mai fókusz a syntaris`, `mi a mostani fókusz?`, `mit tudsz rólam biztosan?`.
+Use `trace-last` to confirm `explicit_claims_captured` appears after capture turns.
+
+- Expected after REBUILD-019 follow-up: no bare `Rendben.` on explicit claim/correction capture turns (`ez az én személyes rendszerem`, `javítás: a nevem ...`).

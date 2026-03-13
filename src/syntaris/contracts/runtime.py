@@ -355,6 +355,27 @@ class TurnInterpretationKind(str, Enum):
     CLARIFICATION_NEEDED = "clarification_needed"
 
 
+class ClaimKind(str, Enum):
+    OWNER_NAME = "owner_name"
+    OWNER_RELATION = "owner_relation"
+    SYSTEM_ROLE = "system_role"
+    CURRENT_FOCUS = "current_focus"
+    CURRENT_DIRECTION = "current_direction"
+
+
+class ClaimScope(str, Enum):
+    STABLE = "stable"
+    THREAD = "thread"
+
+
+class MemoryQueryKind(str, Enum):
+    WHO_AM_I = "who_am_i"
+    WHAT_KNOWN_CERTAIN = "what_known_certain"
+    RELATIONSHIP = "relationship"
+    SYSTEM_ROLE = "system_role"
+    CURRENT_FOCUS = "current_focus"
+
+
 class RecallTargetKind(str, Enum):
     NONE = "none"
     CURRENT = "current"
@@ -396,7 +417,16 @@ class TurnInterpretation:
     recall_request: RecallRequest | None = None
     clarification_reason: str | None = None
     personal_entry: PersonalEntrySignal | None = None
+    memory_query: MemoryQueryKind | None = None
+    claim_capture: list[ClaimCapture] = field(default_factory=list)
     relative_time_terms: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class ClaimCapture:
+    kind: ClaimKind
+    value: str
+    scope: ClaimScope
 
 
 class DaypartKind(str, Enum):
@@ -747,7 +777,15 @@ class TurnInterpretTrace:
     owner_relation: str | None = None
     declared_focus: str | None = None
     declared_direction: str | None = None
+    memory_query: str | None = None
+    claim_capture_count: int = 0
     relative_time_terms: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class ClaimCaptureTrace:
+    captured: bool
+    items: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -969,6 +1007,16 @@ class TurnResult:
 class OwnerIdentityProfile:
     owner_name: str | None = None
     owner_relation: str | None = None
+    system_role: str | None = None
+
+
+@dataclass(frozen=True)
+class PersonalMemoryView:
+    owner_name: str | None = None
+    owner_relation: str | None = None
+    system_role: str | None = None
+    current_focus: str | None = None
+    current_direction: str | None = None
 
 
 @dataclass(frozen=True)

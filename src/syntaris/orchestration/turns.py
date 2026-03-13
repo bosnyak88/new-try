@@ -21,6 +21,7 @@ from syntaris.contracts.runtime import (
     SynthesisTrace,
     ThreadFocusTrace,
     TurnInterpretTrace,
+    ClaimCaptureTrace,
     RouteStateTransition,
     RuntimeContext,
     SnapshotTrace,
@@ -274,6 +275,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             route=resolved.route,
             context_load=context_load,
             snapshot_trace=snapshot_trace,
+            claim_capture_trace=None,
         )
         store.create_trace_events(
             session_id=turn.session_id,
@@ -298,12 +300,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     interpretation = interpret_turn(normalized_message)
     last_turn_at = store.read_last_turn_at(resolved.state_after.thread_id)
     time_context = build_time_context(context, last_turn_at=last_turn_at, relative_terms=interpretation.relative_time_terms)
+    personal_memory = store.get_personal_memory(session_id=resolved.state_after.session_id, thread_id=resolved.state_after.thread_id)
     owner_identity = store.get_owner_identity()
-    if interpretation.personal_entry is not None:
-        owner_identity = store.set_owner_identity(
-            owner_name=interpretation.personal_entry.owner_name,
-            owner_relation=interpretation.personal_entry.owner_relation,
-        )
     recall_resolution = resolve_recall_request(context, interpretation)
     focus_view = build_thread_focus_view(
         context,
@@ -393,6 +391,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         focus=focus_view.focus if focus_view.found else None,
         followup_target=followup_resolution.target_line,
         owner_identity=owner_identity,
+        personal_memory=personal_memory,
         time_context=time_context,
     )
 
@@ -406,6 +405,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         owner_relation=interpretation.personal_entry.owner_relation if interpretation.personal_entry is not None else None,
         declared_focus=interpretation.personal_entry.declared_focus if interpretation.personal_entry is not None else None,
         declared_direction=interpretation.personal_entry.declared_direction if interpretation.personal_entry is not None else None,
+        memory_query=interpretation.memory_query.value if interpretation.memory_query is not None else None,
+        claim_capture_count=len(interpretation.claim_capture),
         relative_time_terms=interpretation.relative_time_terms,
     )
     recall_trace = RecallTrace(
@@ -419,6 +420,11 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         refreshed_snapshot=recall_resolution.refreshed_snapshot,
         clarification_emitted=response_plan.kind.value == "clarification",
     )
+    claim_trace = ClaimCaptureTrace(
+        captured=bool(interpretation.claim_capture),
+        items=[f"{item.scope.value}:{item.kind.value}={item.value}" for item in interpretation.claim_capture],
+    )
+
     plan_trace = ResponsePlanTrace(
         kind=response_plan.kind.value,
         section_count=len(response_plan.sections),
@@ -497,6 +503,12 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             degraded=False,
             created_at=turn_created_at,
         )
+        store.capture_claims(
+            session_id=resolved.state_after.session_id,
+            thread_id=resolved.state_after.thread_id,
+            source_turn_id=turn.turn_id,
+            captures=interpretation.claim_capture,
+        )
         events = build_turn_trace_events(
             state=resolved.state_after,
             turn=turn,
@@ -518,6 +530,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             decomposition_trace=decomposition_trace,
             evidence_trace=evidence_trace,
             synthesis_trace=synthesis_trace,
+            claim_capture_trace=claim_trace,
         )
         store.create_trace_events(
             session_id=turn.session_id,

@@ -11,7 +11,7 @@ def test_initialize_creates_schema(tmp_path):
     result = store.initialize(data_dir=str(tmp_path / "data"))
 
     assert result.schema_initialized is True
-    assert result.schema_version == 5
+    assert result.schema_version == 6
     with sqlite3.connect(db_path) as conn:
         names = {
             row[0]

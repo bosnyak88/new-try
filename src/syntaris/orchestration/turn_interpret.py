@@ -3,6 +3,10 @@ from __future__ import annotations
 import re
 
 from syntaris.contracts.runtime import (
+    ClaimCapture,
+    ClaimKind,
+    ClaimScope,
+    MemoryQueryKind,
     PersonalEntryKind,
     PersonalEntrySignal,
     RecallRequest,
@@ -52,6 +56,7 @@ _AMBIGUOUS_RESUME_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 _OWNER_NAME_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"(?:^|\s)én\s+([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű]+)\s+vagyok(?:\s|$)", re.IGNORECASE),
     re.compile(r"(?:^|\s)([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű]+)\s+vagyok(?:\s|$)", re.IGNORECASE),
+    re.compile(r"(?:^|\s)(?:javitas[:\s]+)?a\s+nevem\s+([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű]+)(?:\s|$)", re.IGNORECASE),
 )
 
 
@@ -78,6 +83,45 @@ def _extract_relative_time_terms(normalized: str) -> list[str]:
             if mapped not in terms:
                 terms.append(mapped)
     return terms
+
+
+def _extract_system_role(normalized: str) -> str | None:
+    if "a szereped" in normalized and "szemelyes rendszerem" in normalized:
+        return "személyes rendszered"
+    if "a szereped" in normalized and "hogy" in normalized:
+        return "személyes rendszered"
+    if "ez az en szemelyes rendszerem" in normalized:
+        return "személyes rendszered"
+    return None
+
+
+def _memory_query_kind(normalized: str) -> MemoryQueryKind | None:
+    if normalized in {"ki vagyok", "ki vagyok?", "hogy hivnak", "hogy hivnak?"}:
+        return MemoryQueryKind.WHO_AM_I
+    if normalized in {"mit tudsz rolam biztosan", "mit tudsz rolam biztosan?"}:
+        return MemoryQueryKind.WHAT_KNOWN_CERTAIN
+    if normalized in {"mi a kapcsolatunk", "mi a kapcsolatunk?"}:
+        return MemoryQueryKind.RELATIONSHIP
+    if normalized in {"mi a szereped", "mi a szereped?"}:
+        return MemoryQueryKind.SYSTEM_ROLE
+    if normalized in {"mi a mostani fokusz", "mi a mostani fokusz?", "mirol akartam most beszelni", "mirol akartam most beszelni?"}:
+        return MemoryQueryKind.CURRENT_FOCUS
+    return None
+
+
+def _claim_captures(owner_name: str | None, owner_framing: bool, system_role: str | None, declared_focus: str | None, declared_direction: str | None) -> list[ClaimCapture]:
+    captures: list[ClaimCapture] = []
+    if owner_name is not None:
+        captures.append(ClaimCapture(kind=ClaimKind.OWNER_NAME, value=owner_name, scope=ClaimScope.STABLE))
+    if owner_framing:
+        captures.append(ClaimCapture(kind=ClaimKind.OWNER_RELATION, value="creator", scope=ClaimScope.STABLE))
+    if system_role is not None:
+        captures.append(ClaimCapture(kind=ClaimKind.SYSTEM_ROLE, value=system_role, scope=ClaimScope.STABLE))
+    if declared_focus is not None:
+        captures.append(ClaimCapture(kind=ClaimKind.CURRENT_FOCUS, value=declared_focus, scope=ClaimScope.THREAD))
+    if declared_direction is not None:
+        captures.append(ClaimCapture(kind=ClaimKind.CURRENT_DIRECTION, value=declared_direction, scope=ClaimScope.THREAD))
+    return captures
 
 
 def interpret_turn(message: str) -> TurnInterpretation:
@@ -108,16 +152,22 @@ def interpret_turn(message: str) -> TurnInterpretation:
         for phrase in ("segits a timesheetben", "dolgozzunk a syntarison", "nezzuk meg ezt a problemat", "most valami konkret segitseg kell")
     )
     declared_focus = _extract_declared_focus(normalized)
+    system_role = _extract_system_role(normalized)
     declared_direction: str | None = None
     if "most a munkarol akarok beszelni" in normalized:
         declared_direction = "munka"
     elif "ma az adminra fokuszaljunk" in normalized:
         declared_direction = "admin"
 
+    memory_query = _memory_query_kind(normalized)
+    correction_name_claim = normalized.startswith("javitas:") or normalized.startswith("javítás:") or "nem igy hivnak" in normalized
+
     resume_intake = any(
         phrase in normalized
         for phrase in ("folytassuk a syntarist", "menjunk tovabb innen", "vegyuk fel innen a fonalat")
     )
+
+    captures = _claim_captures(owner_name, owner_framing, system_role, declared_focus, declared_direction)
 
     if owner_framing:
         return TurnInterpretation(
@@ -128,6 +178,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
                 owner_name=owner_name,
                 owner_relation="creator",
             ),
+            claim_capture=captures,
             relative_time_terms=relative_terms,
         )
 
@@ -136,6 +187,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
             kind=TurnInterpretationKind.PERSONAL_ENTRY,
             pattern_name="personal_entry_self_intro",
             personal_entry=PersonalEntrySignal(kind=PersonalEntryKind.SELF_INTRO, owner_name=owner_name),
+            claim_capture=captures,
             relative_time_terms=relative_terms,
         )
 
@@ -148,6 +200,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
                 declared_focus=declared_focus,
                 declared_direction=declared_direction,
             ),
+            claim_capture=captures,
             relative_time_terms=relative_terms,
         )
 
@@ -269,5 +322,20 @@ def interpret_turn(message: str) -> TurnInterpretation:
                 clarification_reason="resume_target_ambiguous",
                 relative_time_terms=relative_terms,
             )
+
+    if captures:
+        return TurnInterpretation(
+            kind=TurnInterpretationKind.ORDINARY,
+            pattern_name="claim_correction" if correction_name_claim else "claim_capture",
+            claim_capture=captures,
+            relative_time_terms=relative_terms,
+        )
+
+    if memory_query is not None:
+        return TurnInterpretation(
+            kind=TurnInterpretationKind.ORDINARY,
+            memory_query=memory_query,
+            relative_time_terms=relative_terms,
+        )
 
     return TurnInterpretation(kind=TurnInterpretationKind.ORDINARY, relative_time_terms=relative_terms)
