@@ -142,3 +142,17 @@ Schema migration: not required in this phase (v7 unchanged).
 
 ### Scope control
 - Narrow live-ingress parity fix only; no presence/persona/onboarding redesign and no evidence/maintenance feature expansion.
+
+
+## REBUILD-032 propagation snapshot
+### Changed
+- `src/syntaris/orchestration/live_loop.py`: added optional `on_output` callback and `reply_adapted_rendered` trace to expose generated/adapted output before console emission.
+- `src/syntaris/cli.py`: live interactive path now streams emissions per output and records `reply_emit_attempted` / `reply_emitted_successfully` / `reply_emit_failed`; output writes are explicitly flushed.
+- Added regressions: `tests/test_live_interactive_emit.py` for callback-order visibility and emit-honesty failure/success trace semantics.
+
+### Reviewed unchanged
+- `src/syntaris/orchestration/turns.py`, `src/syntaris/reply/*`, persistence schema/store core behavior, maintenance/evidence orchestration families.
+
+### Schema/contracts
+- Schema unchanged (v7).
+- Contract shape unchanged; behavior extended via existing live loop/trace event payloads.

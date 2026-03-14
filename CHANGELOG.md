@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- REBUILD-032: fixed manual interactive `talk --live` emission path by streaming each live output immediately (emit + flush before next input wait) instead of buffering until loop end.
+- REBUILD-032: added explicit live output honesty trace events (`reply_adapted_rendered`, `reply_emit_attempted`, `reply_emitted_successfully`, `reply_emit_failed`) while preserving REBUILD-030 sanitization via `live_output_sanitized`.
 - REBUILD-031: fixed Windows/PowerShell live stdin mojibake boundary with deterministic byte-decoding + reversible repair so Hungarian prompts preserve semantic fidelity in `talk --live`.
 - REBUILD-031: added `live_input_repaired` trace accounting for repaired/degraded ingress and restored once/live self-intro parity on repaired live input flows.
 - REBUILD-030: fixed Windows live output boundary with console-safe rendering fallback so `talk --live` no longer crashes on unencodable Unicode in constrained codepages.

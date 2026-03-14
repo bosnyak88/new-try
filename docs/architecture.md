@@ -117,3 +117,8 @@ Schema impact: none for REBUILD-027 (v7 unchanged).
 ## REBUILD-031 live ingress doctrine
 - Live stdin ingress may decode from bytes using deterministic encoding candidates with bounded mojibake repair before turn execution.
 - Input repair/degradation is trace-visible (`live_input_repaired`) to preserve audit honesty for semantic parity claims.
+
+## REBUILD-032 follow-up (manual live output visibility)
+- Live loop now supports streaming output callbacks so manual interactive mode can emit each turn result immediately instead of end-of-loop batch printing.
+- CLI live path now records output-stage honesty events (`reply_emit_attempted`, `reply_emitted_successfully`, `reply_emit_failed`) and keeps degraded sanitization audit (`live_output_sanitized`).
+- No cognition relocation to CLI, no schema change, no maintenance/evidence architecture expansion in this follow-up.
