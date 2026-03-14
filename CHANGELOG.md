@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- REBUILD-029: stabilized `talk --live` response visibility so processed turns cannot silently render as blank output; added explicit degraded live-surface fallback + `live_surface_degraded` trace event.
+- REBUILD-029: hardened llama-http reply extraction for structured/malformed payload variants and deterministic fallback on empty content.
+- REBUILD-029: added deterministic regressions for live visibility, degraded handling, greeting first-turn stability, and once/live parity spot-check.
 - REBUILD-028: fixed maintenance-route hijack where explicit maintenance/blocker turns containing time references ("most/ma") could fall back to generic clarification.
 - REBUILD-028: added blocker replacement parsing (old blocker resolved + new blocker remains), and completed applicability/conclusion query handling for the Scenario-A maintenance flow.
 - REBUILD-028: added focused regressions for maintenance update routing, blocker persistence/replacement, and state/trace/snapshot alignment.
@@ -53,6 +56,9 @@
 
 
 ## Unreleased
+- REBUILD-029: stabilized `talk --live` response visibility so processed turns cannot silently render as blank output; added explicit degraded live-surface fallback + `live_surface_degraded` trace event.
+- REBUILD-029: hardened llama-http reply extraction for structured/malformed payload variants and deterministic fallback on empty content.
+- REBUILD-029: added deterministic regressions for live visibility, degraded handling, greeting first-turn stability, and once/live parity spot-check.
 - REBUILD-028: fixed maintenance-route hijack where explicit maintenance/blocker turns containing time references ("most/ma") could fall back to generic clarification.
 - REBUILD-028: added blocker replacement parsing (old blocker resolved + new blocker remains), and completed applicability/conclusion query handling for the Scenario-A maintenance flow.
 - REBUILD-028: added focused regressions for maintenance update routing, blocker persistence/replacement, and state/trace/snapshot alignment.

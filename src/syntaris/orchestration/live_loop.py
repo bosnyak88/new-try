@@ -69,6 +69,22 @@ def _output(kind: str, message: str, state: LiveConversationState, **kwargs: obj
     return LiveTurnOutput(kind=kind, message=message, state=state, **kwargs)
 
 
+def _ensure_visible_live_message(
+    *,
+    kind: str,
+    message: str,
+    fallback_hint: str,
+) -> tuple[str, bool]:
+    visible = message.strip()
+    if visible:
+        return message, False
+    return (
+        f"[degraded-live] A válasz feldolgozása nem adott látható szöveget ({fallback_hint}). "
+        "Próbáld újra vagy futtasd ugyanazt a kérést talk --once módban.",
+        True,
+    )
+
+
 def run_live_loop(
     context: RuntimeContext,
     lines: Iterable[str],
@@ -145,16 +161,42 @@ def run_live_loop(
         if command.action == LoopAction.TURN:
             result = execute_turn(context, TalkRequest(message=str(command.value)), source="talk_live")
             state = _to_live_state(context)
+            visible_message, live_surface_degraded = _ensure_visible_live_message(
+                kind=result.output_kind,
+                message=result.turn.assistant_reply,
+                fallback_hint="empty_turn_reply",
+            )
+            degraded = bool(result.turn.degraded or live_surface_degraded)
             outputs.append(
                 _output(
                     result.output_kind,
-                    result.turn.assistant_reply,
+                    visible_message,
                     state,
                     turn_id=result.turn.turn_id,
                     backend=result.turn.reply_backend,
-                    degraded=result.turn.degraded,
+                    degraded=degraded,
                 )
             )
+            if emit_trace and live_surface_degraded:
+                store.create_trace_events(
+                    session_id=state.session_id,
+                    thread_id=state.thread_id,
+                    turn_id=result.turn.turn_id,
+                    mode=state.mode,
+                    backend="loop",
+                    degraded=True,
+                    events=[
+                        {
+                            "event_name": "live_surface_degraded",
+                            "payload": {
+                                "reason": "empty_turn_reply",
+                                "turn_id": result.turn.turn_id,
+                                "kind": result.output_kind,
+                                "reply_backend": result.turn.reply_backend,
+                            },
+                        }
+                    ],
+                )
 
     return LiveLoopResult(outputs=outputs)
 

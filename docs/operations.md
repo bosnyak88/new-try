@@ -46,3 +46,11 @@ Expected: source-grounded lines are explicit, inferred/unresolved parts stay sep
 
 ## REBUILD-027 operations note
 Operationally validate lifecycle semantics with Hungarian cues (`parkoljuk`, `vissza a főszálra`, `lezártuk`) and applicability prompts (`mi maradt érvényes`, `felülírja az új helyzet?`). Confirm `thread-snapshot`, `thread-focus`, and `trace-last` all show aligned maintenance status.
+
+
+## REBUILD-029 live visibility smoke
+- `python -m syntaris.cli --config "$CFG" init-db`
+- `python -m syntaris.cli --config "$CFG" talk --once "szia syntaris én Árpi vagyok"`
+- `printf "szia\nhol tartottunk?\n" | python -m syntaris.cli --config "$CFG" talk --live`
+- `printf "szia syntaris\nszia syntaris én Árpi vagyok\nmit tudsz rólam biztosan?\n" | python -m syntaris.cli --config "$CFG" talk --live`
+- Confirm each live turn emits visible text (no blank processed turn lines), and verify `python -m syntaris.cli --config "$CFG" trace-last` reflects any live-surface degradation via `live_surface_degraded` when triggered.

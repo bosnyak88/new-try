@@ -82,3 +82,23 @@ Schema migration: not required in this phase (v7 unchanged).
 - completed Scenario-A applicability/conclusion path so maintained conclusion is not left empty when supersession is explicitly present
 - kept REBUILD-027 lifecycle cues and REBUILD-026 evidence behavior intact (validated by regressions)
 - schema unchanged (v7)
+
+
+## REBUILD-029 propagation note (live runtime stabilization)
+
+### Changed
+- `src/syntaris/orchestration/live_loop.py`: added visibility guard for empty live replies and explicit `live_surface_degraded` trace emission.
+- `src/syntaris/reply/adapters.py`: hardened llama HTTP extraction for structured/malformed payloads and deterministic fallback on empty/malformed content.
+- `tests/test_live_rendering.py`, `tests/test_reply_adapter.py`: added deterministic regressions for live visibility, degraded handling, greeting first-turn stability, once/live parity spot-check, and structured extraction fallback.
+
+### Reviewed unchanged
+- `src/syntaris/orchestration/turns.py`, `src/syntaris/trace/events.py`, `src/syntaris/contracts/runtime.py`, `src/syntaris/cli.py`, persistence schema/store modules.
+- Evidence/workframe/thread-weave/maintenance orchestration modules were reviewed for regression risk; no behavior change required in this runtime-only fix.
+
+### Schema/contracts
+- No schema migration required.
+- No contract shape change required; live visibility is enforced within existing `LiveTurnOutput.message` semantics and trace events.
+
+### Scope control
+- Kept separate from presence/persona/onboarding architecture work.
+- Kept separate from executor/tooling/reminder concerns.

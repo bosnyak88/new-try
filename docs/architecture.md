@@ -5,6 +5,7 @@
 - One shared turn orchestration path for once/live/script.
 - Hungarian-first deterministic behavior remains primary.
 - Deterministic fallback must work without live LLM.
+- Live response surface must be visibility-safe: processed turns cannot silently render as blank output.
 
 ## Layer map
 1. `contracts/runtime.py`: DTOs for interpretation, memory semantics, continuity, focus/snapshot/recall, trace.
@@ -100,3 +101,8 @@ Propagation shape:
 - trace `thread_weave_state_derived` carries lifecycle/validity payloads for honest auditability
 
 Schema impact: none for REBUILD-027 (v7 unchanged).
+
+
+## REBUILD-029 live visibility note
+- Live-loop output remains a thin boundary above shared turn execution, but applies a visibility guard for empty replies and records `live_surface_degraded` trace when guardrails are used.
+- No cognition logic moved into `cli.py`; routing/state/trace boundaries remain unchanged.

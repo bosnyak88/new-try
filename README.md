@@ -65,3 +65,9 @@ Current baseline intentionally does **not** include:
 - Conclusion maintenance now includes validity tracking (`still_valid`, `partially_valid`, `no_longer_valid_in_current_context`, `superseded_by_newer_context`, `historical_reminder_value_only`).
 - Applicability/carry-forward answers now explicitly surface lifecycle + maintenance status, so old blockers/conclusions are not silently treated as current.
 - Snapshot/focus/trace stay aligned with the same `ThreadWeaveState` maintenance fields (schema remains v7).
+
+## REBUILD-029 live runtime stabilization
+- `talk --live` now guarantees visible user-facing output for processed turns; empty live surface replies degrade with an explicit bounded message instead of silent blank lines.
+- Live loop emits `live_surface_degraded` trace when visibility fallback is applied, keeping trace honest about runtime rendering degradation.
+- Llama HTTP response extraction now handles structured `content` payload variants and falls back deterministically on malformed/empty content.
+- Deterministic core behavior (recall/compare/snapshot/focus/evidence/maintenance/applicability) remains unchanged; this pass is runtime visibility stabilization only.
