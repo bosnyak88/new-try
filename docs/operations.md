@@ -19,3 +19,8 @@ Use `trace-last` to confirm `workframe_state_derived` is emitted after turns tha
 
 ## Operational check (REBUILD-024)
 Use `trace-last` and inspect `workframe_state_derived` for: `missing_info_status`, `open_question_status`, `assumption_status`, `decision_state`, `evidence_gap_status` plus count fields. This is the authoritative runtime audit surface for decision readiness.
+
+
+## Operational check (REBUILD-025)
+Use `trace-last` and inspect `thread_weave_state_derived` (`relation`, `conclusion_status`, `applicability_status`, `query_family`).
+Also verify `thread-snapshot --current` and `thread-focus --current` include `thread_weave_state` payloads aligned with current workframe state.

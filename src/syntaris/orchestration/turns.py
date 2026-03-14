@@ -31,6 +31,7 @@ from syntaris.contracts.runtime import (
     ThreadFocusRequest,
     TalkRequest,
     WorkframeTrace,
+    ThreadWeaveTrace,
     TurnInput,
     TurnResult,
 )
@@ -51,6 +52,7 @@ from syntaris.orchestration.response_plan import build_response_plan
 from syntaris.orchestration.workframe_state import derive_workframe_state, detect_query_signals, detect_update_signals
 from syntaris.orchestration.time_context import build_time_context
 from syntaris.orchestration.routing import resolve_route_decision
+from syntaris.orchestration.thread_weave import derive_thread_weave_state, detect_thread_weave_query_family
 from syntaris.persistence import PersistenceStore
 from syntaris.reply.adapters import ReplyOutput
 from syntaris.reply.plan_renderer import render_response_plan
@@ -348,6 +350,13 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     semantic_turns = semantic_context.recent_turns if semantic_context is not None else context_load.pack.recent_turns
     workframe_state = derive_workframe_state(semantic_turns, normalized_message)
     historical_workframe_state = derive_workframe_state(semantic_turns, "")
+    thread_weave_state = derive_thread_weave_state(
+        semantic_turns,
+        normalized_message,
+        active_thread_key=resolved.state_after.thread_key,
+        previous_thread_key=resolved.state_after.previous_thread_key,
+        workframe_state=workframe_state,
+    )
     workframe_queries = detect_query_signals(normalized_message)
     workframe_updates = detect_update_signals(normalized_message)
     decomposition = build_decomposition_plan(normalized_message, objective)
@@ -417,6 +426,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         workframe_queries=workframe_queries,
         workframe_updates=workframe_updates,
         historical_workframe_state=historical_workframe_state,
+        thread_weave_state=thread_weave_state,
+        thread_weave_query_family=detect_thread_weave_query_family(normalized_message),
     )
 
     recap_trace = RecapTrace(recognized=False)
@@ -554,6 +565,15 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         query_family=workframe_queries.family,
         uncertainty_marked=workframe_updates.uncertainty_marked or (workframe_queries.family in {"uncertainty_query", "decision_readiness_query"}) or (response_plan.kind.value == "uncertainty_labeled"),
     )
+    thread_weave_trace = ThreadWeaveTrace(
+        relation=thread_weave_state.relation.value,
+        main_thread_key=thread_weave_state.main_thread_key,
+        related_thread_key=thread_weave_state.related_thread_key,
+        detour_thread_key=thread_weave_state.detour_thread_key,
+        conclusion_status=thread_weave_state.conclusion_status.value,
+        applicability_status=thread_weave_state.applicability_status.value,
+        query_family=detect_thread_weave_query_family(normalized_message),
+    )
 
     if response_plan.kind.value in {"recall", "resume", "clarification"} or any(section.lines for section in response_plan.sections):
         planned_text = render_response_plan(response_plan)
@@ -598,6 +618,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             synthesis_trace=synthesis_trace,
             workframe_trace=workframe_trace,
             claim_capture_trace=claim_trace,
+            thread_weave_trace=thread_weave_trace,
         )
         store.create_trace_events(
             session_id=turn.session_id,
@@ -666,6 +687,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         comparison_trace=comparison_trace,
         answer_strategy_trace=answer_strategy_trace,
         workframe_trace=workframe_trace,
+        thread_weave_trace=thread_weave_trace,
     )
     store.create_trace_events(
         session_id=turn.session_id,

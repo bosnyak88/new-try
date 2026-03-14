@@ -1,5 +1,5 @@
 from syntaris.orchestration.text_normalize import clean_display_text
-from syntaris.contracts.runtime import ActiveConversationState, AnswerStrategyTrace, ClaimCaptureTrace, ComparisonPackTrace, ContextLoadResult, DecompositionTrace, EvidencePackTrace, FollowupTrace, ObjectiveFrameTrace, RecapTrace, RecallTrace, ResponsePlanTrace, RouteDecision, RuntimeContext, SnapshotTrace, SynthesisTrace, ThreadFocusTrace, TurnInterpretTrace, TurnResult, WorkframeTrace
+from syntaris.contracts.runtime import ActiveConversationState, AnswerStrategyTrace, ClaimCaptureTrace, ComparisonPackTrace, ContextLoadResult, DecompositionTrace, EvidencePackTrace, FollowupTrace, ObjectiveFrameTrace, RecapTrace, RecallTrace, ResponsePlanTrace, RouteDecision, RuntimeContext, SnapshotTrace, SynthesisTrace, ThreadFocusTrace, ThreadWeaveTrace, TurnInterpretTrace, TurnResult, WorkframeTrace
 
 
 def build_boot_trace(context: RuntimeContext) -> dict[str, str | bool]:
@@ -33,6 +33,7 @@ def build_turn_trace_events(
     synthesis_trace: SynthesisTrace | None = None,
     claim_capture_trace: ClaimCaptureTrace | None = None,
     workframe_trace: WorkframeTrace | None = None,
+    thread_weave_trace: ThreadWeaveTrace | None = None,
 ) -> list[dict[str, object]]:
     events = [
         {
@@ -232,6 +233,22 @@ def build_turn_trace_events(
                     "evidence_gap_count": workframe_trace.evidence_gap_count,
                     "query_family": workframe_trace.query_family,
                     "uncertainty_marked": workframe_trace.uncertainty_marked,
+                },
+            }
+        )
+
+    if thread_weave_trace is not None:
+        events.append(
+            {
+                "event_name": "thread_weave_state_derived",
+                "payload": {
+                    "relation": thread_weave_trace.relation,
+                    "main_thread_key": thread_weave_trace.main_thread_key,
+                    "related_thread_key": thread_weave_trace.related_thread_key,
+                    "detour_thread_key": thread_weave_trace.detour_thread_key,
+                    "conclusion_status": thread_weave_trace.conclusion_status,
+                    "applicability_status": thread_weave_trace.applicability_status,
+                    "query_family": thread_weave_trace.query_family,
                 },
             }
         )

@@ -317,6 +317,7 @@ class ThreadSnapshotPack:
     previous_thread_id: int | None = None
     previous_thread_key: str | None = None
     workframe_state: WorkframeState | None = None
+    thread_weave_state: ThreadWeaveState | None = None
 
 
 @dataclass(frozen=True)
@@ -346,6 +347,43 @@ class SnapshotTrace:
     filtered_recap_turn_count: int
     filtered_pending_turn_count: int
     filtered_control_turn_count: int
+
+
+class ThreadRelationKind(str, Enum):
+    MAIN_THREAD = "main_thread"
+    SIDE_THREAD = "side_thread"
+    DETOUR = "detour"
+    RETURN_TO_MAIN = "return_to_main"
+    UNRELATED_THREAD = "unrelated_thread"
+    RELATION_UNKNOWN = "relation_unknown"
+
+
+class ConclusionStatus(str, Enum):
+    EXPLICIT = "explicit_conclusion"
+    DERIVED = "derived_conclusion"
+    TENTATIVE = "tentative_conclusion"
+    SUPERSEDED = "superseded_conclusion"
+    NONE = "no_conclusion_established"
+
+
+class ApplicabilityStatus(str, Enum):
+    APPLICABLE_NOW = "applicable_now"
+    PARTIALLY_APPLICABLE = "partially_applicable"
+    NOT_APPLICABLE_NOW = "not_applicable_now"
+    UNCERTAIN = "applicability_uncertain"
+    SUPERSEDED_BY_NEW_CONTEXT = "superseded_by_new_context"
+
+
+@dataclass(frozen=True)
+class ThreadWeaveState:
+    relation: ThreadRelationKind
+    main_thread_key: str | None = None
+    related_thread_key: str | None = None
+    detour_thread_key: str | None = None
+    conclusion_status: ConclusionStatus = ConclusionStatus.NONE
+    conclusion_text: str | None = None
+    applicability_status: ApplicabilityStatus = ApplicabilityStatus.UNCERTAIN
+    applicability_reason: str | None = None
 
 
 class TurnInterpretationKind(str, Enum):
@@ -551,6 +589,7 @@ class ThreadFocusPack:
     focus_lines: list[FocusLine]
     source_metadata: FocusSourceMetadata
     workframe_state: WorkframeState | None = None
+    thread_weave_state: ThreadWeaveState | None = None
 
 
 @dataclass(frozen=True)
@@ -760,6 +799,17 @@ class WorkframeTrace:
     evidence_gap_count: int
     query_family: str | None = None
     uncertainty_marked: bool = False
+
+
+@dataclass(frozen=True)
+class ThreadWeaveTrace:
+    relation: str
+    main_thread_key: str | None
+    related_thread_key: str | None
+    detour_thread_key: str | None
+    conclusion_status: str
+    applicability_status: str
+    query_family: str | None = None
 
 class ObjectiveKind(str, Enum):
     EXPLAIN = "explain"

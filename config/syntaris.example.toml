@@ -67,3 +67,5 @@ timezone = "Europe/Budapest"
 
 
 # REBUILD-024 note: workframe + decision-readiness (missing-info/open-question/assumption/decision/evidence-gap) inference is deterministic and Hungarian-first.
+
+# REBUILD-025 note: deterministic thread-weave + conclusion + applicability semantics are derived across turns and persisted into snapshot/focus artifacts.

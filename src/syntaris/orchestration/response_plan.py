@@ -24,6 +24,7 @@ from syntaris.contracts.runtime import (
     TimeContext,
     TurnInterpretation,
     WorkframeState,
+    ThreadWeaveState,
 )
 
 
@@ -337,7 +338,36 @@ def build_response_plan(
     workframe_queries: object | None = None,
     workframe_updates: object | None = None,
     historical_workframe_state: WorkframeState | None = None,
+    thread_weave_state: ThreadWeaveState | None = None,
+    thread_weave_query_family: str | None = None,
 ) -> ResponsePlan:
+
+    if thread_weave_state is not None and thread_weave_query_family is not None:
+        if thread_weave_query_family == "thread_relation_query":
+            lines = [f"Szál-kapcsolat: {thread_weave_state.relation.value}."]
+            if thread_weave_state.main_thread_key:
+                lines.append(f"Főszál: {clean_display_text(thread_weave_state.main_thread_key)}")
+            if thread_weave_state.related_thread_key:
+                lines.append(f"Kapcsolt szál: {clean_display_text(thread_weave_state.related_thread_key)}")
+            if thread_weave_state.detour_thread_key:
+                lines.append(f"Kitérő szál: {clean_display_text(thread_weave_state.detour_thread_key)}")
+            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="thread_relation", lines=lines)], focus_used=focus is not None)
+
+        if thread_weave_query_family == "conclusion_query":
+            lines = [f"Konklúzió állapot: {thread_weave_state.conclusion_status.value}."]
+            if thread_weave_state.conclusion_text:
+                lines.append(f"Levonható tanulság: {clean_display_text(thread_weave_state.conclusion_text)}")
+            else:
+                lines.append("Még nincs elég erős, megalapozott konklúzió rögzítve.")
+            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="conclusion", lines=lines)], focus_used=focus is not None)
+
+        if thread_weave_query_family == "applicability_query":
+            lines = [f"Alkalmazhatóság: {thread_weave_state.applicability_status.value}."]
+            if thread_weave_state.conclusion_text:
+                lines.append(f"Kiinduló konklúzió: {clean_display_text(thread_weave_state.conclusion_text)}")
+            if thread_weave_state.applicability_reason:
+                lines.append(clean_display_text(thread_weave_state.applicability_reason))
+            return ResponsePlan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="applicability", lines=lines)], focus_used=focus is not None)
     if interpretation.memory_query is not None and personal_memory is not None:
         return ResponsePlan(
             kind=ResponsePlanKind.STRUCTURED,

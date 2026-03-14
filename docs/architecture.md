@@ -9,7 +9,7 @@
 ## Layer map
 1. `contracts/runtime.py`: DTOs for interpretation, memory semantics, continuity, focus/snapshot/recall, trace.
 2. `orchestration/`: shared deterministic execution path (`turns.py`).
-3. `persistence/`: SQLite schema v6 and store logic.
+3. `persistence/`: SQLite schema v7 and store logic.
 4. `reply/`: plan rendering + adapter boundary.
 5. `trace/events.py`: persisted event stream.
 6. `cli.py`: thin boundary.
@@ -53,3 +53,18 @@ Propagation shape:
 - state-query prompts are inspection-only and do not self-materialize as persistent open-question content.
 
 Schema impact: none in this phase (SQLite schema remains v6) because this layer is deterministic derivation from turn context, not a new persisted table.
+
+
+## Post-025 thread-weave + conclusion applicability model
+Authoritative deterministic model (`ThreadWeaveState`) now propagates across contracts/orchestration/persistence/reply/trace:
+- thread relation: `main_thread`, `side_thread`, `detour`, `return_to_main`, `unrelated_thread`, `relation_unknown`
+- conclusion status: `explicit_conclusion`, `derived_conclusion`, `tentative_conclusion`, `superseded_conclusion`, `no_conclusion_established`
+- applicability status: `applicable_now`, `partially_applicable`, `not_applicable_now`, `applicability_uncertain`, `superseded_by_new_context`
+
+Propagation shape:
+- orchestration derives once from semantic context (`thread_weave.py`),
+- response surface answers Hungarian thread/conclusion/applicability queries from the same state,
+- snapshot/focus persist aligned `thread_weave_state`,
+- trace emits `thread_weave_state_derived` for auditability.
+
+Schema impact: minimal, SQLite schema moved to v7 with `thread_weave_json` columns on `thread_snapshots` and `thread_focus` for persisted derived-state alignment.

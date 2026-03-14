@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- REBUILD-025: deterministic thread-weave baseline (main/side/detour/return/unrelated/unknown) with conclusion + applicability semantics.
+- Added persisted `thread_weave_state` propagation to snapshot/focus (schema v7 migration).
+- Added `thread_weave_state_derived` trace event and Hungarian response-surface handling for relation/conclusion/applicability queries.
+- Added regression tests and docs synchronization for post-025 baseline.
+
 - REBUILD-022: full-system personal cognitive baseline propagation pass.
 - Added explicit memory-query semantics for inferred/temporary-vs-certain answers.
 - Extended trace capture payload with stable/temporary/strengthened counters.
