@@ -20,7 +20,9 @@ from syntaris.orchestration.text_normalize import normalize_hungarian_for_match
 
 _OBJECTIVE_ACTIVE = re.compile(r"(?:a\s+cel\s+most|celunk\s+most|mostani\s+cel(?:unk)?)\s+(?:az\s+)?(.+)$")
 _OBJECTIVE_PROPOSED = re.compile(r"(?:lehet\s+a\s+cel|javasolt\s+cel|talan\s+a\s+cel|jo\s+lenne)\s+(?:az\s+)?(.+)$")
-_BLOCKER_EXPLICIT = re.compile(r"(?:fo\s+problema\s+hogy|ebben\s+most\s+az\s+a\s+fo\s+problema\s+hogy|miben\s+akadtunk\s+el\s*:?|elakadtunk\s+abban\s+hogy)\s+(.+)$")
+_BLOCKER_EXPLICIT = re.compile(
+    r"(?:fo\s+problema\s+hogy|fo\s+problema\s+most\s+az\s+hogy|ebben\s+most\s+az\s+a\s+fo\s+problema\s+hogy|miben\s+akadtunk\s+el\s*:?|elakadtunk\s+abban\s+hogy)\s+(.+)$"
+)
 _BLOCKER_HEDGED = re.compile(r"(?:lehet\s+hogy)\s+(.+?)\s+(?:a\s+blokk|blokkol|a\s+fo\s+problema)")
 _NEXT_STEP_HEDGED = re.compile(r"(?:talan\s+az\s+lenne\s+a\s+kovetkezo\s+lepes\s+hogy)\s+(.+)$")
 
@@ -99,7 +101,7 @@ def detect_query_signals(message: str) -> WorkframeQuerySignals:
         asks_open_questions=("milyen nyitott kerdesek" in n) or ("mi maradt nyitva" in n) or ("amire meg nincs valasz" in n),
         asks_assumptions=("mi csak feltetelezes" in n) or ("mi ebben a bizonytalan" in n),
         asks_decision_state=("milyen dontest kell" in n) or ("van most dontesi pont" in n) or ("mihez kell dontes" in n) or ("eldolt mar" in n),
-        asks_evidence_gaps=("mihez nincs meg eleg alap" in n) or ("mihez kell meg bizonyitek" in n) or ("mitol lenne ez megalapozott" in n),
+        asks_evidence_gaps=("mihez nincs meg eleg alap" in n) or ("mihez kell meg bizonyitek" in n) or ("mihez nincs meg eleg bizonyitek" in n) or ("mitol lenne ez megalapozott" in n),
         asks_progress_block_reason=("miert nem tudunk meg tovabbmenni" in n),
     )
 
@@ -137,6 +139,12 @@ def _trim(value: str) -> str:
     return value.strip(" .!?:;")
 
 
+def _is_meta_state_query(n: str, query_signals: WorkframeQuerySignals) -> bool:
+    return query_signals.family in {"decision_readiness_query", "current_state_query", "historical_state_query", "uncertainty_query"} or (
+        n.endswith("?") and ("mi " in n or "milyen " in n or "van most" in n)
+    )
+
+
 def derive_workframe_state(turns: list[ThreadContextTurn], current_message: str) -> WorkframeState:
     workframe = WorkframeKind.CHAT
     objective_status = WorkframeObjectiveStatus.NONE
@@ -156,9 +164,14 @@ def derive_workframe_state(turns: list[ThreadContextTurn], current_message: str)
     evidence_gap_status = EvidenceGapStatus.UNKNOWN
     evidence_gap_lines: list[str] = []
 
-    for turn in [*turns, ThreadContextTurn(turn_id=-1, turn_index=-1, user_message=current_message, assistant_reply="", backend="deterministic", degraded=False)]:
+    seed_turns = [*turns, ThreadContextTurn(turn_id=-1, turn_index=-1, user_message=current_message, assistant_reply="", backend="deterministic", degraded=False)]
+    for turn in seed_turns:
         msg = turn.user_message
-        n = normalize_hungarian_for_match(msg)
+        n = normalize_hungarian_for_match(msg).strip()
+        query_signals = detect_query_signals(msg)
+        update_signals = detect_update_signals(msg)
+        is_meta_query = _is_meta_state_query(n, query_signals)
+
         workframe = _detect_workframe(msg, workframe)
 
         if match := _OBJECTIVE_ACTIVE.search(n):
@@ -173,6 +186,11 @@ def derive_workframe_state(turns: list[ThreadContextTurn], current_message: str)
         if match := _BLOCKER_EXPLICIT.search(n):
             blocker_status = WorkframeBlockerStatus.EXPLICIT
             blocker_text = _trim(match.group(1))
+            if "nincs meg" in blocker_text and any(token in blocker_text for token in ("eleg", "adat", "informacio", "bizonyitek", "eros")):
+                missing_info_status = MissingInfoStatus.IMPLIED
+                missing_info_lines = [f"A fő blokker alapján még hiányzik valami a haladáshoz: {blocker_text}."]
+                evidence_gap_status = EvidenceGapStatus.IMPLIED
+                evidence_gap_lines = ["A fő blokker alapján további bizonyíték/adat kell a biztos továbblépéshez."]
         elif (_BLOCKER_HEDGED.search(n) is not None) and blocker_status == WorkframeBlockerStatus.NONE:
             blocker_status = WorkframeBlockerStatus.IMPLIED
             blocker_text = "Lehetséges blokkerről beszéltünk, de nem biztos állításként."
@@ -182,52 +200,12 @@ def derive_workframe_state(turns: list[ThreadContextTurn], current_message: str)
             blocker_status = WorkframeBlockerStatus.IMPLIED
             blocker_text = blocker_text or "Van súrlódás, de nincs teljesen kimondva a fő akadály."
 
-        if "nincs meg" in n and any(t in n for t in ("adat", "informacio", "bizonyitek")):
-            missing_info_status = MissingInfoStatus.EXPLICIT
-            missing_info_lines = ["Hiányzó adat/információ van kimondva."]
-            evidence_gap_status = EvidenceGapStatus.EXPLICIT
-            evidence_gap_lines = ["A továbblépéshez még nincs elég bizonyíték/adat."]
-        elif any(t in n for t in ("nem tudjuk", "nem derult ki", "nyitott")) and missing_info_status == MissingInfoStatus.NONE:
-            missing_info_status = MissingInfoStatus.IMPLIED
-            missing_info_lines = ["Valami hiányzik, de nincs teljesen explicit leírva."]
-
-        if "?" in msg or any(t in n for t in ("milyen nyitott kerdes", "mi maradt nyitva")):
-            if any(t in n for t in ("mi a valasz", "megvan a valasz", "eldolt")):
-                open_question_status = OpenQuestionStatus.ANSWERED
-                open_question_lines = ["A korábban nyitott kérdés lezártnak tűnik."]
-            elif open_question_status in {OpenQuestionStatus.NONE, OpenQuestionStatus.ANSWERED}:
-                open_question_status = OpenQuestionStatus.EXPLICIT if "?" in msg else OpenQuestionStatus.IMPLIED
-                open_question_lines = [_trim(msg) if "?" in msg else "Nyitott kérdés állapotot jelez a szöveg."]
-
-        if any(t in n for t in ("feltetelez", "talan", "lehet hogy")):
-            if assumption_status != AssumptionStatus.ASSUMPTION:
+        if update_signals.hedged_blocker or update_signals.hedged_objective or update_signals.hedged_next_step:
+            if assumption_status == AssumptionStatus.UNKNOWN:
                 assumption_status = AssumptionStatus.ASSUMPTION
             if not assumption_lines:
                 assumption_lines = ["Van olyan állítás, ami csak feltételezésként szerepel."]
 
-        if any(t in n for t in ("dontest kell", "dontesi pont", "mi legyen a kovetkezo")):
-            decision_state = DecisionState.NEEDED
-            decision_lines = ["Aktív döntési pont van."]
-        if "eldolt" in n or "dontottunk" in n:
-            decision_state = DecisionState.MADE
-            decision_lines = ["A döntés lezártnak van jelezve."]
-        if decision_state in {DecisionState.NEEDED, DecisionState.PROPOSED} and missing_info_status in {MissingInfoStatus.EXPLICIT, MissingInfoStatus.IMPLIED}:
-            decision_state = DecisionState.BLOCKED_BY_MISSING_INFO
-            decision_lines = ["Döntés kellene, de hiányzó információ blokkolja."]
-
-        if "kovetkezo lepes" in n or "mit kell most tenni" in n:
-            if missing_info_status in {MissingInfoStatus.EXPLICIT, MissingInfoStatus.IMPLIED}:
-                next_step_status = WorkframeNextStepStatus.SUGGESTED
-                next_step_lines = ["Előbb pótoljuk a hiányzó információt, utána legyen végleges következő lépés."]
-            elif blocker_text:
-                next_step_status = WorkframeNextStepStatus.SUGGESTED
-                next_step_lines = [f"Javaslat: a blokkert bontsuk fel és pontosítsuk ({blocker_text})."]
-            elif objective_text:
-                next_step_status = WorkframeNextStepStatus.SUGGESTED
-                next_step_lines = [f"Javaslat: az aktív célból induljunk ki ({objective_text})."]
-            else:
-                next_step_status = WorkframeNextStepStatus.NONE
-                next_step_lines = []
         if match := _NEXT_STEP_HEDGED.search(n):
             next_step_status = WorkframeNextStepStatus.SUGGESTED
             next_step_lines = [f"Lehetséges következő lépés (még nem biztos): {_trim(match.group(1))}."]
@@ -239,19 +217,62 @@ def derive_workframe_state(turns: list[ThreadContextTurn], current_message: str)
                     "2) Azonosítsuk a fő blokkert.",
                     "3) Pótoljuk a hiányzó adatot és csak utána döntsünk.",
                 ]
-            else:
-                next_step_status = WorkframeNextStepStatus.NONE
-                next_step_lines = []
+
+
+        # Do not materialize meta state-queries into persistent open/missing/decision state.
+        if is_meta_query:
+            continue
+
+        if "nincs meg" in n and any(t in n for t in ("adat", "informacio", "bizonyitek", "alap")):
+            missing_info_status = MissingInfoStatus.EXPLICIT
+            missing_info_lines = ["Hiányzó adat/információ van kimondva."]
+            evidence_gap_status = EvidenceGapStatus.EXPLICIT
+            evidence_gap_lines = ["A továbblépéshez még nincs elég bizonyíték/adat."]
+        elif any(t in n for t in ("nem tudjuk", "nem derult ki", "hianyzik")) and missing_info_status == MissingInfoStatus.NONE:
+            missing_info_status = MissingInfoStatus.IMPLIED
+            missing_info_lines = ["Valami hiányzik, de nincs teljesen explicit leírva."]
+
+        if any(t in n for t in ("nyitott kerdes", "kerdes hogy", "nincs valasz")):
+            open_question_status = OpenQuestionStatus.EXPLICIT
+            open_question_lines = ["Van tartalmi nyitott kérdés, ami még nincs lezárva."]
+        elif any(t in n for t in ("megvan a valasz", "lezartuk a kerdest")) and open_question_status in {OpenQuestionStatus.EXPLICIT, OpenQuestionStatus.IMPLIED}:
+            open_question_status = OpenQuestionStatus.ANSWERED
+            open_question_lines = ["A korábban nyitott kérdés lezártnak tűnik."]
+
+        if any(t in n for t in ("dontest kell", "dontesi pont", "mi legyen a kovetkezo")):
+            decision_state = DecisionState.NEEDED
+            decision_lines = ["Aktív döntési pont van."]
+        elif any(t in n for t in ("dontes lett", "ugy dontottunk", "eldolt")) and "?" not in n:
+            decision_state = DecisionState.MADE
+            decision_lines = ["A döntés lezártnak van jelezve."]
+
+    # Derived relation rules after scanning full turn history.
+    if decision_state in {DecisionState.NEEDED, DecisionState.PROPOSED} and missing_info_status in {MissingInfoStatus.EXPLICIT, MissingInfoStatus.IMPLIED}:
+        decision_state = DecisionState.BLOCKED_BY_MISSING_INFO
+        decision_lines = ["Döntés kellene, de hiányzó információ blokkolja."]
+
+    if next_step_status == WorkframeNextStepStatus.NONE:
+        if missing_info_status in {MissingInfoStatus.EXPLICIT, MissingInfoStatus.IMPLIED}:
+            next_step_status = WorkframeNextStepStatus.SUGGESTED
+            next_step_lines = ["Előbb pótoljuk a hiányzó információt, utána legyen végleges következő lépés."]
+        elif blocker_text:
+            next_step_status = WorkframeNextStepStatus.SUGGESTED
+            next_step_lines = [f"Javaslat: a blokkert bontsuk fel és pontosítsuk ({blocker_text})."]
+        elif objective_text:
+            next_step_status = WorkframeNextStepStatus.SUGGESTED
+            next_step_lines = [f"Javaslat: az aktív célból induljunk ki ({objective_text})."]
 
     if objective_status == WorkframeObjectiveStatus.NONE and objective_text is None and workframe in {WorkframeKind.WORK, WorkframeKind.PLANNING}:
         objective_status = WorkframeObjectiveStatus.UNRELATED_CONTEXT
     if blocker_status == WorkframeBlockerStatus.NONE and workframe in {WorkframeKind.WORK, WorkframeKind.PLANNING}:
         blocker_status = WorkframeBlockerStatus.UNKNOWN
 
-    if missing_info_status == MissingInfoStatus.NONE and missing_info_lines:
-        missing_info_status = MissingInfoStatus.RESOLVED
-    if evidence_gap_status == EvidenceGapStatus.UNKNOWN and not evidence_gap_lines and missing_info_status == MissingInfoStatus.NONE:
-        evidence_gap_status = EvidenceGapStatus.SUFFICIENT
+    if evidence_gap_status == EvidenceGapStatus.UNKNOWN:
+        evidence_gap_status = EvidenceGapStatus.SUFFICIENT if missing_info_status == MissingInfoStatus.NONE else EvidenceGapStatus.IMPLIED
+
+    if decision_state == DecisionState.NONE and missing_info_status in {MissingInfoStatus.EXPLICIT, MissingInfoStatus.IMPLIED}:
+        decision_state = DecisionState.BLOCKED_BY_MISSING_INFO
+        decision_lines = ["A következő döntési pontot hiányzó információ blokkolja."]
 
     return WorkframeState(
         workframe=workframe,

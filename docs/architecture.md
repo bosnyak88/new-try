@@ -50,5 +50,6 @@ Propagation shape:
 - response plan surfaces it in Hungarian-first structured wording,
 - snapshots/focus carry aligned workframe state,
 - trace `workframe_state_derived` includes each status plus count fields.
+- state-query prompts are inspection-only and do not self-materialize as persistent open-question content.
 
 Schema impact: none in this phase (SQLite schema remains v6) because this layer is deterministic derivation from turn context, not a new persisted table.
