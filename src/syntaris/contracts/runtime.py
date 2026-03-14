@@ -455,6 +455,7 @@ class MemoryQueryKind(str, Enum):
     WHO_ARE_YOU = "who_are_you"
     WHAT_KNOWN_CERTAIN = "what_known_certain"
     RELATIONSHIP = "relationship"
+    HOW_HELP = "how_help"
     SYSTEM_ROLE = "system_role"
     CURRENT_FOCUS = "current_focus"
     CURRENT_DIRECTION = "current_direction"

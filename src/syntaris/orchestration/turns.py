@@ -49,7 +49,7 @@ from syntaris.orchestration.question_decompose import build_decomposition_plan
 from syntaris.orchestration.evidence_pack import build_evidence_pack
 from syntaris.orchestration.evidence_ingest import ingest_text_evidence
 from syntaris.orchestration.answer_synthesis import build_synthesis_plan
-from syntaris.orchestration.text_normalize import preprocess_turn_message
+from syntaris.orchestration.text_normalize import normalize_hungarian_for_match, preprocess_turn_message
 from syntaris.orchestration.response_plan import build_response_plan
 from syntaris.orchestration.workframe_state import derive_workframe_state, detect_query_signals, detect_update_signals
 from syntaris.orchestration.time_context import build_time_context
@@ -70,6 +70,55 @@ class TalkRunResult:
     output_kind: str = "turn"
 
 
+def _allows_explicit_prior_evidence_reuse(message: str) -> bool:
+    lower = normalize_hungarian_for_match(message).lower()
+    return any(
+        phrase in lower
+        for phrase in (
+            "korabbi konzol",
+            "korabbi log",
+            "abbol a konzolbol",
+            "abbol a logbol",
+            "elozo konzol",
+            "elozo log",
+            "korabbi forras",
+        )
+    )
+
+
+
+
+def _is_evidence_followup_prompt(message: str) -> bool:
+    lower = normalize_hungarian_for_match(message).lower()
+    return any(
+        phrase in lower
+        for phrase in (
+            "mi biztosan latszik ebbol",
+            "mi csak kovetkeztetes",
+            "mi benne a valodi hiba",
+            "melyik resz a fontos",
+            "ebbol mi a blocker",
+            "ebbol mi a blokker",
+            "mihez kell meg adat",
+            "log alapjan",
+            "korabbi konzol",
+            "korabbi log",
+            "forras mit mond",
+        )
+    )
+
+
+def _latest_continuous_evidence_ingest(semantic_turns, context) -> object | None:
+    blocked = False
+    for prior_turn in reversed(semantic_turns):
+        prior_ingest = ingest_text_evidence(prior_turn.user_message, context.config.conversation)
+        if prior_ingest.ingest_status.value == "raw_text_evidence":
+            if not blocked:
+                return prior_ingest
+            return None
+        if not _is_evidence_followup_prompt(prior_turn.user_message):
+            blocked = True
+    return None
 _AFFIRMATIVE = {"igen", "oké", "mehet", "arra", "igen arra"}
 _NEGATIVE = {"nem", "mégse", "maradjon", "ne", "nem arra"}
 
@@ -355,11 +404,16 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     ingest_result = ingest_text_evidence(normalized_message, context.config.conversation)
     evidence_ingest_from_current_turn = ingest_result.ingest_status.value == "raw_text_evidence"
     if ingest_result.ingest_status.value == "no_evidence_ingested" and semantic_turns:
-        for prior_turn in reversed(semantic_turns):
-            prior_ingest = ingest_text_evidence(prior_turn.user_message, context.config.conversation)
-            if prior_ingest.ingest_status.value == "raw_text_evidence":
-                ingest_result = prior_ingest
-                break
+        if _allows_explicit_prior_evidence_reuse(normalized_message):
+            for prior_turn in reversed(semantic_turns):
+                prior_ingest = ingest_text_evidence(prior_turn.user_message, context.config.conversation)
+                if prior_ingest.ingest_status.value == "raw_text_evidence":
+                    ingest_result = prior_ingest
+                    break
+        else:
+            continuous_ingest = _latest_continuous_evidence_ingest(semantic_turns, context)
+            if continuous_ingest is not None:
+                ingest_result = continuous_ingest
 
     if (
         ingest_result.ingest_status.value == "raw_text_evidence"
