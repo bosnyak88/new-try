@@ -148,6 +148,18 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
             os.getenv("SYNTARIS_EVIDENCE_SUMMARY_LINE_LIMIT"),
             conversation.get("evidence_summary_line_limit", 5),
         ),
+        artifact_allowed_roots=tuple(
+            part.strip()
+            for part in _pick(
+                os.getenv("SYNTARIS_ARTIFACT_ALLOWED_ROOTS"),
+                conversation.get("artifact_allowed_roots", ""),
+            ).split(os.pathsep)
+            if part.strip()
+        ),
+        artifact_max_read_bytes=_pick_int(
+            os.getenv("SYNTARIS_ARTIFACT_MAX_READ_BYTES"),
+            conversation.get("artifact_max_read_bytes", 262144),
+        ),
     )
 
     time_config = TimeConfig(

@@ -35,6 +35,8 @@ from syntaris.contracts.runtime import (
     ThreadWeaveTrace,
     TurnInput,
     TurnResult,
+    ArtifactSourceKind,
+    EvidenceSourceReference,
 )
 from syntaris.orchestration.context_pack import load_execution_context_pack
 from syntaris.orchestration.followup_resolution import resolve_followup_reference
@@ -48,6 +50,7 @@ from syntaris.orchestration.objective_frame import frame_objective
 from syntaris.orchestration.question_decompose import build_decomposition_plan
 from syntaris.orchestration.evidence_pack import build_evidence_pack
 from syntaris.orchestration.evidence_ingest import ingest_text_evidence
+from syntaris.orchestration.artifacts import digest_text, make_artifact_id
 from syntaris.orchestration.answer_synthesis import build_synthesis_plan
 from syntaris.orchestration.text_normalize import normalize_hungarian_for_match, preprocess_turn_message
 from syntaris.orchestration.response_plan import build_response_plan
@@ -104,8 +107,50 @@ def _is_evidence_followup_prompt(message: str) -> bool:
             "korabbi konzol",
             "korabbi log",
             "forras mit mond",
+            "mibol dolgozol most",
+            "melyik fajlt hasznaltad",
+            "mostani forras",
         )
     )
+
+
+def _register_artifact_for_request(store: PersistenceStore, state: ActiveConversationState, request: TalkRequest, message: str) -> str | None:
+    if request.source_kind == ArtifactSourceKind.ONCE_FILE_IMPORT.value:
+        kind = ArtifactSourceKind.ONCE_FILE_IMPORT
+    elif request.source_kind == ArtifactSourceKind.LOCAL_TEXT_FILE.value:
+        kind = ArtifactSourceKind.LOCAL_TEXT_FILE
+    else:
+        kind = ArtifactSourceKind.RAW_PASTE
+    source_origin = request.source_origin
+    digest = digest_text(message)
+    artifact_id = make_artifact_id(kind, source_origin, digest)
+    store.upsert_artifact(
+        artifact_id=artifact_id,
+        source_kind=kind,
+        source_origin=source_origin,
+        media_type="text/plain",
+        size_bytes=len(message.encode("utf-8")),
+        content_digest=digest,
+        session_id=state.session_id,
+        thread_id=state.thread_id,
+        turn_id=None,
+        summary_excerpt=message.strip().splitlines()[0][:180] if message.strip() else None,
+        status="ok",
+        imported_at=store.read_last_turn_at(state.thread_id) if kind == ArtifactSourceKind.ONCE_FILE_IMPORT else None,
+        read_at=store.read_last_turn_at(state.thread_id) if kind == ArtifactSourceKind.RAW_PASTE else None,
+    )
+    store.create_source_audit(
+        action="artifact_import",
+        target=source_origin or "inline_message",
+        outcome="success",
+        reason=None,
+        context="talk_request",
+        session_id=state.session_id,
+        thread_id=state.thread_id,
+        turn_id=None,
+        artifact_id=artifact_id,
+    )
+    return artifact_id
 
 
 def _latest_continuous_evidence_ingest(semantic_turns, context) -> object | None:
@@ -299,6 +344,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         )
 
     turn_created_at = context.clock.now()
+    artifact_message = preprocess_turn_message(resolved.execution_message or request.message)
+    current_artifact_id = _register_artifact_for_request(store, resolved.state_after, request, artifact_message)
 
     if resolved.execution_message is None:
         pending = resolved.state_after.pending_route
@@ -321,6 +368,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             thread_id=resolved.state_after.thread_id,
             mode=resolved.state_after.mode,
         )
+        if current_artifact_id is not None:
+            store.link_turn_artifact(turn_id=turn.turn_id, artifact_id=current_artifact_id)
         events = build_turn_trace_events(
             state=resolved.state_after,
             turn=turn,
@@ -401,8 +450,39 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     semantic_turns = semantic_context.recent_turns if semantic_context is not None else context_load.pack.recent_turns
     workframe_state = derive_workframe_state(semantic_turns, normalized_message)
     historical_workframe_state = derive_workframe_state(semantic_turns, "")
-    ingest_result = ingest_text_evidence(normalized_message, context.config.conversation)
+    ingest_result = ingest_text_evidence(normalized_message, context.config.conversation, artifact_ids=[current_artifact_id] if current_artifact_id else None)
+    if request.source_origin and ingest_result.ingest_status.value == "raw_text_evidence":
+        ingest_result = type(ingest_result)(
+            ingest_status=ingest_result.ingest_status,
+            raw_text_evidence=ingest_result.raw_text_evidence,
+            chunked_evidence=ingest_result.chunked_evidence,
+            extracted_key_lines=ingest_result.extracted_key_lines,
+            evidence_summary=ingest_result.evidence_summary,
+            evidence_source_references=[
+                EvidenceSourceReference(source_label="artifact_origin", excerpt=request.source_origin),
+                *ingest_result.evidence_source_references,
+            ],
+            unresolved_evidence=ingest_result.unresolved_evidence,
+            artifact_ids=ingest_result.artifact_ids,
+        )
     evidence_ingest_from_current_turn = ingest_result.ingest_status.value == "raw_text_evidence"
+    if ingest_result.ingest_status.value == "no_evidence_ingested" and _is_evidence_followup_prompt(normalized_message):
+        latest_artifacts = store.list_artifacts(current_thread_id=resolved.state_after.thread_id, limit=1)
+        if latest_artifacts:
+            latest = latest_artifacts[0]
+            refs = []
+            if latest.source_origin:
+                refs.append(EvidenceSourceReference(source_label="artifact_origin", excerpt=latest.source_origin))
+            ingest_result = type(ingest_result)(
+                ingest_status=ingest_result.ingest_status,
+                raw_text_evidence=ingest_result.raw_text_evidence,
+                chunked_evidence=ingest_result.chunked_evidence,
+                extracted_key_lines=ingest_result.extracted_key_lines,
+                evidence_summary=ingest_result.evidence_summary,
+                evidence_source_references=refs,
+                unresolved_evidence=ingest_result.unresolved_evidence,
+                artifact_ids=[latest.artifact_id],
+            )
     if ingest_result.ingest_status.value == "no_evidence_ingested" and semantic_turns:
         if _allows_explicit_prior_evidence_reuse(normalized_message):
             for prior_turn in reversed(semantic_turns):
@@ -635,6 +715,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         ingest_status=(evidence_pack.ingest.ingest_status.value if evidence_pack.ingest is not None else "no_evidence_ingested"),
         chunk_count=(len(evidence_pack.ingest.chunked_evidence) if evidence_pack.ingest is not None else 0),
         key_line_count=(len(evidence_pack.ingest.extracted_key_lines) if evidence_pack.ingest is not None else 0),
+        artifact_ids=(list(evidence_pack.ingest.artifact_ids) if evidence_pack.ingest is not None else []),
     )
     synthesis_trace = SynthesisTrace(
         section_count=len(synthesis_plan.sections),
@@ -688,6 +769,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             degraded=False,
             created_at=turn_created_at,
         )
+        if current_artifact_id is not None:
+            store.link_turn_artifact(turn_id=turn.turn_id, artifact_id=current_artifact_id)
         store.capture_claims(
             session_id=resolved.state_after.session_id,
             thread_id=resolved.state_after.thread_id,

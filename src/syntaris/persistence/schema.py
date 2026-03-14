@@ -1,4 +1,4 @@
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS app_meta (
@@ -112,5 +112,54 @@ CREATE TABLE IF NOT EXISTS trace_events (
     FOREIGN KEY(session_id) REFERENCES sessions(session_id),
     FOREIGN KEY(thread_id) REFERENCES threads(thread_id),
     FOREIGN KEY(turn_id) REFERENCES turns(turn_id)
+);
+
+CREATE TABLE IF NOT EXISTS artifacts (
+    artifact_id TEXT PRIMARY KEY,
+    source_kind TEXT NOT NULL,
+    source_origin TEXT,
+    media_type TEXT,
+    created_at TEXT NOT NULL,
+    imported_at TEXT,
+    read_at TEXT,
+    size_bytes INTEGER,
+    content_digest TEXT,
+    session_id INTEGER,
+    thread_id INTEGER,
+    turn_id INTEGER,
+    summary_excerpt TEXT,
+    status TEXT NOT NULL,
+    FOREIGN KEY(session_id) REFERENCES sessions(session_id),
+    FOREIGN KEY(thread_id) REFERENCES threads(thread_id),
+    FOREIGN KEY(turn_id) REFERENCES turns(turn_id)
+);
+
+CREATE TABLE IF NOT EXISTS source_audit_journal (
+    audit_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    action TEXT NOT NULL,
+    target TEXT NOT NULL,
+    outcome TEXT NOT NULL,
+    reason TEXT,
+    context TEXT,
+    session_id INTEGER,
+    thread_id INTEGER,
+    turn_id INTEGER,
+    artifact_id TEXT,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY(session_id) REFERENCES sessions(session_id),
+    FOREIGN KEY(thread_id) REFERENCES threads(thread_id),
+    FOREIGN KEY(turn_id) REFERENCES turns(turn_id),
+    FOREIGN KEY(artifact_id) REFERENCES artifacts(artifact_id)
+);
+
+CREATE TABLE IF NOT EXISTS turn_artifact_links (
+    link_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    turn_id INTEGER NOT NULL,
+    artifact_id TEXT NOT NULL,
+    relation TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    UNIQUE(turn_id, artifact_id, relation),
+    FOREIGN KEY(turn_id) REFERENCES turns(turn_id),
+    FOREIGN KEY(artifact_id) REFERENCES artifacts(artifact_id)
 );
 """

@@ -252,3 +252,29 @@ Schema migration: not required in this phase (v7 unchanged).
 
 ### Scope control
 - Narrow truth-first correction on failed raw evidence handoff and stale-evidence substitution guard only; no broad presence/evidence redesign and no execution/UI expansion.
+
+## REBUILD-035 artifact/source registry baseline snapshot
+### Changed
+- `src/syntaris/contracts/runtime.py`: additive artifact/source contracts (`ArtifactSourceKind`, `ArtifactRecord`, `SourceAuditRecord`) and evidence ingest traceability via `artifact_ids`; `ConversationConfig` now carries artifact read-only roots and max-read limit.
+- `src/syntaris/persistence/schema.py`: schema v8 with additive `artifacts`, `turn_artifact_links`, and `source_audit_journal` tables.
+- `src/syntaris/persistence/store.py`: additive persistence + query APIs for artifact upsert/list/show, turn↔artifact linkage, and source-audit journaling.
+- `src/syntaris/orchestration/artifacts.py`: deterministic read-only local file bridge helpers (allowed-root guard, supported text extension gate, digest/id generation, lexical search).
+- `src/syntaris/cli.py`: new read-only source commands (`artifact-find`, `artifact-read`, `artifact-list`, `artifact-show`, `audit-last`), plus once-file source-kind/origin propagation.
+- `src/syntaris/orchestration/turns.py`: source artifact registration + linkage within existing turn orchestration; follow-up source-awareness can use retained artifact context without stale substitution.
+- `src/syntaris/orchestration/evidence_ingest.py`, `src/syntaris/trace/events.py`: additive artifact provenance plumbing in ingest/trace payload.
+- `src/syntaris/orchestration/response_plan.py`: explicit source-awareness response surface for "miből dolgozol most?" family with historical reuse disclosure.
+- `src/syntaris/config/loader.py`, `config/syntaris.example.toml`: artifact bridge configuration load + example knobs.
+- Added regressions: `tests/test_artifact_registry.py`, `tests/test_local_file_bridge.py`, `tests/test_source_context_visibility.py`, `tests/test_artifact_scope_guard.py`, `tests/test_artifact_audit.py`.
+- Added capability truth doc: `docs/rebuild-035-capability-catalog.md`.
+
+### Reviewed unchanged
+- `src/syntaris/reply/*`: no adapter boundary expansion; deterministic reply backend split preserved.
+- `src/syntaris/orchestration/live_loop.py`: no live loop behavior broadening.
+- REBUILD-034/034a presence/evidence/maintenance families preserved through full-suite regression runs.
+
+### Removed
+- None.
+
+### Deferred with reason
+- PDF/Office/binary adapters and broad source parser framework: intentionally deferred to later adapter phase to keep REBUILD-035 read-only + deterministic baseline minimal.
+- Any write-capable file operation, external app automation, permissioned execution/session orchestration, and shell/panel UI work: explicitly out of scope for this foundational source/artifact step.

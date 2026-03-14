@@ -344,6 +344,42 @@ def _evidence_query_flags(message: str) -> dict[str, bool]:
     }
 
 
+def _source_awareness_lines(message: str, evidence_pack: EvidencePack) -> list[str] | None:
+    lower = normalize_hungarian_for_match(message).lower()
+    asks = any(
+        phrase in lower
+        for phrase in (
+            "mibol dolgozol most",
+            "melyik fajlt hasznaltad",
+            "sorold fel a mostani forrasokat",
+            "ez most raw blokk vagy helyi fajl",
+        )
+    )
+    if not asks:
+        return None
+    ingest = evidence_pack.ingest
+    if ingest is None:
+        return ["Most nincs aktív, beolvasott forrásom."]
+
+    origin = None
+    for ref in ingest.evidence_source_references:
+        if ref.source_label == "artifact_origin":
+            origin = clean_display_text(ref.excerpt)
+            break
+    if origin:
+        kind = "helyi fájl" if "/" in origin or "\\" in origin else "fájlforrás"
+        reuse_line = ""
+        if ingest.ingest_status.value != "raw_text_evidence":
+            reuse_line = " (korábban beolvasott artifact)"
+        return [f"Most ebből dolgozom{reuse_line}: {origin}", f"Forrás típusa: {kind}."]
+
+    if ingest.ingest_status.value == "raw_text_evidence":
+        return ["Most a legutóbbi nyers forrásblokk alapján dolgozom.", "Forrás típusa: raw_paste."]
+    if ingest.artifact_ids:
+        return [f"Most korábban beolvasott artifactból dolgozom: {ingest.artifact_ids[0]}"]
+    return ["Most nincs aktív, beolvasott forrásom."]
+
+
 def _evidence_grounded_lines(message: str, evidence_pack: EvidencePack, workframe_state: WorkframeState | None) -> list[str] | None:
     ingest = evidence_pack.ingest
     if ingest is None or ingest.ingest_status.value != "raw_text_evidence":
@@ -631,6 +667,14 @@ def build_response_plan(
         return ResponsePlan(
             kind=ResponsePlanKind.STRUCTURED,
             sections=[ResponsePlanSection(title="evidence_ingest_ack", lines=ingest_ack)],
+            focus_used=focus is not None,
+        )
+
+    source_awareness = _source_awareness_lines(interpretation_text, evidence_pack)
+    if source_awareness is not None:
+        return ResponsePlan(
+            kind=ResponsePlanKind.STRUCTURED,
+            sections=[ResponsePlanSection(title="source_awareness", lines=source_awareness)],
             focus_used=focus is not None,
         )
 

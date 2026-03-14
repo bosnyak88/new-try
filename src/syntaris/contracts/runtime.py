@@ -58,6 +58,8 @@ class ConversationConfig:
     evidence_chunk_line_limit: int = 24
     evidence_max_chunks: int = 6
     evidence_summary_line_limit: int = 5
+    artifact_allowed_roots: tuple[str, ...] = ()
+    artifact_max_read_bytes: int = 262144
 
 
 @dataclass(frozen=True)
@@ -143,6 +145,8 @@ class TalkRequest:
     message: str
     thread_key: str | None = None
     mode: str | None = None
+    source_kind: str | None = None
+    source_origin: str | None = None
 
 
 class RouteDecisionAction(str, Enum):
@@ -928,6 +932,46 @@ class EvidenceIngestResult:
     evidence_summary: list[str] = field(default_factory=list)
     evidence_source_references: list[EvidenceSourceReference] = field(default_factory=list)
     unresolved_evidence: list[str] = field(default_factory=list)
+    artifact_ids: list[str] = field(default_factory=list)
+
+
+class ArtifactSourceKind(str, Enum):
+    RAW_PASTE = "raw_paste"
+    ONCE_FILE_IMPORT = "once_file_import"
+    LOCAL_TEXT_FILE = "local_text_file"
+
+
+@dataclass(frozen=True)
+class ArtifactRecord:
+    artifact_id: str
+    source_kind: ArtifactSourceKind
+    source_origin: str | None
+    media_type: str | None
+    created_at: datetime
+    imported_at: datetime | None
+    read_at: datetime | None
+    size_bytes: int | None
+    content_digest: str | None
+    session_id: int | None
+    thread_id: int | None
+    turn_id: int | None
+    summary_excerpt: str | None
+    status: str
+
+
+@dataclass(frozen=True)
+class SourceAuditRecord:
+    audit_id: int
+    action: str
+    target: str
+    outcome: str
+    reason: str | None
+    context: str | None
+    session_id: int | None
+    thread_id: int | None
+    turn_id: int | None
+    artifact_id: str | None
+    created_at: datetime
 
 
 @dataclass(frozen=True)
@@ -1054,6 +1098,7 @@ class EvidencePackTrace:
     ingest_status: str = "no_evidence_ingested"
     chunk_count: int = 0
     key_line_count: int = 0
+    artifact_ids: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
