@@ -353,6 +353,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     workframe_state = derive_workframe_state(semantic_turns, normalized_message)
     historical_workframe_state = derive_workframe_state(semantic_turns, "")
     ingest_result = ingest_text_evidence(normalized_message, context.config.conversation)
+    evidence_ingest_from_current_turn = ingest_result.ingest_status.value == "raw_text_evidence"
     if ingest_result.ingest_status.value == "no_evidence_ingested" and semantic_turns:
         for prior_turn in reversed(semantic_turns):
             prior_ingest = ingest_text_evidence(prior_turn.user_message, context.config.conversation)
@@ -466,6 +467,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         thread_weave_query_family=detect_thread_weave_query_family(normalized_message),
         thread_weave_update_kind=detect_thread_weave_update_kind(normalized_message),
         thread_weave_query_message=normalized_message,
+        evidence_ingest_from_current_turn=evidence_ingest_from_current_turn,
     )
 
     recap_trace = RecapTrace(recognized=False)

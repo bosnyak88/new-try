@@ -29,6 +29,7 @@ Also verify `thread-snapshot --current` and `thread-focus --current` include `th
 
 
 ## REBUILD-026 runtime probes (large text/evidence grounding)
+- Expected on raw block turn: explicit ingest acknowledgement (`evidenciaként beemeltem`) before follow-up evidence questions.
 - Deterministic multiline ingest (supported): `python -m syntaris.cli --config config/syntaris.example.toml talk --once-file ./sample.log`
 - Deterministic multiline ingest from stdin (supported): `cat ./sample.log | python -m syntaris.cli --config config/syntaris.example.toml talk --once-stdin`
 - If evidence was not ingested, evidence-query family now returns explicit no-evidence guidance (never generic filler).

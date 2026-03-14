@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- REBUILD-026 follow-up: raw multiline evidence turn now acknowledges ingest explicitly, and evidence query family returns grounded non-filler answers (error/inference/important-part/blocker/recall).
 - REBUILD-026 follow-up: added deterministic CLI multiline ingress path (`talk --once-file`, `talk --once-stdin`) and removed evidence-query filler fallback when no evidence is ingested.
 
 - REBUILD-025: deterministic thread-weave baseline (main/side/detour/return/unrelated/unknown) with conclusion + applicability semantics.
@@ -46,6 +47,7 @@
 
 
 ## Unreleased
+- REBUILD-026 follow-up: raw multiline evidence turn now acknowledges ingest explicitly, and evidence query family returns grounded non-filler answers (error/inference/important-part/blocker/recall).
 - Added deterministic REBUILD-023 workframe baseline (mode/objective/blocker/next-step derivation) with trace visibility via `workframe_state_derived`.
 
 - REBUILD-023 follow-up: separated explicit blocker declaration from hedged blocker/next-step/objective proposal semantics; certainty-split responses now keep tentative inputs out of certain facts, with aligned trace uncertainty flags.

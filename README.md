@@ -50,6 +50,7 @@ Current baseline intentionally does **not** include:
 
 
 ## REBUILD-026 baseline
+- Raw multiline evidence turn now gets explicit ingest acknowledgement (not generic chat response), with chunk/key-line count preview.
 - Supported deterministic multiline ingest paths at CLI boundary: `talk --once-file <path>` and `talk --once-stdin` (for reliable local validation without fragile shell quoting).
 - Evidence-query family now has explicit no-evidence fallback instead of filler (`Rendben.`), and explicit ingest-intent acknowledgement for `bemásolok egy hosszabb konzolkimenetet`.
 - Added authoritative deterministic evidence-ingest semantics for large pasted text: raw evidence, chunking, extracted key lines, reduced summary, source references, unresolved evidence.

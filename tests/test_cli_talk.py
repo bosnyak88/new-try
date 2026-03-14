@@ -1386,6 +1386,7 @@ exit code 1
     assert cli.main() == 0
     first = json.loads(capsys.readouterr().out)
     assert first["thread_key"] == "default"
+    assert "evidenciaként" in first["reply"].lower()
 
     monkeypatch.setattr(
         "sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "mi biztosan látszik ebből?"]

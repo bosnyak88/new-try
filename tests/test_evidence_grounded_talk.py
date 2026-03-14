@@ -57,7 +57,8 @@ exit code 1"""
 
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", log_text])
     assert cli.main() == 0
-    capsys.readouterr()
+    ingested = json.loads(capsys.readouterr().out)
+    assert "evidenciaként beemeltem" in ingested["reply"].lower()
 
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "mi biztosan látszik ebből?"])
     assert cli.main() == 0
@@ -68,12 +69,36 @@ exit code 1"""
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "mi benne a valódi hiba?"])
     assert cli.main() == 0
     second = json.loads(capsys.readouterr().out)
-    assert "Közvetlenül látszik" in second["reply"]
+    assert "valódi hiba" in second["reply"].lower() or "forrás alapján" in second["reply"].lower()
 
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "a korábbi konzolból mi derült ki?"])
     assert cli.main() == 0
     recalled = json.loads(capsys.readouterr().out)
     assert "forrás" in recalled["reply"].lower() or "Traceback" in recalled["reply"]
+
+
+    for prompt in [
+        "mi csak következtetés?",
+        "melyik rész a fontos?",
+        "ebből mi a blocker?",
+        "mihez kell még adat a log alapján?",
+    ]:
+        monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", prompt])
+        assert cli.main() == 0
+        out = json.loads(capsys.readouterr().out)
+        assert out["reply"].strip() != "Rendben."
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-snapshot", "--current"])
+    assert cli.main() == 0
+    snap = json.loads(capsys.readouterr().out)
+    assert snap["snapshot"]["workframe_state"] is not None
+    assert snap["snapshot"]["workframe_state"]["blocker_status"] in {"implied", "explicit"}
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "thread-focus", "--current"])
+    assert cli.main() == 0
+    focus = json.loads(capsys.readouterr().out)
+    assert focus["focus"]["workframe_state"] is not None
+    assert focus["focus"]["workframe_state"]["blocker_status"] in {"implied", "explicit"}
 
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
     assert cli.main() == 0
