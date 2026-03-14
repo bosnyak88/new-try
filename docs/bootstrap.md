@@ -35,3 +35,17 @@ Fallback behavior remains valid without live LLM.
 
 ## REBUILD-027 bootstrap note
 No new bootstrap command is required. Maintenance/applicability semantics are deterministic defaults in orchestration and require no additional runtime services. Existing scoped-state staleness knobs still apply; schema remains v7.
+
+
+## REBUILD-029 live runtime note
+- Bootstrap assumptions are unchanged: no extra service is required.
+- Live-mode visibility now degrades explicitly when a processed turn yields empty text, while deterministic fallback remains valid without live LLM.
+
+
+## REBUILD-030 live text boundary note
+- Bootstrap services are unchanged.
+- Runtime now includes deterministic surrogate-safe text normalization and console-safe live rendering fallback for constrained terminals.
+
+
+## REBUILD-031 live ingress note
+- Bootstrap services remain unchanged. Runtime now includes deterministic live stdin decode/repair boundary for Windows pipeline fidelity (HU-first).

@@ -1,12 +1,15 @@
 import argparse
 import json
+import sys
 
 from syntaris.bootstrap.env import load_repo_env
 from syntaris.bootstrap.init_app import build_runtime
 from syntaris.contracts.runtime import TalkRequest
 from syntaris.orchestration.doctor import run_doctor
 from syntaris.orchestration.live_loop import run_live_loop, run_live_loop_interactive
+from syntaris.orchestration.text_normalize import clean_display_text, decode_live_input_line, render_console_text
 from syntaris.orchestration.talk import init_db, list_threads, session_status, talk_once, thread_focus_current, thread_focus_named, thread_focus_previous, thread_recap_current, thread_recap_named, thread_recap_previous, thread_snapshot_current, thread_snapshot_named, thread_snapshot_previous, thread_view_current, thread_view_named, thread_view_previous, trace_last
+from syntaris.persistence import PersistenceStore
 from syntaris.trace.events import build_boot_trace
 
 
@@ -245,6 +248,107 @@ def _thread_recap_payload(view) -> dict[str, object]:
     return payload
 
 
+def _emit_console_text(text: str) -> tuple[bool, str | None]:
+    encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
+    result = render_console_text(text, encoding=encoding)
+    payload = result.text
+    try:
+        print(payload)
+    except UnicodeEncodeError:
+        fallback = render_console_text(payload, encoding="ascii")
+        payload = fallback.text
+        buffer = getattr(sys.stdout, "buffer", None)
+        if buffer is not None:
+            buffer.write((payload + "\n").encode("ascii", errors="replace"))
+            buffer.flush()
+        else:
+            print(payload)
+        reason = fallback.reason or "console_encoding_replace:ascii"
+        return True, reason
+
+    return result.degraded, result.reason
+
+
+def _record_live_output_degraded(runtime, output, reason: str | None) -> None:
+    store = PersistenceStore(runtime.config.paths.db_path)
+    store.initialize(data_dir=runtime.config.paths.data_dir)
+    store.create_trace_events(
+        session_id=output.state.session_id,
+        thread_id=output.state.thread_id,
+        turn_id=output.turn_id or 0,
+        mode=output.state.mode,
+        backend="loop",
+        degraded=True,
+        events=[
+            {
+                "event_name": "live_output_sanitized",
+                "payload": {
+                    "reason": clean_display_text(reason or "console_encoding_replace"),
+                    "kind": output.kind,
+                    "turn_id": output.turn_id,
+                    "backend": output.backend,
+                },
+            }
+        ],
+    )
+
+
+def _decode_live_stdin_lines() -> tuple[list[str], list[dict[str, object]]]:
+    buffer = getattr(sys.stdin, "buffer", None)
+    if buffer is None:
+        return [], []
+
+    preferred = getattr(sys.stdin, "encoding", None)
+    decoded_lines: list[str] = []
+    repairs: list[dict[str, object]] = []
+    line_index = 0
+    while True:
+        raw = buffer.readline()
+        if raw == b"":
+            break
+        line_index += 1
+        result = decode_live_input_line(raw, preferred_encoding=preferred)
+        decoded_lines.append(result.text)
+        if result.repaired or result.degraded:
+            repairs.append(
+                {
+                    "line_index": line_index,
+                    "source_encoding": result.source_encoding,
+                    "degraded": result.degraded,
+                    "reason": result.reason,
+                    "preview": clean_display_text(result.text)[:160],
+                }
+            )
+
+    return decoded_lines, repairs
+
+
+def _record_live_input_repairs(runtime, repairs: list[dict[str, object]]) -> None:
+    if not repairs:
+        return
+    store = PersistenceStore(runtime.config.paths.db_path)
+    store.initialize(data_dir=runtime.config.paths.data_dir)
+    active = store.resolve_or_create_active(
+        default_thread_key=runtime.config.conversation.default_thread_key,
+        default_mode=runtime.config.conversation.default_mode,
+    )
+    for item in repairs:
+        store.create_trace_events(
+            session_id=active.session_id,
+            thread_id=active.thread_id,
+            turn_id=0,
+            mode=active.mode,
+            backend="loop",
+            degraded=bool(item["degraded"]),
+            events=[
+                {
+                    "event_name": "live_input_repaired",
+                    "payload": item,
+                }
+            ],
+        )
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
@@ -281,7 +385,6 @@ def main() -> int:
             return 0
 
         if args.once_stdin:
-            import sys
             message = sys.stdin.read()
             request = TalkRequest(message=message, thread_key=args.thread_key, mode=args.mode)
             result = talk_once(runtime, request)
@@ -289,9 +392,16 @@ def main() -> int:
             return 0
 
         if args.live:
-            result = run_live_loop_interactive(runtime)
+            if not sys.stdin.isatty() and getattr(sys.stdin, "buffer", None) is not None:
+                lines, repairs = _decode_live_stdin_lines()
+                _record_live_input_repairs(runtime, repairs)
+                result = run_live_loop(runtime, lines)
+            else:
+                result = run_live_loop_interactive(runtime)
             for output in result.outputs:
-                print(output.message)
+                degraded, reason = _emit_console_text(output.message)
+                if degraded:
+                    _record_live_output_degraded(runtime, output, reason)
             return 0
 
         if args.script:

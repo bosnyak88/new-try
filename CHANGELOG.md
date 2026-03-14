@@ -1,6 +1,14 @@
 # Changelog
 
 ## Unreleased
+- REBUILD-031: fixed Windows/PowerShell live stdin mojibake boundary with deterministic byte-decoding + reversible repair so Hungarian prompts preserve semantic fidelity in `talk --live`.
+- REBUILD-031: added `live_input_repaired` trace accounting for repaired/degraded ingress and restored once/live self-intro parity on repaired live input flows.
+- REBUILD-030: fixed Windows live output boundary with console-safe rendering fallback so `talk --live` no longer crashes on unencodable Unicode in constrained codepages.
+- REBUILD-030: fixed live input/persistence boundary by replacing invalid surrogate code points before turn persistence; prevents `surrogates not allowed` crashes.
+- REBUILD-030: added bounded live failure accounting via `live_turn_failed` and output-sanitization audit via `live_output_sanitized`; updated `trace-last` to surface loop-level (`turn_id=0`) events when needed.
+- REBUILD-029: stabilized `talk --live` response visibility so processed turns cannot silently render as blank output; added explicit degraded live-surface fallback + `live_surface_degraded` trace event.
+- REBUILD-029: hardened llama-http reply extraction for structured/malformed payload variants and deterministic fallback on empty content.
+- REBUILD-029: added deterministic regressions for live visibility, degraded handling, greeting first-turn stability, and once/live parity spot-check.
 - REBUILD-028: fixed maintenance-route hijack where explicit maintenance/blocker turns containing time references ("most/ma") could fall back to generic clarification.
 - REBUILD-028: added blocker replacement parsing (old blocker resolved + new blocker remains), and completed applicability/conclusion query handling for the Scenario-A maintenance flow.
 - REBUILD-028: added focused regressions for maintenance update routing, blocker persistence/replacement, and state/trace/snapshot alignment.
@@ -53,6 +61,14 @@
 
 
 ## Unreleased
+- REBUILD-031: fixed Windows/PowerShell live stdin mojibake boundary with deterministic byte-decoding + reversible repair so Hungarian prompts preserve semantic fidelity in `talk --live`.
+- REBUILD-031: added `live_input_repaired` trace accounting for repaired/degraded ingress and restored once/live self-intro parity on repaired live input flows.
+- REBUILD-030: fixed Windows live output boundary with console-safe rendering fallback so `talk --live` no longer crashes on unencodable Unicode in constrained codepages.
+- REBUILD-030: fixed live input/persistence boundary by replacing invalid surrogate code points before turn persistence; prevents `surrogates not allowed` crashes.
+- REBUILD-030: added bounded live failure accounting via `live_turn_failed` and output-sanitization audit via `live_output_sanitized`; updated `trace-last` to surface loop-level (`turn_id=0`) events when needed.
+- REBUILD-029: stabilized `talk --live` response visibility so processed turns cannot silently render as blank output; added explicit degraded live-surface fallback + `live_surface_degraded` trace event.
+- REBUILD-029: hardened llama-http reply extraction for structured/malformed payload variants and deterministic fallback on empty content.
+- REBUILD-029: added deterministic regressions for live visibility, degraded handling, greeting first-turn stability, and once/live parity spot-check.
 - REBUILD-028: fixed maintenance-route hijack where explicit maintenance/blocker turns containing time references ("most/ma") could fall back to generic clarification.
 - REBUILD-028: added blocker replacement parsing (old blocker resolved + new blocker remains), and completed applicability/conclusion query handling for the Scenario-A maintenance flow.
 - REBUILD-028: added focused regressions for maintenance update routing, blocker persistence/replacement, and state/trace/snapshot alignment.

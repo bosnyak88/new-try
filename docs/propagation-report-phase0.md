@@ -82,3 +82,63 @@ Schema migration: not required in this phase (v7 unchanged).
 - completed Scenario-A applicability/conclusion path so maintained conclusion is not left empty when supersession is explicitly present
 - kept REBUILD-027 lifecycle cues and REBUILD-026 evidence behavior intact (validated by regressions)
 - schema unchanged (v7)
+
+
+## REBUILD-029 propagation note (live runtime stabilization)
+
+### Changed
+- `src/syntaris/orchestration/live_loop.py`: added visibility guard for empty live replies and explicit `live_surface_degraded` trace emission.
+- `src/syntaris/reply/adapters.py`: hardened llama HTTP extraction for structured/malformed payloads and deterministic fallback on empty/malformed content.
+- `tests/test_live_rendering.py`, `tests/test_reply_adapter.py`: added deterministic regressions for live visibility, degraded handling, greeting first-turn stability, once/live parity spot-check, and structured extraction fallback.
+
+### Reviewed unchanged
+- `src/syntaris/orchestration/turns.py`, `src/syntaris/trace/events.py`, `src/syntaris/contracts/runtime.py`, `src/syntaris/cli.py`, persistence schema/store modules.
+- Evidence/workframe/thread-weave/maintenance orchestration modules were reviewed for regression risk; no behavior change required in this runtime-only fix.
+
+### Schema/contracts
+- No schema migration required.
+- No contract shape change required; live visibility is enforced within existing `LiveTurnOutput.message` semantics and trace events.
+
+### Scope control
+- Kept separate from presence/persona/onboarding architecture work.
+- Kept separate from executor/tooling/reminder concerns.
+
+
+## REBUILD-030 propagation note (Windows live text-boundary follow-up)
+
+### Changed
+- `src/syntaris/orchestration/text_normalize.py`: added surrogate replacement and console-safe rendering helpers.
+- `src/syntaris/persistence/store.py`: create-turn writes now use normalized surrogate-safe raw/canonical text; `read_last_turn_trace` now surfaces loop-level trace signals (`turn_id=0`) for bounded live failure visibility.
+- `src/syntaris/orchestration/live_loop.py`: bounded exception handling around live turn execution with explicit degraded message + `live_turn_failed` trace, while keeping existing REBUILD-029 visibility guard.
+- `src/syntaris/cli.py`: live output now goes through console-safe emission; sanitization emits `live_output_sanitized` trace.
+- Added regressions: `tests/test_live_windows_console.py`, `tests/test_live_text_sanitization.py`, `tests/test_live_trace_honesty.py`.
+
+### Reviewed unchanged
+- `src/syntaris/orchestration/turns.py`, `src/syntaris/reply/*` (except previous REBUILD-029 hardening), contracts enums/DTOs, schema versioning migration files.
+- REBUILD-026 evidence and REBUILD-027/028 maintenance routes reviewed for regressions.
+
+### Schema/contracts
+- Schema unchanged (v7).
+- No contract redesign; behavior change implemented at normalization/live boundary + trace event payload level.
+
+### Scope control
+- Narrow live-runtime follow-up only (no identity/presence/onboarding redesign, no executor/workspace expansion).
+
+
+## REBUILD-031 propagation note (Windows stdin mojibake/parity follow-up)
+
+### Changed
+- `src/syntaris/cli.py`: live non-tty path now decodes stdin bytes deterministically and records `live_input_repaired` trace when repair/degradation happened.
+- `src/syntaris/orchestration/text_normalize.py`: added `decode_live_input_line` with bounded encoding candidates + mojibake repair scoring.
+- `src/syntaris/persistence/store.py`: `trace-last` now includes recent loop-level events for same thread/session without time-cutoff loss so ingress-repair signals remain inspectable.
+- Added regressions: `tests/test_live_input_decoding.py`, `tests/test_live_parity.py`.
+
+### Reviewed unchanged
+- `src/syntaris/orchestration/turns.py`, `src/syntaris/orchestration/live_loop.py`, `src/syntaris/reply/*`, contracts/schema remained stable for this narrow ingress parity fix.
+
+### Schema/contracts
+- Schema unchanged (v7).
+- No contract redesign; only ingress decoding/trace observability behavior adjusted.
+
+### Scope control
+- Narrow live-ingress parity fix only; no presence/persona/onboarding redesign and no evidence/maintenance feature expansion.
