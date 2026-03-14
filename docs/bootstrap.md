@@ -24,6 +24,7 @@ No external bootstrap service was added. Thread-weave/conclusion/applicability s
 
 
 ## REBUILD-026 evidence-ingest bootstrap
+- Supported CLI ingest entrypoints for multiline raw evidence: `talk --once-file` and `talk --once-stdin`.
 No new external service is required. Deterministic ingest/reduction is local and controlled by conversation config:
 - `evidence_chunk_line_limit`
 - `evidence_max_chunks`

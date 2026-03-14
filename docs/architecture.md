@@ -46,6 +46,7 @@ This model is derived in orchestration and propagated to response planning and t
 - evidence gap: `evidence_gap_explicit` / `evidence_gap_implied` / `evidence_sufficient` / `evidence_unknown`
 
 Propagation shape:
+- CLI boundary provides deterministic multiline evidence ingress (`--once-file` / `--once-stdin`) so ingest semantics are testable without shell-quoting ambiguity
 - orchestration derives state once (`workframe_state.py`),
 - response plan surfaces it in Hungarian-first structured wording,
 - snapshots/focus carry aligned workframe state,

@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- REBUILD-026 follow-up: added deterministic CLI multiline ingress path (`talk --once-file`, `talk --once-stdin`) and removed evidence-query filler fallback when no evidence is ingested.
 
 - REBUILD-025: deterministic thread-weave baseline (main/side/detour/return/unrelated/unknown) with conclusion + applicability semantics.
 - Added persisted `thread_weave_state` propagation to snapshot/focus (schema v7 migration).

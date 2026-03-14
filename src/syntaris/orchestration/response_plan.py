@@ -232,6 +232,17 @@ def _claim_capture_lines(interpretation: TurnInterpretation) -> list[str]:
 
 
 
+
+
+def _ingest_intent_lines(message: str) -> list[str] | None:
+    lower = normalize_hungarian_for_match(message).lower()
+    if "bemasolok" in lower and any(term in lower for term in ("hosszabb konzolkimenet", "hosszabb log", "traceback", "konzol")):
+        return [
+            "Rendben, várom a nyers forrásblokkot.",
+            "A következő üzenetben küldheted a teljes több soros konzol/log szöveget; azt nyers evidenciaként kezelem.",
+        ]
+    return None
+
 def _workframe_lines(workframe_state: WorkframeState) -> list[str]:
     lines: list[str] = [f"Munkakeret: {workframe_state.workframe.value}."]
     if workframe_state.objective_status.value == "active" and workframe_state.objective_text:
@@ -264,16 +275,24 @@ def _workframe_lines(workframe_state: WorkframeState) -> list[str]:
 
 
 
+
+
+def _evidence_query_flags(message: str) -> tuple[bool, bool, bool, bool, bool]:
+    lower = normalize_hungarian_for_match(message).lower()
+    evidence_context = any(term in lower for term in ("forras", "log", "konzol", "traceback", "kimenet", "stack", "exception", "valodi hiba"))
+    asks_cert = ("biztosan latszik" in lower) or (evidence_context and "forras mit mond" in lower)
+    asks_infer = evidence_context and ("kovetkeztetes" in lower or "csak kovetkeztetes" in lower)
+    asks_error = evidence_context and ("valodi hiba" in lower or "fo hiba" in lower)
+    asks_key = evidence_context and ("melyik resz a fontos" in lower or "mi a lenyeg" in lower)
+    asks_recall = "korabbi konzol" in lower or "korabbi log" in lower or "abbol a konzolbol" in lower
+    return asks_cert, asks_infer, asks_error, asks_key, asks_recall
+
 def _evidence_grounded_lines(message: str, evidence_pack: EvidencePack) -> list[str] | None:
     ingest = evidence_pack.ingest
     if ingest is None or ingest.ingest_status.value != "raw_text_evidence":
         return None
-    lower = normalize_hungarian_for_match(message).lower()
-    asks_cert = "mi biztos" in lower or "biztosan latszik" in lower
-    asks_infer = "kovetkeztetes" in lower or "csak kovetkeztetes" in lower
-    asks_error = "valodi hiba" in lower or "fo hiba" in lower
-    asks_key = "melyik resz a fontos" in lower or "mi a lenyeg" in lower
-    if not any((asks_cert, asks_infer, asks_error, asks_key)):
+    asks_cert, asks_infer, asks_error, asks_key, asks_recall = _evidence_query_flags(message)
+    if not any((asks_cert, asks_infer, asks_error, asks_key, asks_recall)):
         return None
 
     direct = [f"• {clean_display_text(line)}" for line in ingest.extracted_key_lines[:4]]
@@ -283,12 +302,26 @@ def _evidence_grounded_lines(message: str, evidence_pack: EvidencePack) -> list[
     lines = ["A forrás alapján:"]
     lines.append("Közvetlenül látszik:")
     lines.extend(direct or ["• Nincs erős közvetlen sor kivonva."])
-    if asks_infer or asks_key or asks_error:
+    if asks_infer or asks_key or asks_error or asks_recall:
         lines.append("Következtetés (forrásból):")
         lines.extend(inferred or ["• Nincs stabil következtetés."])
     lines.append("Ami még nincs alátámasztva:")
     lines.extend(unresolved or ["• Jelenleg nincs külön unresolved tétel."])
     return lines
+
+
+
+def _no_evidence_lines(message: str, evidence_pack: EvidencePack) -> list[str] | None:
+    asks_cert, asks_infer, asks_error, asks_key, asks_recall = _evidence_query_flags(message)
+    if not any((asks_cert, asks_infer, asks_error, asks_key, asks_recall)):
+        return None
+    ingest = evidence_pack.ingest
+    if ingest is not None and ingest.ingest_status.value == "raw_text_evidence":
+        return None
+    return [
+        "Ehhez a kérdéshez még nincs korábban ténylegesen ingesztált nagy forrásblokk.",
+        "Illessz be egy több soros log/traceback szöveget (pl. talk --once-file vagy talk --once-stdin úton), és abból forrásalapon válaszolok.",
+    ]
 
 def _decision_readiness_lines(state: WorkframeState) -> list[str]:
     return [
@@ -432,6 +465,20 @@ def build_response_plan(
         return ResponsePlan(
             kind=ResponsePlanKind.STRUCTURED,
             sections=[ResponsePlanSection(title="source_grounded_evidence", lines=grounded_lines)],
+            focus_used=focus is not None,
+        )
+    no_evidence = _no_evidence_lines(interpretation_text, evidence_pack)
+    if no_evidence is not None:
+        return ResponsePlan(
+            kind=ResponsePlanKind.UNCERTAINTY_LABELED,
+            sections=[ResponsePlanSection(title="no_evidence_ingested", lines=no_evidence)],
+            focus_used=focus is not None,
+        )
+    ingest_intent = _ingest_intent_lines(interpretation_text)
+    if ingest_intent is not None:
+        return ResponsePlan(
+            kind=ResponsePlanKind.STRUCTURED,
+            sections=[ResponsePlanSection(title="evidence_ingest_intent", lines=ingest_intent)],
             focus_used=focus is not None,
         )
 

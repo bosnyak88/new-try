@@ -70,8 +70,38 @@ exit code 1"""
     second = json.loads(capsys.readouterr().out)
     assert "Közvetlenül látszik" in second["reply"]
 
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "a korábbi konzolból mi derült ki?"])
+    assert cli.main() == 0
+    recalled = json.loads(capsys.readouterr().out)
+    assert "forrás" in recalled["reply"].lower() or "Traceback" in recalled["reply"]
+
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
     assert cli.main() == 0
     trace = json.loads(capsys.readouterr().out)
     event = next(evt for evt in trace["trace_events"] if evt["event_name"] == "evidence_pack_built")
     assert '"ingest_status": "raw_text_evidence"' in event["payload"]
+
+
+def test_evidence_query_without_ingest_is_honest_not_filler(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "mi benne a valódi hiba?"])
+    assert cli.main() == 0
+    answer = json.loads(capsys.readouterr().out)
+    assert "nincs korábban ténylegesen ingesztált" in answer["reply"]
+    assert answer["reply"].strip() != "Rendben."
+
+
+def test_ingest_intent_message_is_acknowledged(tmp_path, monkeypatch, capsys):
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "bemásolok egy hosszabb konzolkimenetet"])
+    assert cli.main() == 0
+    answer = json.loads(capsys.readouterr().out)
+    assert "várom a nyers forrásblokkot" in answer["reply"].lower()

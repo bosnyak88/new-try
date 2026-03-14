@@ -50,6 +50,8 @@ Current baseline intentionally does **not** include:
 
 
 ## REBUILD-026 baseline
+- Supported deterministic multiline ingest paths at CLI boundary: `talk --once-file <path>` and `talk --once-stdin` (for reliable local validation without fragile shell quoting).
+- Evidence-query family now has explicit no-evidence fallback instead of filler (`Rendben.`), and explicit ingest-intent acknowledgement for `bemásolok egy hosszabb konzolkimenetet`.
 - Added authoritative deterministic evidence-ingest semantics for large pasted text: raw evidence, chunking, extracted key lines, reduced summary, source references, unresolved evidence.
 - Source-grounded answer model is explicit: direct source support vs inferred vs unresolved are surfaced in Hungarian wording (`mi biztosan látszik ebből?`, `mi csak következtetés?`).
 - Workframe/blocker derivation can now consume ingested evidence safely without overwriting explicit state blindly.

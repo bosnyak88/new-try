@@ -22,6 +22,8 @@ def build_parser() -> argparse.ArgumentParser:
     talk_parser = sub.add_parser("talk", help="Execute talk flows")
     group = talk_parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--once", help="Run a single-turn interaction")
+    group.add_argument("--once-file", help="Run a single-turn interaction by loading message text from file")
+    group.add_argument("--once-stdin", action="store_true", help="Run a single-turn interaction by reading full message text from stdin")
     group.add_argument("--live", action="store_true", help="Run interactive multi-turn loop")
     group.add_argument("--script", help="Run deterministic multi-turn loop from input file")
     talk_parser.add_argument("--thread", dest="thread_key", default=None, help="Open/create and activate thread key")
@@ -266,6 +268,22 @@ def main() -> int:
     if args.command == "talk":
         if args.once is not None:
             request = TalkRequest(message=args.once, thread_key=args.thread_key, mode=args.mode)
+            result = talk_once(runtime, request)
+            _print_turn_result(result)
+            return 0
+
+        if args.once_file is not None:
+            with open(args.once_file, "r", encoding="utf-8-sig") as f:
+                message = f.read()
+            request = TalkRequest(message=message, thread_key=args.thread_key, mode=args.mode)
+            result = talk_once(runtime, request)
+            _print_turn_result(result)
+            return 0
+
+        if args.once_stdin:
+            import sys
+            message = sys.stdin.read()
+            request = TalkRequest(message=message, thread_key=args.thread_key, mode=args.mode)
             result = talk_once(runtime, request)
             _print_turn_result(result)
             return 0

@@ -353,8 +353,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     workframe_state = derive_workframe_state(semantic_turns, normalized_message)
     historical_workframe_state = derive_workframe_state(semantic_turns, "")
     ingest_result = ingest_text_evidence(normalized_message, context.config.conversation)
-    if ingest_result.ingest_status.value == "no_evidence_ingested" and context_load.pack.recent_turns:
-        for prior_turn in reversed(context_load.pack.recent_turns):
+    if ingest_result.ingest_status.value == "no_evidence_ingested" and semantic_turns:
+        for prior_turn in reversed(semantic_turns):
             prior_ingest = ingest_text_evidence(prior_turn.user_message, context.config.conversation)
             if prior_ingest.ingest_status.value == "raw_text_evidence":
                 ingest_result = prior_ingest

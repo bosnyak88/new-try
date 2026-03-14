@@ -29,6 +29,9 @@ Also verify `thread-snapshot --current` and `thread-focus --current` include `th
 
 
 ## REBUILD-026 runtime probes (large text/evidence grounding)
+- Deterministic multiline ingest (supported): `python -m syntaris.cli --config config/syntaris.example.toml talk --once-file ./sample.log`
+- Deterministic multiline ingest from stdin (supported): `cat ./sample.log | python -m syntaris.cli --config config/syntaris.example.toml talk --once-stdin`
+- If evidence was not ingested, evidence-query family now returns explicit no-evidence guidance (never generic filler).
 - `python -m syntaris.cli --config config/syntaris.example.toml talk --once "bemásolok egy hosszabb konzolkimenetet"`
 - `python -m syntaris.cli --config config/syntaris.example.toml talk --once "<többsoros log/traceback minta>"`
 - `python -m syntaris.cli --config config/syntaris.example.toml talk --once "mi a lényeg ebből?"`

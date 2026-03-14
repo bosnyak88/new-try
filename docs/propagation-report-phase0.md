@@ -51,6 +51,8 @@ Narrow semantic correction pass on the same PR: detour declaration and return-to
 
 
 ## REBUILD-026 propagation note
+- CLI boundary: added explicit deterministic multiline ingest path (`talk --once-file`, `talk --once-stdin`) and tests.
+- response surface: evidence-query family now emits explicit no-evidence guidance when ingest state is absent (no generic filler).
 Full-system propagation pass completed for deterministic large-text evidence ingest + source-grounding baseline.
 - contracts/config: new evidence ingest/chunk/grounding DTOs and config knobs
 - orchestration: evidence ingest reducer + evidence-pack integration + follow-up evidence reuse
