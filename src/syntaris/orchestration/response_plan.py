@@ -500,13 +500,34 @@ def build_response_plan(
                 lines.append(f"Kitérő téma: {clean_display_text(thread_weave_state.detour_thread_key)}")
             if thread_weave_state.main_thread_key:
                 lines.append(f"Aktív főszál marad: {clean_display_text(thread_weave_state.main_thread_key)}")
+            lines.append(f"Thread lifecycle: {thread_weave_state.thread_lifecycle.value}.")
             return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="thread_weave_update", lines=lines)], focus_used=focus is not None)
+        if thread_weave_update_kind == "park_declared":
+            return ResponsePlan(
+                kind=ResponsePlanKind.STRUCTURED,
+                sections=[ResponsePlanSection(title="thread_weave_update", lines=[
+                    "Rendben, ezt parkolt szálként kezelem.",
+                    f"Thread lifecycle: {thread_weave_state.thread_lifecycle.value}.",
+                    f"Állapot-karbantartás: {thread_weave_state.temporary_state_lifecycle.value}.",
+                ])],
+                focus_used=focus is not None,
+            )
+        if thread_weave_update_kind == "close_declared":
+            return ResponsePlan(
+                kind=ResponsePlanKind.STRUCTURED,
+                sections=[ResponsePlanSection(title="thread_weave_update", lines=[
+                    "Rendben, ezt lezárt részként kezelem.",
+                    f"Thread lifecycle: {thread_weave_state.thread_lifecycle.value}.",
+                ])],
+                focus_used=focus is not None,
+            )
         if thread_weave_update_kind == "return_to_main_declared":
             lines = ["Rendben, ezt főszálra-visszatérésként kezelem."]
             if thread_weave_state.main_thread_key:
                 lines.append(f"Főszál megerősítve: {clean_display_text(thread_weave_state.main_thread_key)}")
             if thread_weave_state.detour_thread_key:
                 lines.append(f"A kitérő megmarad háttérként: {clean_display_text(thread_weave_state.detour_thread_key)}")
+            lines.append(f"Thread lifecycle: {thread_weave_state.thread_lifecycle.value}.")
             return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="thread_weave_update", lines=lines)], focus_used=focus is not None)
 
     if thread_weave_state is not None and thread_weave_query_family is not None:
@@ -533,7 +554,11 @@ def build_response_plan(
             return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="thread_relation", lines=lines)], focus_used=focus is not None)
 
         if thread_weave_query_family == "conclusion_query":
-            lines = [f"Konklúzió állapot: {thread_weave_state.conclusion_status.value}."]
+            lines = [
+                f"Konklúzió állapot: {thread_weave_state.conclusion_status.value}.",
+                f"Konklúzió érvényesség: {thread_weave_state.conclusion_validity.value}.",
+                f"Állapot-karbantartás: {thread_weave_state.temporary_state_lifecycle.value}.",
+            ]
             if thread_weave_state.conclusion_text:
                 lines.append(f"Levonható tanulság (szál-szövésből): {clean_display_text(thread_weave_state.conclusion_text)}")
             else:
@@ -541,7 +566,11 @@ def build_response_plan(
             return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="conclusion", lines=lines)], focus_used=focus is not None)
 
         if thread_weave_query_family == "applicability_query":
-            lines = [f"Mostani alkalmazhatóság: {thread_weave_state.applicability_status.value}."]
+            lines = [
+                f"Mostani alkalmazhatóság: {thread_weave_state.applicability_status.value}.",
+                f"Thread lifecycle: {thread_weave_state.thread_lifecycle.value}.",
+                f"Állapot-karbantartás: {thread_weave_state.temporary_state_lifecycle.value}.",
+            ]
             if thread_weave_state.conclusion_text:
                 lines.append(f"Kiinduló konklúzió: {clean_display_text(thread_weave_state.conclusion_text)}")
             if thread_weave_state.applicability_reason:

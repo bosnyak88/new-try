@@ -377,6 +377,30 @@ class ApplicabilityStatus(str, Enum):
     SUPERSEDED_BY_NEW_CONTEXT = "superseded_by_new_context"
 
 
+class TemporaryStateLifecycle(str, Enum):
+    ACTIVE = "currently_active_temporary_state"
+    AGED_STALE = "aging_or_stale_temporary_state"
+    RESOLVED = "resolved_temporary_state"
+    SUPERSEDED = "superseded_temporary_state"
+    ARCHIVED = "archived_inactive_state"
+
+
+class ThreadLifecycleStatus(str, Enum):
+    ACTIVE = "active"
+    PARKED = "parked"
+    ABANDONED = "abandoned"
+    CLOSED = "closed"
+    REOPENABLE = "reopenable"
+
+
+class ConclusionValidityStatus(str, Enum):
+    STILL_VALID = "still_valid"
+    PARTIALLY_VALID = "partially_valid"
+    NO_LONGER_VALID = "no_longer_valid_in_current_context"
+    SUPERSEDED = "superseded_by_newer_context"
+    HISTORICAL_REMINDER = "historical_reminder_value_only"
+
+
 @dataclass(frozen=True)
 class ThreadWeaveState:
     relation: ThreadRelationKind
@@ -385,8 +409,11 @@ class ThreadWeaveState:
     detour_thread_key: str | None = None
     conclusion_status: ConclusionStatus = ConclusionStatus.NONE
     conclusion_text: str | None = None
+    conclusion_validity: ConclusionValidityStatus = ConclusionValidityStatus.HISTORICAL_REMINDER
     applicability_status: ApplicabilityStatus = ApplicabilityStatus.UNCERTAIN
     applicability_reason: str | None = None
+    temporary_state_lifecycle: TemporaryStateLifecycle = TemporaryStateLifecycle.AGED_STALE
+    thread_lifecycle: ThreadLifecycleStatus = ThreadLifecycleStatus.ACTIVE
 
 
 class TurnInterpretationKind(str, Enum):
@@ -811,7 +838,10 @@ class ThreadWeaveTrace:
     related_thread_key: str | None
     detour_thread_key: str | None
     conclusion_status: str
+    conclusion_validity: str
     applicability_status: str
+    temporary_state_lifecycle: str
+    thread_lifecycle: str
     query_family: str | None = None
 
 class ObjectiveKind(str, Enum):

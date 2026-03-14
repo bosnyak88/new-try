@@ -63,3 +63,13 @@ Full-system propagation pass completed for deterministic large-text evidence ing
 - docs/config/changelog: synchronized to post-026 semantics
 
 Schema migration: not required in this phase (v7 unchanged).
+
+
+## REBUILD-027 propagation snapshot
+- contracts: extended `ThreadWeaveState` + trace DTO for maintenance lifecycle and conclusion validity
+- orchestration: deterministic maintenance/applicability derivation updated, including park/return/close cues
+- persistence: thread-weave serialization/deserialization updated for new lifecycle fields
+- response surface: Hungarian-first lifecycle/maintenance wording added for update + query families
+- trace: lifecycle and maintenance fields added to `thread_weave_state_derived` payload
+- regression: added deterministic tests for memory maintenance, thread lifecycle maintenance, and applicability gate
+- schema: unchanged (v7)

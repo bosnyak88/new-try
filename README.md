@@ -57,3 +57,11 @@ Current baseline intentionally does **not** include:
 - Source-grounded answer model is explicit: direct source support vs inferred vs unresolved are surfaced in Hungarian wording (`mi biztosan látszik ebből?`, `mi csak következtetés?`).
 - Workframe/blocker derivation can now consume ingested evidence safely without overwriting explicit state blindly.
 - Trace `evidence_pack_built` now includes ingest status + chunk/key-line counts.
+
+
+## REBUILD-027 baseline
+- Added deterministic maintenance lifecycle semantics across threads/conclusions/applicability to prevent stale carry-forward.
+- Thread lifecycle cues (`parkoljuk`, `vissza a főszálra`, `lezártuk`) now map to explicit lifecycle states (`active`, `parked`, `closed`, `reopenable`).
+- Conclusion maintenance now includes validity tracking (`still_valid`, `partially_valid`, `no_longer_valid_in_current_context`, `superseded_by_newer_context`, `historical_reminder_value_only`).
+- Applicability/carry-forward answers now explicitly surface lifecycle + maintenance status, so old blockers/conclusions are not silently treated as current.
+- Snapshot/focus/trace stay aligned with the same `ThreadWeaveState` maintenance fields (schema remains v7).

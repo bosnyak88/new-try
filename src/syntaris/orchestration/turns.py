@@ -614,7 +614,10 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         related_thread_key=thread_weave_state.related_thread_key,
         detour_thread_key=thread_weave_state.detour_thread_key,
         conclusion_status=thread_weave_state.conclusion_status.value,
+        conclusion_validity=thread_weave_state.conclusion_validity.value,
         applicability_status=thread_weave_state.applicability_status.value,
+        temporary_state_lifecycle=thread_weave_state.temporary_state_lifecycle.value,
+        thread_lifecycle=thread_weave_state.thread_lifecycle.value,
         query_family=detect_thread_weave_query_family(normalized_message) or detect_thread_weave_update_kind(normalized_message),
     )
 

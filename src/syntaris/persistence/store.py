@@ -39,6 +39,9 @@ from syntaris.contracts.runtime import (
     ThreadRelationKind,
     ConclusionStatus,
     ApplicabilityStatus,
+    ConclusionValidityStatus,
+    TemporaryStateLifecycle,
+    ThreadLifecycleStatus,
 )
 from syntaris.persistence.schema import SCHEMA_SQL, SCHEMA_VERSION
 from syntaris.orchestration.text_normalize import clean_display_text, normalize_text
@@ -287,6 +290,9 @@ class PersistenceStore:
                 "conclusion_text": weave.conclusion_text,
                 "applicability_status": weave.applicability_status.value,
                 "applicability_reason": weave.applicability_reason,
+                "conclusion_validity": weave.conclusion_validity.value,
+                "temporary_state_lifecycle": weave.temporary_state_lifecycle.value,
+                "thread_lifecycle": weave.thread_lifecycle.value,
             },
             ensure_ascii=False,
             sort_keys=True,
@@ -309,6 +315,9 @@ class PersistenceStore:
                 conclusion_text=str(data["conclusion_text"]) if data.get("conclusion_text") is not None else None,
                 applicability_status=ApplicabilityStatus(str(data.get("applicability_status", ApplicabilityStatus.UNCERTAIN.value))),
                 applicability_reason=str(data["applicability_reason"]) if data.get("applicability_reason") is not None else None,
+                conclusion_validity=ConclusionValidityStatus(str(data.get("conclusion_validity", ConclusionValidityStatus.HISTORICAL_REMINDER.value))),
+                temporary_state_lifecycle=TemporaryStateLifecycle(str(data.get("temporary_state_lifecycle", TemporaryStateLifecycle.AGED_STALE.value))),
+                thread_lifecycle=ThreadLifecycleStatus(str(data.get("thread_lifecycle", ThreadLifecycleStatus.ACTIVE.value))),
             )
         except Exception:
             return None
