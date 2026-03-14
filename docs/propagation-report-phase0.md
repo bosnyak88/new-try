@@ -156,3 +156,60 @@ Schema migration: not required in this phase (v7 unchanged).
 ### Schema/contracts
 - Schema unchanged (v7).
 - Contract shape unchanged; behavior extended via existing live loop/trace event payloads.
+
+
+## REBUILD-033 propagation snapshot
+### Changed
+- `src/syntaris/contracts/runtime.py`: extended deterministic contracts with `ClaimKind.SYSTEM_NAME`, `MemoryQueryKind.WHO_ARE_YOU`, and owner/system identity fields in `OwnerIdentityProfile` + `PersonalMemoryView`.
+- `src/syntaris/orchestration/turn_interpret.py`: widened HU identity intake coverage (`az én nevem ...`, `a te neved ...`, `én tervezlek és fejlesztelek`, `te a személyes kognitív rendszerem leszel`) and added `ki vagy te?` memory-query routing.
+- `src/syntaris/orchestration/response_plan.py`: strengthened claim-capture acknowledgements and memory-query coherence so owner/system/relationship answers stay mutually aligned and non-filler.
+- `src/syntaris/persistence/store.py`: propagated stable `system_name` persistence/readback into personal-memory/owner-identity views.
+- Added deterministic regressions: `tests/test_identity_relationship.py`, `tests/test_presence_surface.py`.
+
+### Reviewed unchanged
+- Live transport/emission chain (`src/syntaris/orchestration/live_loop.py`, `src/syntaris/cli.py`) kept intact to preserve REBUILD-032 visibility/emit honesty and REBUILD-031 ingress parity.
+- Evidence and maintenance families (`tests/test_evidence_grounded_talk.py`, `tests/test_maintenance_route_hijack.py`) validated unchanged behavior.
+- Thread/snapshot/focus/trace architecture remained in current deterministic shape.
+
+### Schema/contracts
+- Schema unchanged (v7): `personal_claims` already supports additional stable claim kinds without migration.
+- Contracts changed in a narrow, additive way for owner/system identity coherence.
+
+### Scope control
+- No workspace shell / tool bridge / execution engine / A/B orchestration broadening.
+- No theatrical persona simulation; tone improvements remain bounded by explicit captured claims.
+
+
+## REBUILD-033 follow-up completion note
+### Changed
+- `src/syntaris/orchestration/turn_interpret.py`: completed explicit relationship-frame intake for the non-"te" variant (`a személyes kognitív rendszerem leszel`) so the turn routes to deterministic claim capture instead of low-value fallback.
+- `src/syntaris/orchestration/thread_weave.py`: added conservative relationship-frame derivation from explicit owner/system cues, including non-empty relation/conclusion/applicability semantics and relationship query/update trace tagging.
+- Added deterministic regressions: `tests/test_relationship_alignment.py`, `tests/test_relationship_trace.py`.
+
+### Reviewed unchanged
+- `src/syntaris/orchestration/live_loop.py`, `src/syntaris/cli.py` (REBUILD-032/031/030 live guarantees preserved).
+- Evidence and maintenance families verified via targeted suites (`tests/test_evidence_grounded_talk.py`, `tests/test_maintenance_route_hijack.py`).
+
+### Schema/contracts
+- Schema unchanged (v7).
+- No contract migration required for this follow-up; completion is in interpretation + weave-state derivation/trace alignment.
+
+### Scope control
+- Kept as narrow in-place completion on REBUILD-033 branch/PR; no architecture redesign, no A/B orchestration, no workspace/tool bridge expansion.
+
+
+## REBUILD-033 live-alignment completion note
+### Changed
+- `src/syntaris/orchestration/thread_weave.py`: completed live relationship alignment by deriving conservative non-empty weave semantics (`relation`/`conclusion`/`applicability`) from relationship-query + explicit owner/system signals, and exposing `relationship_query` in trace.
+- Added deterministic live regressions: `tests/test_live_relationship_alignment.py`, `tests/test_live_relationship_trace.py`.
+
+### Reviewed unchanged
+- `src/syntaris/orchestration/live_loop.py`, `src/syntaris/cli.py` (emit/visibility/input hardening preserved).
+- Identity/evidence/maintenance families and their deterministic suites remained green.
+
+### Schema/contracts
+- Schema unchanged (v7).
+- Contract shapes unchanged in this completion pass.
+
+### Scope control
+- Narrow completion on existing REBUILD-033 branch/PR only; no architecture redesign or A/B/workspace/tooling expansion.

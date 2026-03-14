@@ -501,6 +501,7 @@ class PersistenceStore:
 
         return PersonalMemoryView(
             owner_name=stable.get("owner_name"),
+            system_name=stable.get("system_name"),
             owner_relation=stable.get("owner_relation"),
             system_role=stable.get("system_role"),
             current_focus=focus_item.value if focus_item is not None else None,
@@ -560,17 +561,20 @@ class PersistenceStore:
         )
         return OwnerIdentityProfile(
             owner_name=memory.owner_name,
+            system_name=memory.system_name,
             owner_relation=memory.owner_relation,
             system_role=memory.system_role,
         )
 
-    def set_owner_identity(self, owner_name: str | None = None, owner_relation: str | None = None, system_role: str | None = None) -> OwnerIdentityProfile:
+    def set_owner_identity(self, owner_name: str | None = None, system_name: str | None = None, owner_relation: str | None = None, system_role: str | None = None) -> OwnerIdentityProfile:
         state = self.get_active_state()
         if state is None:
             return OwnerIdentityProfile()
         captures: list[ClaimCapture] = []
         if owner_name:
             captures.append(ClaimCapture(kind=ClaimKind.OWNER_NAME, value=owner_name, scope=ClaimScope.STABLE))
+        if system_name:
+            captures.append(ClaimCapture(kind=ClaimKind.SYSTEM_NAME, value=system_name, scope=ClaimScope.STABLE))
         if owner_relation:
             captures.append(ClaimCapture(kind=ClaimKind.OWNER_RELATION, value=owner_relation, scope=ClaimScope.STABLE))
         if system_role:

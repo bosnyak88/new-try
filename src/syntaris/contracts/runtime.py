@@ -430,6 +430,7 @@ class TurnInterpretationKind(str, Enum):
 
 class ClaimKind(str, Enum):
     OWNER_NAME = "owner_name"
+    SYSTEM_NAME = "system_name"
     OWNER_RELATION = "owner_relation"
     SYSTEM_ROLE = "system_role"
     CURRENT_FOCUS = "current_focus"
@@ -451,6 +452,7 @@ class ScopedStateStatus(str, Enum):
 
 class MemoryQueryKind(str, Enum):
     WHO_AM_I = "who_am_i"
+    WHO_ARE_YOU = "who_are_you"
     WHAT_KNOWN_CERTAIN = "what_known_certain"
     RELATIONSHIP = "relationship"
     SYSTEM_ROLE = "system_role"
@@ -1305,6 +1307,7 @@ class TurnResult:
 @dataclass(frozen=True)
 class OwnerIdentityProfile:
     owner_name: str | None = None
+    system_name: str | None = None
     owner_relation: str | None = None
     system_role: str | None = None
 
@@ -1312,6 +1315,7 @@ class OwnerIdentityProfile:
 @dataclass(frozen=True)
 class PersonalMemoryView:
     owner_name: str | None = None
+    system_name: str | None = None
     owner_relation: str | None = None
     system_role: str | None = None
     current_focus: str | None = None

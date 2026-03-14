@@ -129,9 +129,22 @@ def _memory_query_lines(query: MemoryQueryKind, memory: PersonalMemoryView) -> l
         if memory.owner_name:
             return [f"A megadott adataid alapján {memory.owner_name} vagy."]
         return ["Ezt még nem tudom biztosan, mert nem mondtad ki egyértelműen a neved."]
+    if query == MemoryQueryKind.WHO_ARE_YOU:
+        system_name = memory.system_name or "Syntaris"
+        role_text = f" A kimondott szerepem: {memory.system_role}." if memory.system_role else ""
+        return [f"{system_name} vagyok, a determinisztikus személyes kognitív rendszered.{role_text}"]
     if query == MemoryQueryKind.RELATIONSHIP:
+        lines: list[str] = ["A kapcsolatunk jelenlegi explicit kerete: owner ↔ személyes kognitív rendszer."]
+        if memory.owner_name:
+            lines.append(f"Te {memory.owner_name} vagy az owner oldalon.")
         if memory.owner_relation == "creator":
-            return ["Amit biztosan tudok: azt mondtad, hogy te tervezted ezt a rendszert."]
+            lines.append("Explicit állításod alapján te tervezed és fejleszted ezt a rendszert.")
+        if memory.system_name:
+            lines.append(f"A rendszer-nevemként ezt rögzítetted: {memory.system_name}.")
+        if memory.system_role:
+            lines.append(f"A szerepemnek ezt mondtad: {memory.system_role}.")
+        if lines:
+            return lines
         return ["A kapcsolatunkról még csak annyit tudok biztosan, amit explicit mondtál — ezt még nem rögzítettük."]
     if query == MemoryQueryKind.SYSTEM_ROLE:
         if memory.system_role:
@@ -166,14 +179,28 @@ def _memory_query_lines(query: MemoryQueryKind, memory: PersonalMemoryView) -> l
             latest = memory.scoped_state.items[0]
             return [f"A legutóbbi ideiglenes állapot ({clean_display_text(latest.value)}) már nem aktív."]
         return ["Most nincs aktív ideiglenes fókusz vagy irány rögzítve."]
+    if query == MemoryQueryKind.WHAT_KNOWN_CERTAIN:
+        lines: list[str] = ["Ami rólad biztosan látszik (explicit állítás alapján):"]
+        if memory.owner_name:
+            lines.append(f"• Név (explicit): {memory.owner_name}")
+        if memory.owner_relation:
+            relation = "creator" if memory.owner_relation == "creator" else memory.owner_relation
+            lines.append(f"• Kapcsolat (explicit): {relation}")
+        if memory.system_role:
+            lines.append(f"• Rendszer-szerep (explicit): {memory.system_role}")
+        if len(lines) == 1:
+            return ["Még nincs olyan explicit állításod eltárolva, amit biztos tényként vissza tudok mondani."]
+        return lines
     if query == MemoryQueryKind.WHAT_INFERRED:
         return ["Rólad jelenleg nem tartok fenn külön, bizonyított következtetés-listát; amit biztosnak mondok, az explicit állításból jön."]
     if query == MemoryQueryKind.TEMPORARY_VS_CERTAIN:
         lines: list[str] = ["Szétválasztva:"]
-        if memory.owner_name or memory.owner_relation or memory.system_role:
+        if memory.owner_name or memory.system_name or memory.owner_relation or memory.system_role:
             lines.append("• Biztos (stabil, explicit):")
             if memory.owner_name:
                 lines.append(f"  - név: {memory.owner_name}")
+            if memory.system_name:
+                lines.append(f"  - rendszer neve: {memory.system_name}")
             if memory.owner_relation:
                 lines.append(f"  - kapcsolat: {memory.owner_relation}")
             if memory.system_role:
@@ -195,6 +222,8 @@ def _memory_query_lines(query: MemoryQueryKind, memory: PersonalMemoryView) -> l
     lines: list[str] = []
     if memory.owner_name:
         lines.append(f"• Név (explicit): {memory.owner_name}")
+    if memory.system_name:
+        lines.append(f"• Rendszer név (explicit): {memory.system_name}")
     if memory.owner_relation:
         relation = "creator" if memory.owner_relation == "creator" else memory.owner_relation
         lines.append(f"• Kapcsolat (explicit): {relation}")
@@ -214,12 +243,19 @@ def _claim_capture_lines(interpretation: TurnInterpretation) -> list[str]:
     if interpretation.pattern_name == "claim_correction" and ClaimKind.OWNER_NAME in by_kind:
         return [f"Köszönöm a javítást, a nevedet {clean_display_text(by_kind[ClaimKind.OWNER_NAME])} néven rögzítettem."]
 
+    if ClaimKind.SYSTEM_NAME in by_kind:
+        return [f"Rögzítettem a rendszer-nevemet: {clean_display_text(by_kind[ClaimKind.SYSTEM_NAME])}. Így fogok hivatkozni magamra."]
     if ClaimKind.SYSTEM_ROLE in by_kind:
         return [f"Rögzítettem: a szerepemnek ezt mondtad — {clean_display_text(by_kind[ClaimKind.SYSTEM_ROLE])}."]
+    if ClaimKind.OWNER_NAME in by_kind and ClaimKind.OWNER_RELATION in by_kind:
+        return [
+            f"Rögzítettem: te {clean_display_text(by_kind[ClaimKind.OWNER_NAME])} vagy, és te tervezed/fejleszted a rendszert.",
+            "Ettől indulva owner-aware módon folytatom.",
+        ]
     if ClaimKind.OWNER_NAME in by_kind:
-        return [f"Rendben, rögzítettem a nevedet: {clean_display_text(by_kind[ClaimKind.OWNER_NAME])}."]
+        return [f"Rögzítettem a nevedet: {clean_display_text(by_kind[ClaimKind.OWNER_NAME])}. Így foglak megszólítani."]
     if ClaimKind.OWNER_RELATION in by_kind and by_kind[ClaimKind.OWNER_RELATION] == "creator":
-        return ["Rögzítettem: azt mondtad, hogy te tervezted a rendszeremet."]
+        return ["Rögzítettem: explicit állításod szerint te tervezed és fejleszted a rendszert."]
     if ClaimKind.CURRENT_FOCUS in by_kind:
         return [f"Rögzítettem a mostani fókuszt: {clean_display_text(by_kind[ClaimKind.CURRENT_FOCUS])}."]
     if ClaimKind.CURRENT_DIRECTION in by_kind:
