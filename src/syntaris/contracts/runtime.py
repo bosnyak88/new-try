@@ -55,6 +55,9 @@ class ConversationConfig:
     synthesis_include_next_step: bool = True
     scoped_state_short_stale_minutes: int = 120
     scoped_state_same_day_stale_minutes: int = 480
+    evidence_chunk_line_limit: int = 24
+    evidence_max_chunks: int = 6
+    evidence_summary_line_limit: int = 5
 
 
 @dataclass(frozen=True)
@@ -851,17 +854,63 @@ class SupportLabel(str, Enum):
     UNRESOLVED = "unresolved"
 
 
+class EvidenceIngestStatus(str, Enum):
+    RAW_TEXT_EVIDENCE = "raw_text_evidence"
+    NO_EVIDENCE_INGESTED = "no_evidence_ingested"
+
+
+class ChunkDisposition(str, Enum):
+    KEPT_CHUNK = "kept_chunk"
+    DROPPED_NOISE = "dropped_noise"
+
+
+class GroundingStatus(str, Enum):
+    DIRECTLY_SUPPORTED_BY_SOURCE = "directly_supported_by_source"
+    WEAKLY_SUPPORTED_BY_SOURCE = "weakly_supported_by_source"
+    INFERRED_FROM_SOURCE = "inferred_from_source"
+    UNSUPPORTED_BY_SOURCE = "unsupported_by_source"
+    SOURCE_NOT_AVAILABLE = "source_not_available"
+
+
+@dataclass(frozen=True)
+class EvidenceChunk:
+    chunk_id: str
+    raw_chunk: str
+    disposition: ChunkDisposition
+    extracted_key_lines: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class EvidenceSourceReference:
+    source_label: str
+    excerpt: str
+
+
+@dataclass(frozen=True)
+class EvidenceIngestResult:
+    ingest_status: EvidenceIngestStatus
+    raw_text_evidence: str | None = None
+    chunked_evidence: list[EvidenceChunk] = field(default_factory=list)
+    extracted_key_lines: list[str] = field(default_factory=list)
+    evidence_summary: list[str] = field(default_factory=list)
+    evidence_source_references: list[EvidenceSourceReference] = field(default_factory=list)
+    unresolved_evidence: list[str] = field(default_factory=list)
+
+
 @dataclass(frozen=True)
 class EvidenceItem:
     unit_id: str
     source: str
     detail: str
     support: SupportLabel
+    grounding: GroundingStatus = GroundingStatus.WEAKLY_SUPPORTED_BY_SOURCE
+    source_reference: str | None = None
 
 
 @dataclass(frozen=True)
 class EvidencePack:
     items: list[EvidenceItem]
+    ingest: EvidenceIngestResult | None = None
 
 
 @dataclass(frozen=True)
@@ -969,6 +1018,9 @@ class DecompositionTrace:
 class EvidencePackTrace:
     item_count: int
     support_distribution: dict[str, int]
+    ingest_status: str = "no_evidence_ingested"
+    chunk_count: int = 0
+    key_line_count: int = 0
 
 
 @dataclass(frozen=True)

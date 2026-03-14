@@ -324,6 +324,9 @@ def build_turn_trace_events(
                 "payload": {
                     "item_count": evidence_trace.item_count,
                     "support_distribution": evidence_trace.support_distribution,
+                    "ingest_status": evidence_trace.ingest_status,
+                    "chunk_count": evidence_trace.chunk_count,
+                    "key_line_count": evidence_trace.key_line_count,
                 },
             }
         )

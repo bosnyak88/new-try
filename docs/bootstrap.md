@@ -21,3 +21,13 @@ No additional bootstrap service is required. Decision-readiness semantics are pr
 
 ## REBUILD-025 deterministic thread-weave bootstrap
 No external bootstrap service was added. Thread-weave/conclusion/applicability semantics are deterministic and available without live LLM, including persisted snapshot/focus state and trace visibility.
+
+
+## REBUILD-026 evidence-ingest bootstrap
+- Supported CLI ingest entrypoints for multiline raw evidence: `talk --once-file` and `talk --once-stdin`.
+No new external service is required. Deterministic ingest/reduction is local and controlled by conversation config:
+- `evidence_chunk_line_limit`
+- `evidence_max_chunks`
+- `evidence_summary_line_limit`
+
+Fallback behavior remains valid without live LLM.

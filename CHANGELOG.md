@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- REBUILD-026 follow-up: raw multiline evidence turn now acknowledges ingest explicitly, and evidence query family returns grounded non-filler answers (error/inference/important-part/blocker/recall).
+- REBUILD-026 follow-up: added deterministic CLI multiline ingress path (`talk --once-file`, `talk --once-stdin`) and removed evidence-query filler fallback when no evidence is ingested.
 
 - REBUILD-025: deterministic thread-weave baseline (main/side/detour/return/unrelated/unknown) with conclusion + applicability semantics.
 - Added persisted `thread_weave_state` propagation to snapshot/focus (schema v7 migration).
@@ -45,6 +47,7 @@
 
 
 ## Unreleased
+- REBUILD-026 follow-up: raw multiline evidence turn now acknowledges ingest explicitly, and evidence query family returns grounded non-filler answers (error/inference/important-part/blocker/recall).
 - Added deterministic REBUILD-023 workframe baseline (mode/objective/blocker/next-step derivation) with trace visibility via `workframe_state_derived`.
 
 - REBUILD-023 follow-up: separated explicit blocker declaration from hedged blocker/next-step/objective proposal semantics; certainty-split responses now keep tentative inputs out of certain facts, with aligned trace uncertainty flags.
@@ -53,3 +56,7 @@
 - Updated README/architecture/bootstrap/operations/propagation docs for post-024 semantics and confirmed schema stays at v6 for this pass.
 
 - REBUILD-024 follow-up: fixed explicit blocker declaration routing, prevented meta state-queries from self-materializing into open-question state, added explicit evidence-gap query matching (`mihez nincs még elég bizonyíték?`), and stopped premature `decision_made` promotion for decision-status questions.
+
+- REBUILD-026: deterministic large-text evidence-ingest baseline with chunking, key-line extraction, source-grounded response sections, and unresolved-evidence separation.
+- Added evidence-ingest config knobs (`evidence_chunk_line_limit`, `evidence_max_chunks`, `evidence_summary_line_limit`) and trace payload enrichment (`ingest_status`, `chunk_count`, `key_line_count`).
+- Added regressions for large-text ingest extraction and follow-up source-grounded recall without repasting full logs.

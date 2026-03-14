@@ -47,6 +47,30 @@ def build_synthesis_plan(
     weak = _unique([clean_display_text(i.detail) for i in evidence.items if i.support == SupportLabel.WEAK_SUPPORT])
     unresolved = _unique([clean_display_text(i.detail) for i in evidence.items if i.support == SupportLabel.UNRESOLVED])
 
+
+    if evidence.ingest is not None and evidence.ingest.ingest_status.value == "raw_text_evidence":
+        if evidence.ingest.evidence_summary:
+            sections.append(
+                SynthesisSection(
+                    key="evidence_summary",
+                    lines=["Forrásból kivont lényeg:", *[f"• {clean_display_text(line)}" for line in evidence.ingest.evidence_summary]],
+                )
+            )
+        if evidence.ingest.extracted_key_lines:
+            sections.append(
+                SynthesisSection(
+                    key="source_key_lines",
+                    lines=["Forrás-sorok (biztosan látszik):", *[f"• {clean_display_text(line)}" for line in evidence.ingest.extracted_key_lines[:4]]],
+                )
+            )
+        if evidence.ingest.unresolved_evidence:
+            sections.append(
+                SynthesisSection(
+                    key="unresolved_evidence",
+                    lines=["Ami még nincs alátámasztva:", *[f"• {clean_display_text(line)}" for line in evidence.ingest.unresolved_evidence]],
+                )
+            )
+
     if supported:
         sections.append(SynthesisSection(key="supported_facts", lines=["Ami biztos:", *[f"• {item}" for item in supported[:3]]]))
     if weak:

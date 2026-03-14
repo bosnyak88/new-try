@@ -26,3 +26,19 @@ Use `trace-last` and inspect `thread_weave_state_derived` (`relation`, `conclusi
 Also verify `thread-snapshot --current` and `thread-focus --current` include `thread_weave_state` payloads aligned with current workframe state.
 
 - REBUILD-025 correction probe: after `közben kitértünk a live loop hibára` and `de a főszál továbbra is a rebuild-025`, check that `mi volt csak mellékszál?` returns the live-loop detour and `mi a főszál most?` returns rebuild-025 (not `unrelated_thread`).
+
+
+## REBUILD-026 runtime probes (large text/evidence grounding)
+- Expected on raw block turn: explicit ingest acknowledgement (`evidenciaként beemeltem`) before follow-up evidence questions.
+- Deterministic multiline ingest (supported): `python -m syntaris.cli --config config/syntaris.example.toml talk --once-file ./sample.log`
+- Deterministic multiline ingest from stdin (supported): `cat ./sample.log | python -m syntaris.cli --config config/syntaris.example.toml talk --once-stdin`
+- If evidence was not ingested, evidence-query family now returns explicit no-evidence guidance (never generic filler).
+- `python -m syntaris.cli --config config/syntaris.example.toml talk --once "bemásolok egy hosszabb konzolkimenetet"`
+- `python -m syntaris.cli --config config/syntaris.example.toml talk --once "<többsoros log/traceback minta>"`
+- `python -m syntaris.cli --config config/syntaris.example.toml talk --once "mi a lényeg ebből?"`
+- `python -m syntaris.cli --config config/syntaris.example.toml talk --once "mi benne a valódi hiba?"`
+- `python -m syntaris.cli --config config/syntaris.example.toml talk --once "mi biztosan látszik ebből?"`
+- `python -m syntaris.cli --config config/syntaris.example.toml talk --once "mi csak következtetés?"`
+- `python -m syntaris.cli --config config/syntaris.example.toml trace-last`
+
+Expected: source-grounded lines are explicit, inferred/unresolved parts stay separated, and trace reports ingest/chunk/key-line counts.

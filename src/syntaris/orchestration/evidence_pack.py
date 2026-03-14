@@ -4,8 +4,10 @@ from syntaris.orchestration.text_normalize import clean_display_text
 from syntaris.contracts.runtime import (
     DecompositionPlan,
     EvidenceItem,
+    EvidenceIngestResult,
     EvidencePack,
     FollowupResolution,
+    GroundingStatus,
     RecallResolution,
     SupportLabel,
     ThreadFocusPack,
@@ -20,6 +22,7 @@ def build_evidence_pack(
     followup: FollowupResolution,
     current_thread_summary: str | None = None,
     previous_thread_summary: str | None = None,
+    ingest: EvidenceIngestResult | None = None,
 ) -> EvidencePack:
     items: list[EvidenceItem] = []
 
@@ -30,6 +33,7 @@ def build_evidence_pack(
                 source="current_message",
                 detail=clean_display_text(message),
                 support=SupportLabel.SUPPORTED,
+                grounding=GroundingStatus.DIRECTLY_SUPPORTED_BY_SOURCE,
             )
         ]
 
@@ -91,6 +95,30 @@ def build_evidence_pack(
                     )
                 )
 
+
+        if ingest is not None and ingest.ingest_status.value == "raw_text_evidence":
+            for line in ingest.extracted_key_lines[:2]:
+                unit_items.append(
+                    EvidenceItem(
+                        unit_id=unit.unit_id,
+                        source="extracted_key_line",
+                        detail=clean_display_text(line),
+                        support=SupportLabel.SUPPORTED,
+                        grounding=GroundingStatus.DIRECTLY_SUPPORTED_BY_SOURCE,
+                        source_reference="evidence_chunk",
+                    )
+                )
+            for line in ingest.unresolved_evidence[:1]:
+                unit_items.append(
+                    EvidenceItem(
+                        unit_id=unit.unit_id,
+                        source="unresolved_evidence",
+                        detail=clean_display_text(line),
+                        support=SupportLabel.UNRESOLVED,
+                        grounding=GroundingStatus.SOURCE_NOT_AVAILABLE,
+                    )
+                )
+
         if unit.objective_kind.value in {"status_check", "diagnose", "next_step"} and len(unit_items) <= 2:
             unit_items.append(
                 EvidenceItem(
@@ -103,4 +131,4 @@ def build_evidence_pack(
 
         items.extend(unit_items)
 
-    return EvidencePack(items=items)
+    return EvidencePack(items=items, ingest=ingest)

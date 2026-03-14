@@ -200,6 +200,17 @@ def derive_workframe_state(turns: list[ThreadContextTurn], current_message: str)
             blocker_status = WorkframeBlockerStatus.IMPLIED
             blocker_text = blocker_text or "Van súrlódás, de nincs teljesen kimondva a fő akadály."
 
+
+        if any(t in n for t in ("traceback", "exception", "error", "runtimeerror", "valueerror", "exit code", "failed")):
+            if blocker_status == WorkframeBlockerStatus.NONE:
+                blocker_status = WorkframeBlockerStatus.IMPLIED
+            if blocker_text is None:
+                blocker_text = "A forrásban hiba/traceback jel látszik, ez valószínűleg blokkolja a továbblépést."
+            if assumption_status == AssumptionStatus.UNKNOWN:
+                assumption_status = AssumptionStatus.INFERRED
+                if not assumption_lines:
+                    assumption_lines = ["A blocker részben közvetlen hibajelre, részben következtetésre épül."]
+
         if update_signals.hedged_blocker or update_signals.hedged_objective or update_signals.hedged_next_step:
             if assumption_status == AssumptionStatus.UNKNOWN:
                 assumption_status = AssumptionStatus.ASSUMPTION

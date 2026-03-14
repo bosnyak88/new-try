@@ -1358,3 +1358,61 @@ def test_cli_owner_aware_intake_bridge_sequences(tmp_path, monkeypatch, capsys):
     assert "timesheet" in replies[2].lower() or "konkrét" in replies[2].lower()
     assert "fókusz" in replies[3].lower()
     assert "fonalat" in replies[4].lower() or "folytassuk" in replies[4].lower()
+
+
+def test_cli_talk_once_file_and_stdin_support_multiline_input(tmp_path, monkeypatch, capsys):
+    import io
+
+    config = tmp_path / "syntaris.toml"
+    data_dir = tmp_path / "data"
+    db_path = data_dir / "runtime.db"
+    _write_config(config, db_path, data_dir)
+
+    evidence_file = tmp_path / "evidence.log"
+    evidence_file.write_text(
+        """Traceback (most recent call last):
+  File "src/syntaris/orchestration/turns.py", line 351, in execute_turn
+    raise ValueError('bad config')
+ValueError: bad config
+WARNING: fallback path selected
+exit code 1
+""",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        "sys.argv", ["syntaris", "--config", str(config), "talk", "--once-file", str(evidence_file)]
+    )
+    assert cli.main() == 0
+    first = json.loads(capsys.readouterr().out)
+    assert first["thread_key"] == "default"
+    assert "evidenciaként" in first["reply"].lower()
+
+    monkeypatch.setattr(
+        "sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "mi biztosan látszik ebből?"]
+    )
+    assert cli.main() == 0
+    second = json.loads(capsys.readouterr().out)
+    assert "Közvetlenül látszik" in second["reply"]
+
+    monkeypatch.setattr(
+        "sys.argv", ["syntaris", "--config", str(config), "talk", "--once-stdin"]
+    )
+    monkeypatch.setattr(
+        "sys.stdin",
+        io.StringIO("""Traceback
+ValueError: stdin ingest
+WARNING: stdin
+exit code 1
+more
+lines
+"""),
+    )
+    assert cli.main() == 0
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "trace-last"])
+    assert cli.main() == 0
+    trace = json.loads(capsys.readouterr().out)
+    event = next(evt for evt in trace["trace_events"] if evt["event_name"] == "evidence_pack_built")
+    assert '"ingest_status": "raw_text_evidence"' in event["payload"]
