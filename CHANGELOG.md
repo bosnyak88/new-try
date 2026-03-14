@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- REBUILD-034a: fixed `talk --once-file` missing-file honesty boundary (controlled failure + `once_file_read_failed` trace) and blocked silent stale-evidence substitution after failed raw-source handoff.
 - REBUILD-034: strengthened HU presence baseline for entry/re-entry (\"folytassuk innen / hol tartottunk / vissza syntaris\") with continuation-aware routing and reduced generic fallback while preserving deterministic owner/system truth constraints.
 - REBUILD-034: added deterministic help-capability follow-up query (\"miben segítesz nekem?\") and expanded presence parity/return-trace regression coverage across once/live/manual paths.
 - REBUILD-033 completion follow-up: aligned live relationship query writeback with visible relationship answers so live thread-weave relation/conclusion/applicability no longer drifts to empty/unknown in grounded flows.

@@ -271,6 +271,33 @@ def _emit_console_text(text: str) -> tuple[bool, str | None]:
     return result.degraded, result.reason
 
 
+
+
+def _record_once_file_read_failed(runtime, *, path: str, reason: str, thread_key: str | None, mode: str | None) -> None:
+    store = PersistenceStore(runtime.config.paths.db_path)
+    store.initialize(data_dir=runtime.config.paths.data_dir)
+    state = store.resolve_or_create_active(
+        default_thread_key=runtime.config.conversation.default_thread_key,
+        default_mode=runtime.config.conversation.default_mode,
+    )
+    store.create_trace_events(
+        session_id=state.session_id,
+        thread_id=state.thread_id,
+        turn_id=0,
+        mode=mode or state.mode,
+        backend="cli",
+        degraded=True,
+        events=[
+            {
+                "event_name": "once_file_read_failed",
+                "payload": {
+                    "path": clean_display_text(path),
+                    "reason": clean_display_text(reason),
+                    "thread_override": thread_key,
+                },
+            }
+        ],
+    )
 def _record_live_output_event(runtime, output, *, event_name: str, degraded: bool, payload: dict[str, object]) -> None:
     store = PersistenceStore(runtime.config.paths.db_path)
     store.initialize(data_dir=runtime.config.paths.data_dir)
@@ -425,8 +452,29 @@ def main() -> int:
             return 0
 
         if args.once_file is not None:
-            with open(args.once_file, "r", encoding="utf-8-sig") as f:
-                message = f.read()
+            try:
+                with open(args.once_file, "r", encoding="utf-8-sig") as f:
+                    message = f.read()
+            except OSError as exc:
+                reason = f"{type(exc).__name__}: {exc}"
+                _record_once_file_read_failed(
+                    runtime,
+                    path=args.once_file,
+                    reason=reason,
+                    thread_key=args.thread_key,
+                    mode=args.mode,
+                )
+                print(
+                    json.dumps(
+                        {
+                            "error": "once_file_read_failed",
+                            "path": args.once_file,
+                            "reason": clean_display_text(reason),
+                        },
+                        ensure_ascii=False,
+                    )
+                )
+                return 2
             request = TalkRequest(message=message, thread_key=args.thread_key, mode=args.mode)
             result = talk_once(runtime, request)
             _print_turn_result(result)

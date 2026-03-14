@@ -233,3 +233,22 @@ Schema migration: not required in this phase (v7 unchanged).
 
 ### Scope control
 - Presence/conversation-surface baseline only; no execution orchestration, workspace-shell/tool bridge, or UI expansion scope added.
+
+
+## REBUILD-034a narrow follow-up snapshot
+### Changed
+- `src/syntaris/cli.py`: hardened `talk --once-file` boundary with controlled `OSError` handling (deterministic non-zero exit + explicit JSON error payload) and emitted `once_file_read_failed` trace event for audit visibility.
+- `src/syntaris/orchestration/turns.py`: tightened evidence-context reuse policy so implicit evidence follow-ups only continue a contiguous evidence thread; historical evidence reuse now requires explicit recall wording and can no longer silently substitute stale evidence after failed handoff attempts.
+- Added deterministic regressions: `tests/test_once_file_boundary.py`, `tests/test_evidence_failed_ingest.py`, `tests/test_evidence_context_honesty.py`.
+
+### Reviewed unchanged
+- `src/syntaris/orchestration/response_plan.py`, `src/syntaris/orchestration/evidence_ingest.py`, `src/syntaris/orchestration/evidence_pack.py` (kept existing evidence rendering/ingest contracts).
+- `src/syntaris/persistence/schema.py` and schema migration flow unchanged (v7).
+- Presence/identity/maintenance suites preserved from REBUILD-034 and revalidated.
+
+### Schema/contracts
+- Schema unchanged (v7).
+- Contracts unchanged in this narrow follow-up (behavioral routing fix + CLI boundary hardening only).
+
+### Scope control
+- Narrow truth-first correction on failed raw evidence handoff and stale-evidence substitution guard only; no broad presence/evidence redesign and no execution/UI expansion.
