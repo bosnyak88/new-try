@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- REBUILD-033: added deterministic owner/system identity baseline (owner name + explicit system name capture, `ki vagy te?` query support, and relationship-coherent reply shaping) to reduce low-value filler on identity clarification turns.
+- REBUILD-033: strengthened owner-aware presence surface without fake certainty, preserved live emit/trace visibility, and added dedicated identity/presence regression suites.
 - REBUILD-032: fixed manual interactive `talk --live` emission path by streaming each live output immediately (emit + flush before next input wait) instead of buffering until loop end.
 - REBUILD-032: added explicit live output honesty trace events (`reply_adapted_rendered`, `reply_emit_attempted`, `reply_emitted_successfully`, `reply_emit_failed`) while preserving REBUILD-030 sanitization via `live_output_sanitized`.
 - REBUILD-031: fixed Windows/PowerShell live stdin mojibake boundary with deterministic byte-decoding + reversible repair so Hungarian prompts preserve semantic fidelity in `talk --live`.

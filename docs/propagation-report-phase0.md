@@ -156,3 +156,25 @@ Schema migration: not required in this phase (v7 unchanged).
 ### Schema/contracts
 - Schema unchanged (v7).
 - Contract shape unchanged; behavior extended via existing live loop/trace event payloads.
+
+
+## REBUILD-033 propagation snapshot
+### Changed
+- `src/syntaris/contracts/runtime.py`: extended deterministic contracts with `ClaimKind.SYSTEM_NAME`, `MemoryQueryKind.WHO_ARE_YOU`, and owner/system identity fields in `OwnerIdentityProfile` + `PersonalMemoryView`.
+- `src/syntaris/orchestration/turn_interpret.py`: widened HU identity intake coverage (`az én nevem ...`, `a te neved ...`, `én tervezlek és fejlesztelek`, `te a személyes kognitív rendszerem leszel`) and added `ki vagy te?` memory-query routing.
+- `src/syntaris/orchestration/response_plan.py`: strengthened claim-capture acknowledgements and memory-query coherence so owner/system/relationship answers stay mutually aligned and non-filler.
+- `src/syntaris/persistence/store.py`: propagated stable `system_name` persistence/readback into personal-memory/owner-identity views.
+- Added deterministic regressions: `tests/test_identity_relationship.py`, `tests/test_presence_surface.py`.
+
+### Reviewed unchanged
+- Live transport/emission chain (`src/syntaris/orchestration/live_loop.py`, `src/syntaris/cli.py`) kept intact to preserve REBUILD-032 visibility/emit honesty and REBUILD-031 ingress parity.
+- Evidence and maintenance families (`tests/test_evidence_grounded_talk.py`, `tests/test_maintenance_route_hijack.py`) validated unchanged behavior.
+- Thread/snapshot/focus/trace architecture remained in current deterministic shape.
+
+### Schema/contracts
+- Schema unchanged (v7): `personal_claims` already supports additional stable claim kinds without migration.
+- Contracts changed in a narrow, additive way for owner/system identity coherence.
+
+### Scope control
+- No workspace shell / tool bridge / execution engine / A/B orchestration broadening.
+- No theatrical persona simulation; tone improvements remain bounded by explicit captured claims.

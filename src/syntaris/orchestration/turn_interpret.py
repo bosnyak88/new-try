@@ -55,7 +55,7 @@ _AMBIGUOUS_RESUME_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 
 _OWNER_NAME_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"(?:^|\s)én\s+([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű]+)\s+vagyok(?:\s|$)", re.IGNORECASE),
-    re.compile(r"(?:^|\s)(?:javitas[:\s]+)?a\s+nevem\s+([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű]+)(?:\s|$)", re.IGNORECASE),
+    re.compile(r"(?:^|\s)(?:javitas[:\s]+)?(?:az\s+[eé]n\s+nevem|a\s+nevem)\s+([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű]+)(?:\s|$)", re.IGNORECASE),
 )
 
 
@@ -65,6 +65,22 @@ def _extract_owner_name(text: str) -> str | None:
         if match:
             raw = match.group(1).strip()
             return raw[:1].upper() + raw[1:].lower()
+    return None
+
+
+
+_SYSTEM_NAME_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"(?:^|\s)a\s+te\s+neved\s+([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű-]+)(?:\s|$)", re.IGNORECASE),
+    re.compile(r"(?:^|\s)te\s+([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű-]+)\s+vagy(?:\s|$)", re.IGNORECASE),
+)
+
+
+def _extract_system_name(text: str) -> str | None:
+    for pattern in _SYSTEM_NAME_PATTERNS:
+        match = pattern.search(text)
+        if match:
+            raw = match.group(1).strip()
+            return raw[:1].upper() + raw[1:]
     return None
 
 
@@ -100,12 +116,16 @@ def _extract_system_role(normalized: str) -> str | None:
         return "személyes rendszered"
     if "ez az en szemelyes rendszerem" in normalized:
         return "személyes rendszered"
+    if "te a szemelyes kognitiv rendszerem leszel" in normalized:
+        return "személyes kognitív rendszered"
     return None
 
 
 def _memory_query_kind(normalized: str) -> MemoryQueryKind | None:
     if normalized in {"ki vagyok", "ki vagyok?", "hogy hivnak", "hogy hivnak?"}:
         return MemoryQueryKind.WHO_AM_I
+    if normalized in {"ki vagy te", "ki vagy te?", "hogy hivnak teged", "hogy hivnak teged?"}:
+        return MemoryQueryKind.WHO_ARE_YOU
     if normalized in {"mit tudsz rolam biztosan", "mit tudsz rolam biztosan?"}:
         return MemoryQueryKind.WHAT_KNOWN_CERTAIN
     if normalized in {"mi a kapcsolatunk", "mi a kapcsolatunk?"}:
@@ -135,10 +155,12 @@ def _memory_query_kind(normalized: str) -> MemoryQueryKind | None:
     return None
 
 
-def _claim_captures(owner_name: str | None, owner_framing: bool, system_role: str | None, declared_focus: str | None, declared_direction: str | None, temporary_state: str | None, declared_chat_day: bool) -> list[ClaimCapture]:
+def _claim_captures(owner_name: str | None, system_name: str | None, owner_framing: bool, system_role: str | None, declared_focus: str | None, declared_direction: str | None, temporary_state: str | None, declared_chat_day: bool) -> list[ClaimCapture]:
     captures: list[ClaimCapture] = []
     if owner_name is not None:
         captures.append(ClaimCapture(kind=ClaimKind.OWNER_NAME, value=owner_name, scope=ClaimScope.STABLE))
+    if system_name is not None:
+        captures.append(ClaimCapture(kind=ClaimKind.SYSTEM_NAME, value=system_name, scope=ClaimScope.STABLE))
     if owner_framing:
         captures.append(ClaimCapture(kind=ClaimKind.OWNER_RELATION, value="creator", scope=ClaimScope.STABLE))
     if system_role is not None:
@@ -161,11 +183,14 @@ def interpret_turn(message: str) -> TurnInterpretation:
 
     owner_name = _extract_owner_name(text)
     relative_terms = _extract_relative_time_terms(normalized)
+    system_name = _extract_system_name(text)
     owner_framing = any(
         phrase in normalized
         for phrase in (
             "en terveztem a rendszered",
             "en fejlesztelek",
+            "en tervezlek",
+            "en tervezlek es fejlesztelek",
             "en epitettem a rendszered",
             "a te rendszergedet en terveztem",
         )
@@ -200,7 +225,7 @@ def interpret_turn(message: str) -> TurnInterpretation:
         for phrase in ("folytassuk a syntarist", "menjunk tovabb innen", "vegyuk fel innen a fonalat")
     )
 
-    captures = _claim_captures(owner_name, owner_framing, system_role, declared_focus, declared_direction, temporary_state, personal_chat_intake)
+    captures = _claim_captures(owner_name, system_name, owner_framing, system_role, declared_focus, declared_direction, temporary_state, personal_chat_intake)
 
     if owner_framing:
         return TurnInterpretation(
