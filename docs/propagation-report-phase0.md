@@ -73,3 +73,12 @@ Schema migration: not required in this phase (v7 unchanged).
 - trace: lifecycle and maintenance fields added to `thread_weave_state_derived` payload
 - regression: added deterministic tests for memory maintenance, thread lifecycle maintenance, and applicability gate
 - schema: unchanged (v7)
+
+
+## REBUILD-028 narrow follow-up snapshot
+- fixed interpretation/update routing gap where maintenance setup/update prompts were incorrectly collapsing into generic time-reference fallback
+- expanded workframe blocker query/update detection for `blocker` phrasing (`mi a blocker most?`, `a blocker most ...`)
+- added deterministic blocker replacement handling for `most már más a helyzet ... megszűnt ..., ... maradt gond`
+- completed Scenario-A applicability/conclusion path so maintained conclusion is not left empty when supersession is explicitly present
+- kept REBUILD-027 lifecycle cues and REBUILD-026 evidence behavior intact (validated by regressions)
+- schema unchanged (v7)

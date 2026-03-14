@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- REBUILD-028: fixed maintenance-route hijack where explicit maintenance/blocker turns containing time references ("most/ma") could fall back to generic clarification.
+- REBUILD-028: added blocker replacement parsing (old blocker resolved + new blocker remains), and completed applicability/conclusion query handling for the Scenario-A maintenance flow.
+- REBUILD-028: added focused regressions for maintenance update routing, blocker persistence/replacement, and state/trace/snapshot alignment.
 - REBUILD-027: deterministic maintenance baseline for memory/thread/conclusion lifecycle with explicit applicability gate propagation.
 - Added lifecycle semantics to `ThreadWeaveState` (temporary-state lifecycle, thread lifecycle, conclusion validity) and aligned response/persistence/trace behavior.
 - Added deterministic regressions for memory maintenance, thread lifecycle cues (park/return/close), and applicability gate behavior.
@@ -50,6 +53,9 @@
 
 
 ## Unreleased
+- REBUILD-028: fixed maintenance-route hijack where explicit maintenance/blocker turns containing time references ("most/ma") could fall back to generic clarification.
+- REBUILD-028: added blocker replacement parsing (old blocker resolved + new blocker remains), and completed applicability/conclusion query handling for the Scenario-A maintenance flow.
+- REBUILD-028: added focused regressions for maintenance update routing, blocker persistence/replacement, and state/trace/snapshot alignment.
 - REBUILD-027: deterministic maintenance baseline for memory/thread/conclusion lifecycle with explicit applicability gate propagation.
 - Added lifecycle semantics to `ThreadWeaveState` (temporary-state lifecycle, thread lifecycle, conclusion validity) and aligned response/persistence/trace behavior.
 - Added deterministic regressions for memory maintenance, thread lifecycle cues (park/return/close), and applicability gate behavior.

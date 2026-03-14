@@ -30,6 +30,7 @@ _CONCLUSION_QUERY_PATTERNS = (
     "mi a konkluzio",
     "mit lehet ebbol levonni",
     "mi maradt ervenyes a korabbibol",
+    "mi maradt ervenyes a korabbi tanulsagbol",
 )
 _APPLICABILITY_QUERY_PATTERNS = (
     "ebbol mi alkalmazhato most",
@@ -193,6 +194,13 @@ def derive_thread_weave_state(
 
     if any(c in message_n for c in _SUPERSEDED_CUES):
         conclusion_status = ConclusionStatus.SUPERSEDED
+
+    if conclusion_status == ConclusionStatus.NONE and (scan.had_resolved or scan.had_superseded):
+        conclusion_status = ConclusionStatus.DERIVED
+        if workframe_state is not None and workframe_state.blocker_text:
+            conclusion_text = f"A korábbi blocker részben lezárult/felülíródott; a mostani aktív blokkernél ezt tartjuk: {workframe_state.blocker_text}."
+        else:
+            conclusion_text = "A korábbi blocker lezárult vagy felülíródott az új helyzettel."
 
     conclusion_validity = ConclusionValidityStatus.HISTORICAL_REMINDER
     temporary_state_lifecycle = TemporaryStateLifecycle.AGED_STALE
