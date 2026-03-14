@@ -116,7 +116,7 @@ def _extract_system_role(normalized: str) -> str | None:
         return "személyes rendszered"
     if "ez az en szemelyes rendszerem" in normalized:
         return "személyes rendszered"
-    if "te a szemelyes kognitiv rendszerem leszel" in normalized:
+    if "te a szemelyes kognitiv rendszerem leszel" in normalized or "a szemelyes kognitiv rendszerem leszel" in normalized:
         return "személyes kognitív rendszered"
     return None
 

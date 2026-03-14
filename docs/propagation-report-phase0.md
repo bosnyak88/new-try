@@ -178,3 +178,21 @@ Schema migration: not required in this phase (v7 unchanged).
 ### Scope control
 - No workspace shell / tool bridge / execution engine / A/B orchestration broadening.
 - No theatrical persona simulation; tone improvements remain bounded by explicit captured claims.
+
+
+## REBUILD-033 follow-up completion note
+### Changed
+- `src/syntaris/orchestration/turn_interpret.py`: completed explicit relationship-frame intake for the non-"te" variant (`a személyes kognitív rendszerem leszel`) so the turn routes to deterministic claim capture instead of low-value fallback.
+- `src/syntaris/orchestration/thread_weave.py`: added conservative relationship-frame derivation from explicit owner/system cues, including non-empty relation/conclusion/applicability semantics and relationship query/update trace tagging.
+- Added deterministic regressions: `tests/test_relationship_alignment.py`, `tests/test_relationship_trace.py`.
+
+### Reviewed unchanged
+- `src/syntaris/orchestration/live_loop.py`, `src/syntaris/cli.py` (REBUILD-032/031/030 live guarantees preserved).
+- Evidence and maintenance families verified via targeted suites (`tests/test_evidence_grounded_talk.py`, `tests/test_maintenance_route_hijack.py`).
+
+### Schema/contracts
+- Schema unchanged (v7).
+- No contract migration required for this follow-up; completion is in interpretation + weave-state derivation/trace alignment.
+
+### Scope control
+- Kept as narrow in-place completion on REBUILD-033 branch/PR; no architecture redesign, no A/B orchestration, no workspace/tool bridge expansion.

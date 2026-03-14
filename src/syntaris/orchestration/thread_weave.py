@@ -54,6 +54,18 @@ _REOPEN_CUES = ("terjunk vissza", "vegyuk vissza", "ujranyitjuk")
 _RESOLVED_CUES = ("megszunt", "megoldodott", "rendezodott", "mar nem blocker")
 _SUPERSEDED_CUES = ("mas a helyzet", "felulirja", "uj helyzet", "most mar mas")
 
+_RELATIONSHIP_OWNER_CREATOR_CUES = (
+    "en tervezlek es fejlesztelek",
+    "en tervezlek",
+    "en fejlesztelek",
+    "en terveztem a rendszered",
+)
+_RELATIONSHIP_SYSTEM_ROLE_CUES = (
+    "a szemelyes kognitiv rendszerem leszel",
+    "te a szemelyes kognitiv rendszerem leszel",
+    "ez az en szemelyes rendszerem",
+)
+
 
 @dataclass(frozen=True)
 class _WeaveScan:
@@ -66,10 +78,14 @@ class _WeaveScan:
     had_reopen: bool = False
     had_resolved: bool = False
     had_superseded: bool = False
+    owner_creator_declared: bool = False
+    system_personal_role_declared: bool = False
 
 
 def detect_thread_weave_query_family(message: str) -> str | None:
     n = normalize_hungarian_for_match(message).strip()
+    if "mi a kapcsolatunk" in n:
+        return "relationship_query"
     if any(p in n for p in _RELATION_MAIN_PATTERNS + _RELATION_SIDE_PATTERNS):
         return "thread_relation_query"
     if any(p in n for p in _CONCLUSION_QUERY_PATTERNS):
@@ -81,6 +97,8 @@ def detect_thread_weave_query_family(message: str) -> str | None:
 
 def detect_thread_weave_update_kind(message: str) -> str | None:
     n = normalize_hungarian_for_match(message).strip()
+    if any(cue in n for cue in _RELATIONSHIP_OWNER_CREATOR_CUES + _RELATIONSHIP_SYSTEM_ROLE_CUES):
+        return "relationship_frame_declared"
     if any(cue in n for cue in _PARK_CUES):
         return "park_declared"
     if any(cue in n for cue in _CLOSE_CUES):
@@ -108,6 +126,8 @@ def _scan_weave(turns: list[ThreadContextTurn], current_message: str, workframe_
     had_reopen = False
     had_resolved = False
     had_superseded = False
+    owner_creator_declared = False
+    system_personal_role_declared = False
 
     for turn in [*turns, ThreadContextTurn(turn_id=-1, turn_index=-1, user_message=current_message, assistant_reply="", backend="deterministic", degraded=False)]:
         n = normalize_hungarian_for_match(turn.user_message)
@@ -131,6 +151,10 @@ def _scan_weave(turns: list[ThreadContextTurn], current_message: str, workframe_
             had_resolved = True
         if any(c in n for c in _SUPERSEDED_CUES):
             had_superseded = True
+        if any(cue in n for cue in _RELATIONSHIP_OWNER_CREATOR_CUES):
+            owner_creator_declared = True
+        if any(cue in n for cue in _RELATIONSHIP_SYSTEM_ROLE_CUES):
+            system_personal_role_declared = True
         if main_topic is None:
             match = _MAIN_DECLARATION.search(n)
             if match:
@@ -145,6 +169,8 @@ def _scan_weave(turns: list[ThreadContextTurn], current_message: str, workframe_
         had_reopen=had_reopen,
         had_resolved=had_resolved,
         had_superseded=had_superseded,
+        owner_creator_declared=owner_creator_declared,
+        system_personal_role_declared=system_personal_role_declared,
     )
 
 
@@ -172,6 +198,11 @@ def derive_thread_weave_state(
     elif "foszal" in message_n and scan.main_topic is not None:
         relation = ThreadRelationKind.RETURN_TO_MAIN if scan.had_return_to_main else ThreadRelationKind.MAIN_THREAD
 
+    relationship_explicit = scan.owner_creator_declared and scan.system_personal_role_declared
+    relationship_partial = scan.owner_creator_declared or scan.system_personal_role_declared
+    if relation == ThreadRelationKind.RELATION_UNKNOWN and relationship_partial:
+        relation = ThreadRelationKind.MAIN_THREAD
+
     conclusion_status = ConclusionStatus.NONE
     conclusion_text: str | None = None
     for turn in turns:
@@ -191,6 +222,13 @@ def derive_thread_weave_state(
         elif workframe_state is not None and workframe_state.next_step_lines:
             conclusion_status = ConclusionStatus.DERIVED
             conclusion_text = workframe_state.next_step_lines[0]
+
+    if conclusion_status == ConclusionStatus.NONE and relationship_explicit:
+        conclusion_status = ConclusionStatus.DERIVED
+        conclusion_text = "Kapcsolati keret rögzítve: te tervezed/fejleszted a rendszert, én a személyes kognitív rendszered szerepében működöm."
+    elif conclusion_status == ConclusionStatus.NONE and relationship_partial:
+        conclusion_status = ConclusionStatus.TENTATIVE
+        conclusion_text = "Részleges kapcsolat-keret látszik, de teljes megerősítéshez még szükséges mindkét oldal explicit jelzése."
 
     if any(c in message_n for c in _SUPERSEDED_CUES):
         conclusion_status = ConclusionStatus.SUPERSEDED
@@ -230,6 +268,13 @@ def derive_thread_weave_state(
     elif scan.had_detour and scan.main_topic:
         applicability_status = ApplicabilityStatus.PARTIALLY_APPLICABLE
         applicability_reason = "A kitérő-felismerés hasznos, de még nincs explicit visszatérés a főszálra."
+
+    if relationship_explicit:
+        applicability_status = ApplicabilityStatus.APPLICABLE_NOW
+        applicability_reason = "Az explicit owner+system kapcsolat-keret most közvetlenül alkalmazható a válaszokban."
+    elif relationship_partial and applicability_status == ApplicabilityStatus.UNCERTAIN:
+        applicability_status = ApplicabilityStatus.PARTIALLY_APPLICABLE
+        applicability_reason = "A kapcsolat-keret részben explicit, de még nem teljes."
 
     if scan.had_superseded:
         applicability_status = ApplicabilityStatus.SUPERSEDED_BY_NEW_CONTEXT
