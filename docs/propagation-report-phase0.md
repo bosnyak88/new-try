@@ -44,3 +44,7 @@ Full-system propagation pass completed for deterministic thread-weave/conclusion
 - CLI: thread-snapshot/thread-focus JSON surfaces now include thread-weave payload.
 - tests: added deterministic regressions for relation/conclusion/applicability answers, trace integrity, and snapshot/focus alignment.
 - docs/config/changelog: synchronized to post-025 semantics.
+
+
+## REBUILD-025 follow-up correction note
+Narrow semantic correction pass on the same PR: detour declaration and return-to-main declaration are now explicitly captured as thread-weave updates, and relation/conclusion/applicability answers are derived from retained weave state (not generic fallback). Direct answers are aligned with snapshot/focus/trace (`thread_weave_state_derived`) for the in-thread main-vs-detour scenario.

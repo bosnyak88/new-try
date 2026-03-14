@@ -46,3 +46,4 @@ Current baseline intentionally does **not** include:
 - Added deterministic conclusion semantics: `explicit_conclusion`, `derived_conclusion`, `tentative_conclusion`, `superseded_conclusion`, `no_conclusion_established`.
 - Added deterministic carry-forward applicability semantics: `applicable_now`, `partially_applicable`, `not_applicable_now`, `applicability_uncertain`, `superseded_by_new_context`.
 - Snapshot/focus/trace now carry aligned thread-weave state, and `trace-last` includes `thread_weave_state_derived`.
+- Detour (`kitértünk ...`) and return-to-main (`a főszál továbbra is ...`) declarations are captured as retained thread-weave updates, and direct relation answers align with snapshot/focus/trace state.

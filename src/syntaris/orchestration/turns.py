@@ -52,7 +52,7 @@ from syntaris.orchestration.response_plan import build_response_plan
 from syntaris.orchestration.workframe_state import derive_workframe_state, detect_query_signals, detect_update_signals
 from syntaris.orchestration.time_context import build_time_context
 from syntaris.orchestration.routing import resolve_route_decision
-from syntaris.orchestration.thread_weave import derive_thread_weave_state, detect_thread_weave_query_family
+from syntaris.orchestration.thread_weave import derive_thread_weave_state, detect_thread_weave_query_family, detect_thread_weave_update_kind
 from syntaris.persistence import PersistenceStore
 from syntaris.reply.adapters import ReplyOutput
 from syntaris.reply.plan_renderer import render_response_plan
@@ -428,6 +428,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         historical_workframe_state=historical_workframe_state,
         thread_weave_state=thread_weave_state,
         thread_weave_query_family=detect_thread_weave_query_family(normalized_message),
+        thread_weave_update_kind=detect_thread_weave_update_kind(normalized_message),
+        thread_weave_query_message=normalized_message,
     )
 
     recap_trace = RecapTrace(recognized=False)
@@ -572,7 +574,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         detour_thread_key=thread_weave_state.detour_thread_key,
         conclusion_status=thread_weave_state.conclusion_status.value,
         applicability_status=thread_weave_state.applicability_status.value,
-        query_family=detect_thread_weave_query_family(normalized_message),
+        query_family=detect_thread_weave_query_family(normalized_message) or detect_thread_weave_update_kind(normalized_message),
     )
 
     if response_plan.kind.value in {"recall", "resume", "clarification"} or any(section.lines for section in response_plan.sections):

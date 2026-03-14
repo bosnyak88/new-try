@@ -32,7 +32,11 @@ def test_thread_relation_answers_and_trace(tmp_path):
     main = talk_once(runtime, TalkRequest(message="mi a főszál most?"))
 
     assert "Szál-kapcsolat" in rel.turn.assistant_reply
+    assert "live loop" in rel.turn.assistant_reply.lower()
     assert "Szál-kapcsolat" in main.turn.assistant_reply
+    assert "rebuild-025" in main.turn.assistant_reply.lower()
+    assert "unrelated_thread" not in rel.turn.assistant_reply
+    assert "unrelated_thread" not in main.turn.assistant_reply
 
     trace = trace_last(runtime)
     payloads = {e.event_name: json.loads(e.payload) for e in trace.trace_events}
@@ -55,7 +59,9 @@ def test_conclusion_and_applicability_surface(tmp_path):
     appl = talk_once(runtime, TalkRequest(message="ebből mi alkalmazható most?"))
 
     assert "Konklúzió állapot" in concl.turn.assistant_reply
-    assert "Alkalmazhatóság" in appl.turn.assistant_reply
+    assert "kitérő" in concl.turn.assistant_reply.lower()
+    assert "Mostani alkalmazhatóság" in appl.turn.assistant_reply
+    assert ("minta" in appl.turn.assistant_reply.lower()) or ("kitérő" in appl.turn.assistant_reply.lower())
 
 
 def test_snapshot_and_focus_include_thread_weave_state(tmp_path):
@@ -69,3 +75,20 @@ def test_snapshot_and_focus_include_thread_weave_state(tmp_path):
     assert focus.found and focus.focus is not None
     assert snapshot.snapshot.thread_weave_state is not None
     assert focus.focus.thread_weave_state is not None
+
+
+def test_detour_and_return_declarations_are_not_generic_filler(tmp_path):
+    runtime = _runtime(tmp_path)
+    talk_once(runtime, TalkRequest(message="most ezen dolgozunk"))
+    talk_once(runtime, TalkRequest(message="a cél most a rebuild-025 ticket lezárása"))
+
+    detour = talk_once(runtime, TalkRequest(message="közben kitértünk a live loop hibára"))
+    ret = talk_once(runtime, TalkRequest(message="de a főszál továbbra is a rebuild-025"))
+
+    assert detour.turn.assistant_reply.strip() != "Rendben."
+    assert "kitérő" in detour.turn.assistant_reply.lower()
+    assert "live loop" in detour.turn.assistant_reply.lower()
+
+    assert ret.turn.assistant_reply.strip() != "Rendben."
+    assert "főszál" in ret.turn.assistant_reply.lower()
+    assert "rebuild-025" in ret.turn.assistant_reply.lower()
