@@ -98,6 +98,7 @@ def run_live_loop(
     context: RuntimeContext,
     lines: Iterable[str],
     emit_trace: bool = True,
+    on_output: Callable[[LiveTurnOutput], None] | None = None,
 ) -> LiveLoopResult:
     outputs: list[LiveTurnOutput] = []
     store = PersistenceStore(context.config.paths.db_path)
@@ -112,23 +113,28 @@ def run_live_loop(
             mode=state.mode,
             backend="loop",
             degraded=False,
-            events=[{"event_name": "live_loop_started", "payload": {"session_id": state.session_id}}],
+                    events=[{"event_name": "live_loop_started", "payload": {"session_id": state.session_id}}],
         )
+
+    def _publish(output: LiveTurnOutput) -> None:
+        outputs.append(output)
+        if on_output is not None:
+            on_output(output)
 
     for raw in lines:
         command = parse_loop_command(raw)
 
         if command.action == LoopAction.INVALID:
-            outputs.append(_output("error", json.dumps({"error": command.error}), state))
+            _publish(_output("error", json.dumps({"error": command.error}), state))
             continue
 
         if command.action == LoopAction.EXIT:
-            outputs.append(_output("exit", json.dumps({"event": "loop_exit"}), state))
+            _publish(_output("exit", json.dumps({"event": "loop_exit"}), state))
             break
 
         if command.action == LoopAction.STATUS:
             state = _to_live_state(context)
-            outputs.append(_output("status", json.dumps(_status_payload(state), sort_keys=True), state))
+            _publish(_output("status", json.dumps(_status_payload(state), sort_keys=True), state))
             continue
 
         if command.action == LoopAction.SWITCH_THREAD:
@@ -137,7 +143,7 @@ def run_live_loop(
             thread = store.open_or_create_thread(active.session_id, thread_key)
             store.set_active_state(session_id=active.session_id, thread_id=thread.thread_id, mode=active.mode)
             state = _to_live_state(context)
-            outputs.append(_output("control", json.dumps({"event": "thread_switched", "thread_key": state.thread_key}, sort_keys=True), state))
+            _publish(_output("control", json.dumps({"event": "thread_switched", "thread_key": state.thread_key}, sort_keys=True), state))
             if emit_trace:
                 store.create_trace_events(
                     session_id=state.session_id,
@@ -154,7 +160,7 @@ def run_live_loop(
             active = resolve_active_state(context)
             store.set_active_state(session_id=active.session_id, thread_id=active.thread_id, mode=str(command.value))
             state = _to_live_state(context)
-            outputs.append(_output("control", json.dumps({"event": "mode_switched", "mode": state.mode}, sort_keys=True), state))
+            _publish(_output("control", json.dumps({"event": "mode_switched", "mode": state.mode}, sort_keys=True), state))
             if emit_trace:
                 store.create_trace_events(
                     session_id=state.session_id,
@@ -177,7 +183,7 @@ def run_live_loop(
                     fallback_hint="empty_turn_reply",
                 )
                 degraded = bool(result.turn.degraded or live_surface_degraded)
-                outputs.append(
+                _publish(
                     _output(
                         result.output_kind,
                         visible_message,
@@ -187,6 +193,27 @@ def run_live_loop(
                         degraded=degraded,
                     )
                 )
+                if emit_trace:
+                    store.create_trace_events(
+                        session_id=state.session_id,
+                        thread_id=state.thread_id,
+                        turn_id=result.turn.turn_id,
+                        mode=state.mode,
+                        backend="loop",
+                        degraded=live_surface_degraded,
+                        events=[
+                            {
+                                "event_name": "reply_adapted_rendered",
+                                "payload": {
+                                    "turn_id": result.turn.turn_id,
+                                    "kind": result.output_kind,
+                                    "reply_backend": result.turn.reply_backend,
+                                    "visible_nonempty": bool(visible_message.strip()),
+                                    "degraded": live_surface_degraded,
+                                },
+                            }
+                        ],
+                    )
                 if emit_trace and live_surface_degraded:
                     store.create_trace_events(
                         session_id=state.session_id,
@@ -210,7 +237,7 @@ def run_live_loop(
             except Exception as exc:  # bounded live-loop safety guard
                 state = _to_live_state(context)
                 reason = f"{type(exc).__name__}:{clean_display_text(str(exc))}"
-                outputs.append(
+                _publish(
                     _output(
                         "error",
                         _build_live_failure_message(reason),
@@ -246,6 +273,7 @@ def run_live_loop(
 def run_live_loop_interactive(
     context: RuntimeContext,
     input_func: Callable[[str], str] = input,
+    on_output: Callable[[LiveTurnOutput], None] | None = None,
 ) -> LiveLoopResult:
     def line_iter() -> Iterable[str]:
         while True:
@@ -255,7 +283,7 @@ def run_live_loop_interactive(
                 yield "/kilep"
                 return
 
-    return run_live_loop(context, line_iter())
+    return run_live_loop(context, line_iter(), on_output=on_output)
 
 
 def _status_payload(state: LiveConversationState) -> dict[str, int | str | None]:

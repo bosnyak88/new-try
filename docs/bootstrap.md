@@ -49,3 +49,8 @@ No new bootstrap command is required. Maintenance/applicability semantics are de
 
 ## REBUILD-031 live ingress note
 - Bootstrap services remain unchanged. Runtime now includes deterministic live stdin decode/repair boundary for Windows pipeline fidelity (HU-first).
+
+## REBUILD-032 follow-up (manual live output visibility)
+- Live loop now supports streaming output callbacks so manual interactive mode can emit each turn result immediately instead of end-of-loop batch printing.
+- CLI live path now records output-stage honesty events (`reply_emit_attempted`, `reply_emitted_successfully`, `reply_emit_failed`) and keeps degraded sanitization audit (`live_output_sanitized`).
+- No cognition relocation to CLI, no schema change, no maintenance/evidence architecture expansion in this follow-up.

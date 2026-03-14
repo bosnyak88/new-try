@@ -253,7 +253,8 @@ def _emit_console_text(text: str) -> tuple[bool, str | None]:
     result = render_console_text(text, encoding=encoding)
     payload = result.text
     try:
-        print(payload)
+        sys.stdout.write(payload + "\n")
+        sys.stdout.flush()
     except UnicodeEncodeError:
         fallback = render_console_text(payload, encoding="ascii")
         payload = fallback.text
@@ -262,14 +263,15 @@ def _emit_console_text(text: str) -> tuple[bool, str | None]:
             buffer.write((payload + "\n").encode("ascii", errors="replace"))
             buffer.flush()
         else:
-            print(payload)
+            sys.stdout.write(payload + "\n")
+            sys.stdout.flush()
         reason = fallback.reason or "console_encoding_replace:ascii"
         return True, reason
 
     return result.degraded, result.reason
 
 
-def _record_live_output_degraded(runtime, output, reason: str | None) -> None:
+def _record_live_output_event(runtime, output, *, event_name: str, degraded: bool, payload: dict[str, object]) -> None:
     store = PersistenceStore(runtime.config.paths.db_path)
     store.initialize(data_dir=runtime.config.paths.data_dir)
     store.create_trace_events(
@@ -278,19 +280,65 @@ def _record_live_output_degraded(runtime, output, reason: str | None) -> None:
         turn_id=output.turn_id or 0,
         mode=output.state.mode,
         backend="loop",
-        degraded=True,
+        degraded=degraded,
         events=[
             {
-                "event_name": "live_output_sanitized",
+                "event_name": event_name,
                 "payload": {
-                    "reason": clean_display_text(reason or "console_encoding_replace"),
                     "kind": output.kind,
                     "turn_id": output.turn_id,
                     "backend": output.backend,
+                    **payload,
                 },
             }
         ],
     )
+
+
+def _record_live_output_degraded(runtime, output, reason: str | None) -> None:
+    _record_live_output_event(
+        runtime,
+        output,
+        event_name="live_output_sanitized",
+        degraded=True,
+        payload={"reason": clean_display_text(reason or "console_encoding_replace")},
+    )
+
+
+def _emit_live_output(runtime, output) -> bool:
+    _record_live_output_event(
+        runtime,
+        output,
+        event_name="reply_emit_attempted",
+        degraded=bool(output.degraded),
+        payload={"message_nonempty": bool(output.message.strip())},
+    )
+    try:
+        degraded, reason = _emit_console_text(output.message)
+    except Exception as exc:
+        failure_reason = clean_display_text(f"{type(exc).__name__}:{exc}")
+        _record_live_output_event(
+            runtime,
+            output,
+            event_name="reply_emit_failed",
+            degraded=True,
+            payload={"reason": failure_reason},
+        )
+        sys.stderr.write(f"[live-output-error] {failure_reason}\n")
+        sys.stderr.flush()
+        return False
+
+    if degraded:
+        _record_live_output_degraded(runtime, output, reason)
+
+    _record_live_output_event(
+        runtime,
+        output,
+        event_name="reply_emitted_successfully",
+        degraded=degraded,
+        payload={"degraded_emit": degraded, "reason": clean_display_text(reason) if reason else None},
+    )
+    return True
 
 
 def _decode_live_stdin_lines() -> tuple[list[str], list[dict[str, object]]]:
@@ -396,12 +444,10 @@ def main() -> int:
                 lines, repairs = _decode_live_stdin_lines()
                 _record_live_input_repairs(runtime, repairs)
                 result = run_live_loop(runtime, lines)
+                for output in result.outputs:
+                    _emit_live_output(runtime, output)
             else:
-                result = run_live_loop_interactive(runtime)
-            for output in result.outputs:
-                degraded, reason = _emit_console_text(output.message)
-                if degraded:
-                    _record_live_output_degraded(runtime, output, reason)
+                run_live_loop_interactive(runtime, on_output=lambda output: _emit_live_output(runtime, output))
             return 0
 
         if args.script:

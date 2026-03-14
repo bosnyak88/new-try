@@ -80,3 +80,8 @@ Current baseline intentionally does **not** include:
 ## REBUILD-031 live stdin decoding parity
 - Added deterministic live stdin byte decoding with bounded mojibake repair for Windows/PowerShell-style piped input so Hungarian prompts survive ingress in `talk --live`.
 - Once/live semantic parity for self-intro prompts is now preserved by fixing input fidelity before interpretation/persistence, with explicit `live_input_repaired` trace when ingress repair occurs.
+
+## REBUILD-032 live interactive emit/trace honesty follow-up
+- Fixed manual TTY `talk --live` visibility gap by emitting each reply immediately on turn completion with deterministic flush before the next input wait.
+- Added explicit trace accounting for output surface stages: `reply_adapted_rendered`, `reply_emit_attempted`, `reply_emitted_successfully`, and `reply_emit_failed`.
+- Kept REBUILD-031 input-decoding parity, REBUILD-030 console sanitization, and deterministic evidence/maintenance families unchanged.

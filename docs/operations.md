@@ -75,3 +75,8 @@ szia syntaris én Árpi vagyok
 mit tudsz rólam biztosan?
 '@ | python -m syntaris.cli --config "$CFG" talk --live`
 - Validate no mojibake in persisted prompt/trace and verify `live_input_repaired` appears when ingress decoding required repair.
+
+## REBUILD-032 follow-up (manual live output visibility)
+- Live loop now supports streaming output callbacks so manual interactive mode can emit each turn result immediately instead of end-of-loop batch printing.
+- CLI live path now records output-stage honesty events (`reply_emit_attempted`, `reply_emitted_successfully`, `reply_emit_failed`) and keeps degraded sanitization audit (`live_output_sanitized`).
+- No cognition relocation to CLI, no schema change, no maintenance/evidence architecture expansion in this follow-up.
