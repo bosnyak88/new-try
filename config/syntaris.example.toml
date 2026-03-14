@@ -39,6 +39,11 @@ support_labeling_enabled = true
 synthesis_include_next_step = true
 scoped_state_short_stale_minutes = 120
 scoped_state_same_day_stale_minutes = 480
+# REBUILD-026 evidence ingest baseline
+# Large pasted text is chunked and reduced deterministically for grounded follow-up answers.
+evidence_chunk_line_limit = 24
+evidence_max_chunks = 6
+evidence_summary_line_limit = 5
 
 [reply]
 # deterministic | llama-http

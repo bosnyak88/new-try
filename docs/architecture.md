@@ -52,7 +52,7 @@ Propagation shape:
 - trace `workframe_state_derived` includes each status plus count fields.
 - state-query prompts are inspection-only and do not self-materialize as persistent open-question content.
 
-Schema impact: none in this phase (SQLite schema remains v6) because this layer is deterministic derivation from turn context, not a new persisted table.
+Schema impact: none in that phase (SQLite schema remained v6 at REBUILD-024).
 
 
 ## Post-025 thread-weave + conclusion applicability model
@@ -68,3 +68,19 @@ Propagation shape:
 - trace emits `thread_weave_state_derived` for auditability.
 
 Schema impact: minimal, SQLite schema moved to v7 with `thread_weave_json` columns on `thread_snapshots` and `thread_focus` for persisted derived-state alignment.
+
+
+## Post-026 evidence-ingest baseline
+Authoritative deterministic model is now explicit and shared across contracts/orchestration/reply/trace:
+- ingest status: `raw_text_evidence` | `no_evidence_ingested`
+- chunking semantics: `kept_chunk` vs `dropped_noise`
+- extracted key lines + summary + source references + unresolved evidence
+- grounding labels on evidence items (`directly_supported_by_source`..`source_not_available`)
+
+Propagation shape:
+- `orchestration/evidence_ingest.py` performs chunk/reduction/extraction from large raw text
+- `orchestration/turns.py` wires ingest into evidence pack and reuses prior large evidence for follow-up turns
+- `answer_synthesis` and response planning keep direct source lines separated from inferred/unresolved lines
+- trace `evidence_pack_built` includes ingest/chunk/key-line counters
+
+Schema impact: **none** for REBUILD-026 (schema remains v7).

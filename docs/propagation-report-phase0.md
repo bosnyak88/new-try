@@ -48,3 +48,15 @@ Full-system propagation pass completed for deterministic thread-weave/conclusion
 
 ## REBUILD-025 follow-up correction note
 Narrow semantic correction pass on the same PR: detour declaration and return-to-main declaration are now explicitly captured as thread-weave updates, and relation/conclusion/applicability answers are derived from retained weave state (not generic fallback). Direct answers are aligned with snapshot/focus/trace (`thread_weave_state_derived`) for the in-thread main-vs-detour scenario.
+
+
+## REBUILD-026 propagation note
+Full-system propagation pass completed for deterministic large-text evidence ingest + source-grounding baseline.
+- contracts/config: new evidence ingest/chunk/grounding DTOs and config knobs
+- orchestration: evidence ingest reducer + evidence-pack integration + follow-up evidence reuse
+- response/reply: source-grounded vs inferred/unresolved separation in answer surface
+- trace: ingest/chunk/key-line visibility in `evidence_pack_built`
+- tests: deterministic regressions for ingest extraction and follow-up grounded reuse
+- docs/config/changelog: synchronized to post-026 semantics
+
+Schema migration: not required in this phase (v7 unchanged).

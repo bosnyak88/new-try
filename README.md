@@ -47,3 +47,10 @@ Current baseline intentionally does **not** include:
 - Added deterministic carry-forward applicability semantics: `applicable_now`, `partially_applicable`, `not_applicable_now`, `applicability_uncertain`, `superseded_by_new_context`.
 - Snapshot/focus/trace now carry aligned thread-weave state, and `trace-last` includes `thread_weave_state_derived`.
 - Detour (`kitértünk ...`) and return-to-main (`a főszál továbbra is ...`) declarations are captured as retained thread-weave updates, and direct relation answers align with snapshot/focus/trace state.
+
+
+## REBUILD-026 baseline
+- Added authoritative deterministic evidence-ingest semantics for large pasted text: raw evidence, chunking, extracted key lines, reduced summary, source references, unresolved evidence.
+- Source-grounded answer model is explicit: direct source support vs inferred vs unresolved are surfaced in Hungarian wording (`mi biztosan látszik ebből?`, `mi csak következtetés?`).
+- Workframe/blocker derivation can now consume ingested evidence safely without overwriting explicit state blindly.
+- Trace `evidence_pack_built` now includes ingest status + chunk/key-line counts.

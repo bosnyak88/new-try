@@ -31,6 +31,7 @@ from syntaris.contracts.runtime import (
     ThreadFocusRequest,
     TalkRequest,
     WorkframeTrace,
+    WorkframeBlockerStatus,
     ThreadWeaveTrace,
     TurnInput,
     TurnResult,
@@ -46,6 +47,7 @@ from syntaris.orchestration.thread_recall import resolve_recall_request
 from syntaris.orchestration.objective_frame import frame_objective
 from syntaris.orchestration.question_decompose import build_decomposition_plan
 from syntaris.orchestration.evidence_pack import build_evidence_pack
+from syntaris.orchestration.evidence_ingest import ingest_text_evidence
 from syntaris.orchestration.answer_synthesis import build_synthesis_plan
 from syntaris.orchestration.text_normalize import preprocess_turn_message
 from syntaris.orchestration.response_plan import build_response_plan
@@ -350,6 +352,39 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     semantic_turns = semantic_context.recent_turns if semantic_context is not None else context_load.pack.recent_turns
     workframe_state = derive_workframe_state(semantic_turns, normalized_message)
     historical_workframe_state = derive_workframe_state(semantic_turns, "")
+    ingest_result = ingest_text_evidence(normalized_message, context.config.conversation)
+    if ingest_result.ingest_status.value == "no_evidence_ingested" and context_load.pack.recent_turns:
+        for prior_turn in reversed(context_load.pack.recent_turns):
+            prior_ingest = ingest_text_evidence(prior_turn.user_message, context.config.conversation)
+            if prior_ingest.ingest_status.value == "raw_text_evidence":
+                ingest_result = prior_ingest
+                break
+
+    if (
+        ingest_result.ingest_status.value == "raw_text_evidence"
+        and workframe_state.blocker_status.value in {"none", "uncertainty_or_missing_info"}
+        and ingest_result.extracted_key_lines
+    ):
+        line = ingest_result.extracted_key_lines[0]
+        workframe_state = type(workframe_state)(
+            workframe=workframe_state.workframe,
+            objective_status=workframe_state.objective_status,
+            objective_text=workframe_state.objective_text,
+            blocker_status=workframe_state.blocker_status if workframe_state.blocker_status.value == "explicit" else WorkframeBlockerStatus.IMPLIED,
+            blocker_text=f"Forrás alapján valószínű blokker: {line}",
+            next_step_status=workframe_state.next_step_status,
+            next_step_lines=workframe_state.next_step_lines,
+            missing_info_status=workframe_state.missing_info_status,
+            missing_info_lines=workframe_state.missing_info_lines,
+            open_question_status=workframe_state.open_question_status,
+            open_question_lines=workframe_state.open_question_lines,
+            assumption_status=workframe_state.assumption_status,
+            assumption_lines=workframe_state.assumption_lines,
+            decision_state=workframe_state.decision_state,
+            decision_lines=workframe_state.decision_lines,
+            evidence_gap_status=workframe_state.evidence_gap_status,
+            evidence_gap_lines=workframe_state.evidence_gap_lines,
+        )
     thread_weave_state = derive_thread_weave_state(
         semantic_turns,
         normalized_message,
@@ -393,6 +428,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         followup=followup_resolution,
         current_thread_summary=current_summary,
         previous_thread_summary=previous_summary,
+        ingest=ingest_result,
     )
     max_items = max(1, context.config.conversation.max_evidence_items_per_unit) * max(1, len(decomposition.units))
     has_compare_unit = any(unit.objective_kind.value == "compare" for unit in decomposition.units)
@@ -402,9 +438,9 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             evidence_pack.items,
             key=lambda item: (compare_priority.get(item.source, 10), item.unit_id, item.source),
         )
-        evidence_pack = type(evidence_pack)(items=prioritized[:max_items])
+        evidence_pack = type(evidence_pack)(items=prioritized[:max_items], ingest=evidence_pack.ingest)
     else:
-        evidence_pack = type(evidence_pack)(items=evidence_pack.items[:max_items])
+        evidence_pack = type(evidence_pack)(items=evidence_pack.items[:max_items], ingest=evidence_pack.ingest)
     synthesis_plan = build_synthesis_plan(objective, decomposition, evidence_pack)
     response_plan = build_response_plan(
         context,
@@ -540,6 +576,9 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     evidence_trace = EvidencePackTrace(
         item_count=len(evidence_pack.items),
         support_distribution=support_distribution,
+        ingest_status=(evidence_pack.ingest.ingest_status.value if evidence_pack.ingest is not None else "no_evidence_ingested"),
+        chunk_count=(len(evidence_pack.ingest.chunked_evidence) if evidence_pack.ingest is not None else 0),
+        key_line_count=(len(evidence_pack.ingest.extracted_key_lines) if evidence_pack.ingest is not None else 0),
     )
     synthesis_trace = SynthesisTrace(
         section_count=len(synthesis_plan.sections),

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from syntaris.orchestration.text_normalize import clean_display_text
+from syntaris.orchestration.text_normalize import clean_display_text, normalize_hungarian_for_match
 from syntaris.contracts.runtime import (
     AnswerStrategy,
     ClaimKind,
@@ -262,6 +262,34 @@ def _workframe_lines(workframe_state: WorkframeState) -> list[str]:
 
 
 
+
+
+def _evidence_grounded_lines(message: str, evidence_pack: EvidencePack) -> list[str] | None:
+    ingest = evidence_pack.ingest
+    if ingest is None or ingest.ingest_status.value != "raw_text_evidence":
+        return None
+    lower = normalize_hungarian_for_match(message).lower()
+    asks_cert = "mi biztos" in lower or "biztosan latszik" in lower
+    asks_infer = "kovetkeztetes" in lower or "csak kovetkeztetes" in lower
+    asks_error = "valodi hiba" in lower or "fo hiba" in lower
+    asks_key = "melyik resz a fontos" in lower or "mi a lenyeg" in lower
+    if not any((asks_cert, asks_infer, asks_error, asks_key)):
+        return None
+
+    direct = [f"• {clean_display_text(line)}" for line in ingest.extracted_key_lines[:4]]
+    inferred = [f"• {clean_display_text(line)}" for line in ingest.evidence_summary[:3]]
+    unresolved = [f"• {clean_display_text(line)}" for line in ingest.unresolved_evidence[:2]]
+
+    lines = ["A forrás alapján:"]
+    lines.append("Közvetlenül látszik:")
+    lines.extend(direct or ["• Nincs erős közvetlen sor kivonva."])
+    if asks_infer or asks_key or asks_error:
+        lines.append("Következtetés (forrásból):")
+        lines.extend(inferred or ["• Nincs stabil következtetés."])
+    lines.append("Ami még nincs alátámasztva:")
+    lines.extend(unresolved or ["• Jelenleg nincs külön unresolved tétel."])
+    return lines
+
 def _decision_readiness_lines(state: WorkframeState) -> list[str]:
     return [
         f"Hiányzó információ állapot: {state.missing_info_status.value}.",
@@ -343,6 +371,7 @@ def build_response_plan(
     thread_weave_update_kind: str | None = None,
     thread_weave_query_message: str | None = None,
 ) -> ResponsePlan:
+    interpretation_text = thread_weave_query_message or ""
 
     if thread_weave_state is not None and thread_weave_update_kind is not None:
         if thread_weave_update_kind == "detour_declared":
@@ -398,6 +427,14 @@ def build_response_plan(
             if thread_weave_state.applicability_reason:
                 lines.append(clean_display_text(thread_weave_state.applicability_reason))
             return ResponsePlan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="applicability", lines=lines)], focus_used=focus is not None)
+    grounded_lines = _evidence_grounded_lines(interpretation_text, evidence_pack)
+    if grounded_lines is not None:
+        return ResponsePlan(
+            kind=ResponsePlanKind.STRUCTURED,
+            sections=[ResponsePlanSection(title="source_grounded_evidence", lines=grounded_lines)],
+            focus_used=focus is not None,
+        )
+
     if interpretation.memory_query is not None and personal_memory is not None:
         return ResponsePlan(
             kind=ResponsePlanKind.STRUCTURED,

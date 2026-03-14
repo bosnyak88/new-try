@@ -136,6 +136,18 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
             os.getenv("SYNTARIS_SCOPED_STATE_SAME_DAY_STALE_MINUTES"),
             conversation.get("scoped_state_same_day_stale_minutes", 480),
         ),
+        evidence_chunk_line_limit=_pick_int(
+            os.getenv("SYNTARIS_EVIDENCE_CHUNK_LINE_LIMIT"),
+            conversation.get("evidence_chunk_line_limit", 24),
+        ),
+        evidence_max_chunks=_pick_int(
+            os.getenv("SYNTARIS_EVIDENCE_MAX_CHUNKS"),
+            conversation.get("evidence_max_chunks", 6),
+        ),
+        evidence_summary_line_limit=_pick_int(
+            os.getenv("SYNTARIS_EVIDENCE_SUMMARY_LINE_LIMIT"),
+            conversation.get("evidence_summary_line_limit", 5),
+        ),
     )
 
     time_config = TimeConfig(

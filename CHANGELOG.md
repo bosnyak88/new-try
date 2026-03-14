@@ -53,3 +53,7 @@
 - Updated README/architecture/bootstrap/operations/propagation docs for post-024 semantics and confirmed schema stays at v6 for this pass.
 
 - REBUILD-024 follow-up: fixed explicit blocker declaration routing, prevented meta state-queries from self-materializing into open-question state, added explicit evidence-gap query matching (`mihez nincs még elég bizonyíték?`), and stopped premature `decision_made` promotion for decision-status questions.
+
+- REBUILD-026: deterministic large-text evidence-ingest baseline with chunking, key-line extraction, source-grounded response sections, and unresolved-evidence separation.
+- Added evidence-ingest config knobs (`evidence_chunk_line_limit`, `evidence_max_chunks`, `evidence_summary_line_limit`) and trace payload enrichment (`ingest_status`, `chunk_count`, `key_line_count`).
+- Added regressions for large-text ingest extraction and follow-up source-grounded recall without repasting full logs.
