@@ -252,9 +252,28 @@ def _workframe_lines(workframe_state: WorkframeState) -> list[str]:
             lines.append(f"- {clean_display_text(step)}")
     elif workframe_state.next_step_status.value == "none":
         lines.append("Következő lépés: még nincs megalapozottan rögzítve.")
+    lines.append(f"Hiányzó információ: {workframe_state.missing_info_status.value}.")
+    lines.append(f"Nyitott kérdés: {workframe_state.open_question_status.value}.")
+    lines.append(f"Döntési állapot: {workframe_state.decision_state.value}.")
     return lines
 
 
+
+
+
+def _decision_readiness_lines(state: WorkframeState) -> list[str]:
+    return [
+        f"Hiányzó információ állapot: {state.missing_info_status.value}.",
+        *(f"- {clean_display_text(line)}" for line in state.missing_info_lines),
+        f"Nyitott kérdés állapot: {state.open_question_status.value}.",
+        *(f"- {clean_display_text(line)}" for line in state.open_question_lines),
+        f"Feltételezés/evidencia állapot: {state.assumption_status.value}.",
+        *(f"- {clean_display_text(line)}" for line in state.assumption_lines),
+        f"Döntési állapot: {state.decision_state.value}.",
+        *(f"- {clean_display_text(line)}" for line in state.decision_lines),
+        f"Bizonyíték-rés állapot: {state.evidence_gap_status.value}.",
+        *(f"- {clean_display_text(line)}" for line in state.evidence_gap_lines),
+    ]
 
 def _history_lines(state: WorkframeState) -> list[str]:
     lines: list[str] = ["Korábbi állapot alapján:"]
@@ -350,6 +369,15 @@ def build_response_plan(
             return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="historical_state", lines=_history_lines(state))], focus_used=focus is not None)
         if getattr(workframe_queries, "asks_certainty_split", False) or getattr(workframe_queries, "asks_next_step_certainty", False):
             return ResponsePlan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="certainty_split", lines=_certainty_lines(workframe_state))], focus_used=focus is not None)
+        if any((
+            getattr(workframe_queries, "asks_missing_info", False),
+            getattr(workframe_queries, "asks_open_questions", False),
+            getattr(workframe_queries, "asks_assumptions", False),
+            getattr(workframe_queries, "asks_decision_state", False),
+            getattr(workframe_queries, "asks_evidence_gaps", False),
+            getattr(workframe_queries, "asks_progress_block_reason", False),
+        )):
+            return ResponsePlan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="decision_readiness", lines=_decision_readiness_lines(workframe_state))], focus_used=focus is not None)
 
     if interpretation.kind.value == "personal_entry" and interpretation.personal_entry is not None:
         signal = interpretation.personal_entry

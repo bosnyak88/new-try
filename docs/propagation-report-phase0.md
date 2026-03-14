@@ -26,3 +26,10 @@ Contracts, orchestration, persistence semantics, reply surface, trace semantics,
 
 ## REBUILD-023 propagation note
 Reviewed core contracts/orchestration/reply/trace/CLI/tests/docs for workframe, objective, blocker, and next-step alignment. Added deterministic workframe derivation and trace event; no schema migration required in this pass.
+
+## REBUILD-024 propagation note
+Reviewed and propagated contracts/orchestration/reply/trace/tests/docs/config for missing-info, open-question, assumption/evidence, and decision-needed semantics. No schema migration was required; persistence remains context-first while snapshot/focus keep aligned derived workframe state.
+
+
+## REBUILD-024 follow-up correction note
+Narrow semantic correction pass: explicit blocker declaration now stays on blocker-update path, meta state-queries are inspection-only (no open-question writeback from query text), evidence-gap question family includes `mihez nincs még elég bizonyíték?`, and decision-status questions no longer force `decision_made` without grounded resolution. Snapshot/focus/trace now retain grounded state without meta-query pollution.

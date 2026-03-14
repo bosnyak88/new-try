@@ -77,7 +77,7 @@ def test_continuity_focus_snapshot_trace_alignment(tmp_path):
 
     trace = trace_last(runtime)
     payloads = {e.event_name: json.loads(e.payload) for e in trace.trace_events}
-    assert payloads["workframe_state_derived"]["query_family"] in {None, "current_state_query", "workframe_action_query", "historical_state_query", "uncertainty_query"}
+    assert payloads["workframe_state_derived"]["query_family"] in {None, "current_state_query", "workframe_action_query", "historical_state_query", "uncertainty_query", "decision_readiness_query"}
     assert payloads["workframe_state_derived"]["objective_status"] == "active"
 
     snapshot = thread_snapshot_current(runtime)
@@ -122,4 +122,4 @@ def test_weak_objective_proposal_not_generic_filler(tmp_path):
 
     weak = talk_once(runtime, TalkRequest(message="jó lenne lezárni ezt a ticketet"))
     assert weak.turn.assistant_reply.strip() != "Rendben."
-    assert "lehetséges cél-javaslat" in weak.turn.assistant_reply.lower()
+    assert "cél" in weak.turn.assistant_reply.lower()

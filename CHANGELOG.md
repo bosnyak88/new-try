@@ -42,3 +42,8 @@
 - Added deterministic REBUILD-023 workframe baseline (mode/objective/blocker/next-step derivation) with trace visibility via `workframe_state_derived`.
 
 - REBUILD-023 follow-up: separated explicit blocker declaration from hedged blocker/next-step/objective proposal semantics; certainty-split responses now keep tentative inputs out of certain facts, with aligned trace uncertainty flags.
+- Added REBUILD-024 deterministic decision-readiness baseline: missing-info/open-question/assumption/decision/evidence-gap statuses in `WorkframeState`, response planning, and trace payloads.
+- Added regression tests for Hungarian missing-info/open-question/decision/evidence queries and trace payload integrity.
+- Updated README/architecture/bootstrap/operations/propagation docs for post-024 semantics and confirmed schema stays at v6 for this pass.
+
+- REBUILD-024 follow-up: fixed explicit blocker declaration routing, prevented meta state-queries from self-materializing into open-question state, added explicit evidence-gap query matching (`mihez nincs még elég bizonyíték?`), and stopped premature `decision_made` promotion for decision-status questions.

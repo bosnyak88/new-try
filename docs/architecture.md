@@ -36,3 +36,20 @@ The authoritative model is `WorkframeState` with:
 This model is derived in orchestration and propagated to response planning and trace.
 
 - Workframe update signals now distinguish explicit blocker declaration vs hedged blocker/objective/next-step proposals to keep state-write certainty discipline consistent with response and trace layers.
+
+## Post-024 decision-readiness model
+`WorkframeState` is extended (no new central orchestrator file) with explicit deterministic statuses:
+- missing info: `missing_info_explicit` / `missing_info_implied` / `no_missing_info_established` / `missing_info_resolved`
+- open question: `explicit_open_question` / `implied_open_question` / `answered_question` / `no_open_question_established`
+- assumption support level: `assumption` / `inferred_possibility` / `supported_claim` / `unknown_or_not_established`
+- decision state: `decision_needed` / `decision_blocked_by_missing_info` / `decision_proposed` / `decision_made` / `no_decision_established`
+- evidence gap: `evidence_gap_explicit` / `evidence_gap_implied` / `evidence_sufficient` / `evidence_unknown`
+
+Propagation shape:
+- orchestration derives state once (`workframe_state.py`),
+- response plan surfaces it in Hungarian-first structured wording,
+- snapshots/focus carry aligned workframe state,
+- trace `workframe_state_derived` includes each status plus count fields.
+- state-query prompts are inspection-only and do not self-materialize as persistent open-question content.
+
+Schema impact: none in this phase (SQLite schema remains v6) because this layer is deterministic derivation from turn context, not a new persisted table.
