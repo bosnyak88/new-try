@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- REBUILD-033 completion follow-up: aligned live relationship query writeback with visible relationship answers so live thread-weave relation/conclusion/applicability no longer drifts to empty/unknown in grounded flows.
 - REBUILD-033 follow-up: completed explicit relationship-frame handling so `a személyes kognitív rendszerem leszel` no longer collapses to filler, and aligned thread-weave relation/conclusion/applicability state with relationship-visible answers.
 - REBUILD-033: added deterministic owner/system identity baseline (owner name + explicit system name capture, `ki vagy te?` query support, and relationship-coherent reply shaping) to reduce low-value filler on identity clarification turns.
 - REBUILD-033: strengthened owner-aware presence surface without fake certainty, preserved live emit/trace visibility, and added dedicated identity/presence regression suites.
@@ -66,6 +67,7 @@
 
 
 ## Unreleased
+- REBUILD-033 completion follow-up: aligned live relationship query writeback with visible relationship answers so live thread-weave relation/conclusion/applicability no longer drifts to empty/unknown in grounded flows.
 - REBUILD-033 follow-up: completed explicit relationship-frame handling so `a személyes kognitív rendszerem leszel` no longer collapses to filler, and aligned thread-weave relation/conclusion/applicability state with relationship-visible answers.
 - REBUILD-031: fixed Windows/PowerShell live stdin mojibake boundary with deterministic byte-decoding + reversible repair so Hungarian prompts preserve semantic fidelity in `talk --live`.
 - REBUILD-031: added `live_input_repaired` trace accounting for repaired/degraded ingress and restored once/live self-intro parity on repaired live input flows.

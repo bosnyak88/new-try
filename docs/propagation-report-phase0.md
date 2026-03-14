@@ -196,3 +196,20 @@ Schema migration: not required in this phase (v7 unchanged).
 
 ### Scope control
 - Kept as narrow in-place completion on REBUILD-033 branch/PR; no architecture redesign, no A/B orchestration, no workspace/tool bridge expansion.
+
+
+## REBUILD-033 live-alignment completion note
+### Changed
+- `src/syntaris/orchestration/thread_weave.py`: completed live relationship alignment by deriving conservative non-empty weave semantics (`relation`/`conclusion`/`applicability`) from relationship-query + explicit owner/system signals, and exposing `relationship_query` in trace.
+- Added deterministic live regressions: `tests/test_live_relationship_alignment.py`, `tests/test_live_relationship_trace.py`.
+
+### Reviewed unchanged
+- `src/syntaris/orchestration/live_loop.py`, `src/syntaris/cli.py` (emit/visibility/input hardening preserved).
+- Identity/evidence/maintenance families and their deterministic suites remained green.
+
+### Schema/contracts
+- Schema unchanged (v7).
+- Contract shapes unchanged in this completion pass.
+
+### Scope control
+- Narrow completion on existing REBUILD-033 branch/PR only; no architecture redesign or A/B/workspace/tooling expansion.

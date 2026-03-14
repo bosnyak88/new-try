@@ -48,6 +48,10 @@ _RETURN_MAIN_DECLARATION = re.compile(r"(?:de\s+)?(?:a\s+)?(?:foszal\s+(?:tovabb
 _MAIN_DECLARATION = re.compile(r"(?:a\s+foszal\s+(?:most\s+)?)?(?:a\s+)?rebuild-\d+[^.?!]*")
 _EXPLICIT_CONCLUSION = re.compile(r"(?:tanulsag|konkluzio|levonhato)\s*(?::|hogy)?\s+(.+)$")
 
+_OWNER_IDENTITY_DECLARATION = re.compile(
+    r"(?:\ben\s+[a-z0-9áéíóöőúüű-]+\s+vagyok\b|\baz\s+en\s+nevem\b|\ba\s+nevem\b)",
+)
+
 _PARK_CUES = ("ezt most parkoljuk", "parkoljuk", "ehhez kesobb terjunk vissza")
 _CLOSE_CUES = ("lezartuk ezt a reszt", "ezt lezartuk", "lezarhatjuk")
 _REOPEN_CUES = ("terjunk vissza", "vegyuk vissza", "ujranyitjuk")
@@ -80,6 +84,7 @@ class _WeaveScan:
     had_superseded: bool = False
     owner_creator_declared: bool = False
     system_personal_role_declared: bool = False
+    owner_identity_declared: bool = False
 
 
 def detect_thread_weave_query_family(message: str) -> str | None:
@@ -128,6 +133,7 @@ def _scan_weave(turns: list[ThreadContextTurn], current_message: str, workframe_
     had_superseded = False
     owner_creator_declared = False
     system_personal_role_declared = False
+    owner_identity_declared = False
 
     for turn in [*turns, ThreadContextTurn(turn_id=-1, turn_index=-1, user_message=current_message, assistant_reply="", backend="deterministic", degraded=False)]:
         n = normalize_hungarian_for_match(turn.user_message)
@@ -155,6 +161,8 @@ def _scan_weave(turns: list[ThreadContextTurn], current_message: str, workframe_
             owner_creator_declared = True
         if any(cue in n for cue in _RELATIONSHIP_SYSTEM_ROLE_CUES):
             system_personal_role_declared = True
+        if _OWNER_IDENTITY_DECLARATION.search(n):
+            owner_identity_declared = True
         if main_topic is None:
             match = _MAIN_DECLARATION.search(n)
             if match:
@@ -171,6 +179,7 @@ def _scan_weave(turns: list[ThreadContextTurn], current_message: str, workframe_
         had_superseded=had_superseded,
         owner_creator_declared=owner_creator_declared,
         system_personal_role_declared=system_personal_role_declared,
+        owner_identity_declared=owner_identity_declared,
     )
 
 
@@ -198,9 +207,12 @@ def derive_thread_weave_state(
     elif "foszal" in message_n and scan.main_topic is not None:
         relation = ThreadRelationKind.RETURN_TO_MAIN if scan.had_return_to_main else ThreadRelationKind.MAIN_THREAD
 
+    relationship_query = "mi a kapcsolatunk" in message_n
     relationship_explicit = scan.owner_creator_declared and scan.system_personal_role_declared
     relationship_partial = scan.owner_creator_declared or scan.system_personal_role_declared
-    if relation == ThreadRelationKind.RELATION_UNKNOWN and relationship_partial:
+    relationship_partial_or_identity = relationship_partial or scan.owner_identity_declared
+    relationship_query_grounded = relationship_query and relationship_partial_or_identity
+    if relation == ThreadRelationKind.RELATION_UNKNOWN and (relationship_partial_or_identity or relationship_query_grounded):
         relation = ThreadRelationKind.MAIN_THREAD
 
     conclusion_status = ConclusionStatus.NONE
@@ -226,7 +238,7 @@ def derive_thread_weave_state(
     if conclusion_status == ConclusionStatus.NONE and relationship_explicit:
         conclusion_status = ConclusionStatus.DERIVED
         conclusion_text = "Kapcsolati keret rögzítve: te tervezed/fejleszted a rendszert, én a személyes kognitív rendszered szerepében működöm."
-    elif conclusion_status == ConclusionStatus.NONE and relationship_partial:
+    elif conclusion_status == ConclusionStatus.NONE and (relationship_partial_or_identity or relationship_query_grounded):
         conclusion_status = ConclusionStatus.TENTATIVE
         conclusion_text = "Részleges kapcsolat-keret látszik, de teljes megerősítéshez még szükséges mindkét oldal explicit jelzése."
 
@@ -272,7 +284,7 @@ def derive_thread_weave_state(
     if relationship_explicit:
         applicability_status = ApplicabilityStatus.APPLICABLE_NOW
         applicability_reason = "Az explicit owner+system kapcsolat-keret most közvetlenül alkalmazható a válaszokban."
-    elif relationship_partial and applicability_status == ApplicabilityStatus.UNCERTAIN:
+    elif (relationship_partial_or_identity or relationship_query_grounded) and applicability_status == ApplicabilityStatus.UNCERTAIN:
         applicability_status = ApplicabilityStatus.PARTIALLY_APPLICABLE
         applicability_reason = "A kapcsolat-keret részben explicit, de még nem teljes."
 
