@@ -191,6 +191,16 @@ def _thread_snapshot_payload(view) -> dict[str, object]:
                 "next_step_status": snapshot.workframe_state.next_step_status.value,
                 "next_step_lines": snapshot.workframe_state.next_step_lines,
             } if snapshot.workframe_state else None,
+            "thread_weave_state": {
+                "relation": snapshot.thread_weave_state.relation.value,
+                "main_thread_key": snapshot.thread_weave_state.main_thread_key,
+                "related_thread_key": snapshot.thread_weave_state.related_thread_key,
+                "detour_thread_key": snapshot.thread_weave_state.detour_thread_key,
+                "conclusion_status": snapshot.thread_weave_state.conclusion_status.value,
+                "conclusion_text": snapshot.thread_weave_state.conclusion_text,
+                "applicability_status": snapshot.thread_weave_state.applicability_status.value,
+                "applicability_reason": snapshot.thread_weave_state.applicability_reason,
+            } if snapshot.thread_weave_state else None,
             "snapshot_lines": [
                 {
                     "turn_id": line.turn_id,
@@ -482,6 +492,16 @@ def _thread_focus_payload(view):
             "next_step_status": view.focus.workframe_state.next_step_status.value,
             "next_step_lines": view.focus.workframe_state.next_step_lines,
         } if view.focus.workframe_state else None,
+        "thread_weave_state": {
+            "relation": view.focus.thread_weave_state.relation.value,
+            "main_thread_key": view.focus.thread_weave_state.main_thread_key,
+            "related_thread_key": view.focus.thread_weave_state.related_thread_key,
+            "detour_thread_key": view.focus.thread_weave_state.detour_thread_key,
+            "conclusion_status": view.focus.thread_weave_state.conclusion_status.value,
+            "conclusion_text": view.focus.thread_weave_state.conclusion_text,
+            "applicability_status": view.focus.thread_weave_state.applicability_status.value,
+            "applicability_reason": view.focus.thread_weave_state.applicability_reason,
+        } if view.focus.thread_weave_state else None,
     }
     return payload
 

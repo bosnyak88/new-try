@@ -16,6 +16,7 @@ from syntaris.orchestration.thread_snapshot import _is_control_turn, _is_pending
 from syntaris.persistence import PersistenceStore
 from syntaris.orchestration.text_normalize import clean_display_text, contains_degraded_text
 from syntaris.orchestration.workframe_state import derive_workframe_state
+from syntaris.orchestration.thread_weave import derive_thread_weave_state
 
 
 def _resolve_limit(context: RuntimeContext, limit: int | None) -> int:
@@ -89,6 +90,13 @@ def build_thread_focus_pack(context: RuntimeContext, thread_id: int, mode: str, 
         focus_lines=focus_lines,
         source_metadata=metadata,
         workframe_state=derive_workframe_state(semantic_turns, ""),
+        thread_weave_state=derive_thread_weave_state(
+            semantic_turns,
+            "",
+            active_thread_key=context_pack.thread_key,
+            previous_thread_key=context_pack.previous_thread_key,
+            workframe_state=derive_workframe_state(semantic_turns, ""),
+        ),
     )
 
 

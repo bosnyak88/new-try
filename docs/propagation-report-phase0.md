@@ -33,3 +33,18 @@ Reviewed and propagated contracts/orchestration/reply/trace/tests/docs/config fo
 
 ## REBUILD-024 follow-up correction note
 Narrow semantic correction pass: explicit blocker declaration now stays on blocker-update path, meta state-queries are inspection-only (no open-question writeback from query text), evidence-gap question family includes `mihez nincs még elég bizonyíték?`, and decision-status questions no longer force `decision_made` without grounded resolution. Snapshot/focus/trace now retain grounded state without meta-query pollution.
+
+
+## REBUILD-025 propagation note
+Full-system propagation pass completed for deterministic thread-weave/conclusion/applicability baseline.
+- contracts: added authoritative relation/conclusion/applicability enums + `ThreadWeaveState` + `ThreadWeaveTrace`.
+- orchestration: added `thread_weave.py` derivation and query-family detection; integrated into turns/response planning/snapshot/focus.
+- persistence/schema: schema v7, added `thread_weave_json` columns and migration/read-write support in store.
+- trace: added `thread_weave_state_derived` event.
+- CLI: thread-snapshot/thread-focus JSON surfaces now include thread-weave payload.
+- tests: added deterministic regressions for relation/conclusion/applicability answers, trace integrity, and snapshot/focus alignment.
+- docs/config/changelog: synchronized to post-025 semantics.
+
+
+## REBUILD-025 follow-up correction note
+Narrow semantic correction pass on the same PR: detour declaration and return-to-main declaration are now explicitly captured as thread-weave updates, and relation/conclusion/applicability answers are derived from retained weave state (not generic fallback). Direct answers are aligned with snapshot/focus/trace (`thread_weave_state_derived`) for the in-thread main-vs-detour scenario.

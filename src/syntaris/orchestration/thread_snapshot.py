@@ -16,6 +16,7 @@ from syntaris.orchestration.recap import match_recap_query
 from syntaris.persistence import PersistenceStore
 from syntaris.orchestration.text_normalize import clean_display_text, contains_degraded_text, flatten_generated_summary_text
 from syntaris.orchestration.workframe_state import derive_workframe_state
+from syntaris.orchestration.thread_weave import derive_thread_weave_state
 
 _CONTROL_PREFIXES = ("/",)
 _AFFIRMATIVE = {"igen", "oké", "mehet", "arra", "igen arra"}
@@ -115,6 +116,13 @@ def build_thread_snapshot_pack(context: RuntimeContext, thread_id: int, mode: st
         previous_thread_id=context_pack.previous_thread_id,
         previous_thread_key=context_pack.previous_thread_key,
         workframe_state=derive_workframe_state(semantic_turns, ""),
+        thread_weave_state=derive_thread_weave_state(
+            semantic_turns,
+            "",
+            active_thread_key=context_pack.thread_key,
+            previous_thread_key=context_pack.previous_thread_key,
+            workframe_state=derive_workframe_state(semantic_turns, ""),
+        ),
     )
     return ThreadSnapshotPack(**{**provisional.__dict__, "snapshot_text": _build_snapshot_text(provisional)})
 

@@ -1,4 +1,4 @@
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS app_meta (
@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS thread_snapshots (
     snapshot_text TEXT NOT NULL,
     previous_thread_id INTEGER,
     previous_thread_key TEXT,
+    thread_weave_json TEXT,
     FOREIGN KEY(session_id) REFERENCES sessions(session_id),
     FOREIGN KEY(thread_id) REFERENCES threads(thread_id)
 );
@@ -76,6 +77,7 @@ CREATE TABLE IF NOT EXISTS thread_focus (
     filtered_pending_turn_count INTEGER NOT NULL,
     filtered_control_turn_count INTEGER NOT NULL,
     focus_lines_json TEXT NOT NULL,
+    thread_weave_json TEXT,
     FOREIGN KEY(session_id) REFERENCES sessions(session_id),
     FOREIGN KEY(thread_id) REFERENCES threads(thread_id)
 );

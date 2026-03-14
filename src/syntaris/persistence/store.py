@@ -35,6 +35,10 @@ from syntaris.contracts.runtime import (
     ScopedStateItem,
     ScopedStateStatus,
     ScopedStateView,
+    ThreadWeaveState,
+    ThreadRelationKind,
+    ConclusionStatus,
+    ApplicabilityStatus,
 )
 from syntaris.persistence.schema import SCHEMA_SQL, SCHEMA_VERSION
 from syntaris.orchestration.text_normalize import clean_display_text, normalize_text
@@ -216,6 +220,8 @@ class PersistenceStore:
         }
         if snapshot_cols and "thread_key" not in snapshot_cols:
             conn.execute("ALTER TABLE thread_snapshots ADD COLUMN thread_key TEXT")
+        if snapshot_cols and "thread_weave_json" not in snapshot_cols:
+            conn.execute("ALTER TABLE thread_snapshots ADD COLUMN thread_weave_json TEXT")
 
 
         claims_exists = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='personal_claims'").fetchone()
@@ -263,6 +269,49 @@ class PersistenceStore:
                 )
                 """
             )
+        else:
+            focus_cols = {row[1] for row in conn.execute("PRAGMA table_info(thread_focus)").fetchall()}
+            if focus_cols and "thread_weave_json" not in focus_cols:
+                conn.execute("ALTER TABLE thread_focus ADD COLUMN thread_weave_json TEXT")
+
+    def _serialize_thread_weave(self, weave: ThreadWeaveState | None) -> str | None:
+        if weave is None:
+            return None
+        return json.dumps(
+            {
+                "relation": weave.relation.value,
+                "main_thread_key": weave.main_thread_key,
+                "related_thread_key": weave.related_thread_key,
+                "detour_thread_key": weave.detour_thread_key,
+                "conclusion_status": weave.conclusion_status.value,
+                "conclusion_text": weave.conclusion_text,
+                "applicability_status": weave.applicability_status.value,
+                "applicability_reason": weave.applicability_reason,
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+
+    def _deserialize_thread_weave(self, payload: str | None) -> ThreadWeaveState | None:
+        if payload is None:
+            return None
+        try:
+            data = json.loads(payload)
+        except json.JSONDecodeError:
+            return None
+        try:
+            return ThreadWeaveState(
+                relation=ThreadRelationKind(str(data.get("relation", ThreadRelationKind.RELATION_UNKNOWN.value))),
+                main_thread_key=str(data["main_thread_key"]) if data.get("main_thread_key") is not None else None,
+                related_thread_key=str(data["related_thread_key"]) if data.get("related_thread_key") is not None else None,
+                detour_thread_key=str(data["detour_thread_key"]) if data.get("detour_thread_key") is not None else None,
+                conclusion_status=ConclusionStatus(str(data.get("conclusion_status", ConclusionStatus.NONE.value))),
+                conclusion_text=str(data["conclusion_text"]) if data.get("conclusion_text") is not None else None,
+                applicability_status=ApplicabilityStatus(str(data.get("applicability_status", ApplicabilityStatus.UNCERTAIN.value))),
+                applicability_reason=str(data["applicability_reason"]) if data.get("applicability_reason") is not None else None,
+            )
+        except Exception:
+            return None
 
     def create_session(self) -> SessionRecord:
         created_at = utc_now()
@@ -734,9 +783,9 @@ class PersistenceStore:
                     session_id, thread_id, thread_key, mode, turn_count, last_turn_id,
                     snapshot_built_at, source_turn_count, included_turn_count,
                     filtered_recap_turn_count, filtered_pending_turn_count, filtered_control_turn_count,
-                    snapshot_lines_json, snapshot_text, previous_thread_id, previous_thread_key
+                    snapshot_lines_json, snapshot_text, previous_thread_id, previous_thread_key, thread_weave_json
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(thread_id) DO UPDATE SET
                     session_id=excluded.session_id,
                     thread_key=excluded.thread_key,
@@ -752,7 +801,8 @@ class PersistenceStore:
                     snapshot_lines_json=excluded.snapshot_lines_json,
                     snapshot_text=excluded.snapshot_text,
                     previous_thread_id=excluded.previous_thread_id,
-                    previous_thread_key=excluded.previous_thread_key
+                    previous_thread_key=excluded.previous_thread_key,
+                    thread_weave_json=excluded.thread_weave_json
                 """,
                 (
                     snapshot.session_id,
@@ -771,6 +821,7 @@ class PersistenceStore:
                     clean_display_text(snapshot.snapshot_text),
                     snapshot.previous_thread_id,
                     snapshot.previous_thread_key,
+                    self._serialize_thread_weave(snapshot.thread_weave_state),
                 ),
             )
             conn.commit()
@@ -810,6 +861,7 @@ class PersistenceStore:
                 snapshot_text=str(row["snapshot_text"]),
                 previous_thread_id=int(row["previous_thread_id"]) if row["previous_thread_id"] is not None else None,
                 previous_thread_key=str(row["previous_thread_key"]) if row["previous_thread_key"] is not None else None,
+                thread_weave_state=self._deserialize_thread_weave(str(row["thread_weave_json"]) if row["thread_weave_json"] is not None else None),
             )
 
     def upsert_thread_focus(self, focus: ThreadFocusPack) -> None:
@@ -821,9 +873,9 @@ class PersistenceStore:
                     session_id, thread_id, thread_key, last_turn_id, focus_updated_at,
                     focus_source_turn_count, source_turn_count, included_turn_count,
                     filtered_recap_turn_count, filtered_pending_turn_count, filtered_control_turn_count,
-                    focus_lines_json
+                    focus_lines_json, thread_weave_json
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(thread_id) DO UPDATE SET
                     session_id=excluded.session_id,
                     thread_key=excluded.thread_key,
@@ -835,7 +887,8 @@ class PersistenceStore:
                     filtered_recap_turn_count=excluded.filtered_recap_turn_count,
                     filtered_pending_turn_count=excluded.filtered_pending_turn_count,
                     filtered_control_turn_count=excluded.filtered_control_turn_count,
-                    focus_lines_json=excluded.focus_lines_json
+                    focus_lines_json=excluded.focus_lines_json,
+                    thread_weave_json=excluded.thread_weave_json
                 """,
                 (
                     focus.session_id,
@@ -850,6 +903,7 @@ class PersistenceStore:
                     focus.source_metadata.filtered_pending_turn_count,
                     focus.source_metadata.filtered_control_turn_count,
                     lines_json,
+                    self._serialize_thread_weave(focus.thread_weave_state),
                 ),
             )
             conn.commit()
@@ -877,6 +931,7 @@ class PersistenceStore:
                     filtered_pending_turn_count=int(row["filtered_pending_turn_count"]),
                     filtered_control_turn_count=int(row["filtered_control_turn_count"]),
                 ),
+                thread_weave_state=self._deserialize_thread_weave(str(row["thread_weave_json"]) if row["thread_weave_json"] is not None else None),
             )
 
 

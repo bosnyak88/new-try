@@ -24,6 +24,7 @@ from syntaris.contracts.runtime import (
     TimeContext,
     TurnInterpretation,
     WorkframeState,
+    ThreadWeaveState,
 )
 
 
@@ -337,7 +338,66 @@ def build_response_plan(
     workframe_queries: object | None = None,
     workframe_updates: object | None = None,
     historical_workframe_state: WorkframeState | None = None,
+    thread_weave_state: ThreadWeaveState | None = None,
+    thread_weave_query_family: str | None = None,
+    thread_weave_update_kind: str | None = None,
+    thread_weave_query_message: str | None = None,
 ) -> ResponsePlan:
+
+    if thread_weave_state is not None and thread_weave_update_kind is not None:
+        if thread_weave_update_kind == "detour_declared":
+            lines = ["Rendben, ezt kitérő/mellékszál jelzésként rögzítem."]
+            if thread_weave_state.detour_thread_key:
+                lines.append(f"Kitérő téma: {clean_display_text(thread_weave_state.detour_thread_key)}")
+            if thread_weave_state.main_thread_key:
+                lines.append(f"Aktív főszál marad: {clean_display_text(thread_weave_state.main_thread_key)}")
+            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="thread_weave_update", lines=lines)], focus_used=focus is not None)
+        if thread_weave_update_kind == "return_to_main_declared":
+            lines = ["Rendben, ezt főszálra-visszatérésként kezelem."]
+            if thread_weave_state.main_thread_key:
+                lines.append(f"Főszál megerősítve: {clean_display_text(thread_weave_state.main_thread_key)}")
+            if thread_weave_state.detour_thread_key:
+                lines.append(f"A kitérő megmarad háttérként: {clean_display_text(thread_weave_state.detour_thread_key)}")
+            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="thread_weave_update", lines=lines)], focus_used=focus is not None)
+
+    if thread_weave_state is not None and thread_weave_query_family is not None:
+        if thread_weave_query_family == "thread_relation_query":
+            message = (thread_weave_query_message or "").lower()
+            lines = [f"Szál-kapcsolat: {thread_weave_state.relation.value}."]
+            if "mellekszal" in message or "kitero" in message:
+                if thread_weave_state.detour_thread_key:
+                    lines.append(f"Mellékszál/kitérő: {clean_display_text(thread_weave_state.detour_thread_key)}")
+                else:
+                    lines.append("Most nincs egyértelműen rögzített mellékszál.")
+                if thread_weave_state.main_thread_key:
+                    lines.append(f"Főszál ettől még: {clean_display_text(thread_weave_state.main_thread_key)}")
+            elif "foszal" in message:
+                if thread_weave_state.main_thread_key:
+                    lines.append(f"Főszál: {clean_display_text(thread_weave_state.main_thread_key)}")
+                if thread_weave_state.detour_thread_key:
+                    lines.append(f"Utolsó kitérő: {clean_display_text(thread_weave_state.detour_thread_key)}")
+            else:
+                if thread_weave_state.main_thread_key:
+                    lines.append(f"Főszál: {clean_display_text(thread_weave_state.main_thread_key)}")
+                if thread_weave_state.detour_thread_key:
+                    lines.append(f"Kitérő: {clean_display_text(thread_weave_state.detour_thread_key)}")
+            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="thread_relation", lines=lines)], focus_used=focus is not None)
+
+        if thread_weave_query_family == "conclusion_query":
+            lines = [f"Konklúzió állapot: {thread_weave_state.conclusion_status.value}."]
+            if thread_weave_state.conclusion_text:
+                lines.append(f"Levonható tanulság (szál-szövésből): {clean_display_text(thread_weave_state.conclusion_text)}")
+            else:
+                lines.append("Még nincs elég erős, megalapozott konklúzió rögzítve.")
+            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="conclusion", lines=lines)], focus_used=focus is not None)
+
+        if thread_weave_query_family == "applicability_query":
+            lines = [f"Mostani alkalmazhatóság: {thread_weave_state.applicability_status.value}."]
+            if thread_weave_state.conclusion_text:
+                lines.append(f"Kiinduló konklúzió: {clean_display_text(thread_weave_state.conclusion_text)}")
+            if thread_weave_state.applicability_reason:
+                lines.append(clean_display_text(thread_weave_state.applicability_reason))
+            return ResponsePlan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="applicability", lines=lines)], focus_used=focus is not None)
     if interpretation.memory_query is not None and personal_memory is not None:
         return ResponsePlan(
             kind=ResponsePlanKind.STRUCTURED,

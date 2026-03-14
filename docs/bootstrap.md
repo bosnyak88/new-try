@@ -17,3 +17,7 @@ Bootstrap remains deterministic-first. Workframe derivation does not require a l
 
 ## REBUILD-024 deterministic readiness bootstrap
 No additional bootstrap service is required. Decision-readiness semantics are produced inside deterministic orchestration from turn context and remain available without live LLM.
+
+
+## REBUILD-025 deterministic thread-weave bootstrap
+No external bootstrap service was added. Thread-weave/conclusion/applicability semantics are deterministic and available without live LLM, including persisted snapshot/focus state and trace visibility.

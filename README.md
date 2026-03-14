@@ -39,3 +39,11 @@ Current baseline intentionally does **not** include:
 - Workframe now carries an explicit decision-readiness layer: `missing_info`, `open_question`, `assumption`, `decision_state`, `evidence_gap`.
 - Natural Hungarian queries like `mi hiányzik még?`, `milyen nyitott kérdések vannak?`, `milyen döntést kell meghozni?` map to deterministic structured answers.
 - `workframe_state_derived` trace payload includes all decision-readiness statuses and counts, so uncertainty and readiness are auditable instead of hidden in wording.
+
+
+## REBUILD-025 baseline
+- Added an explicit deterministic thread-weave model: `main_thread`, `side_thread`, `detour`, `return_to_main`, `unrelated_thread`, `relation_unknown`.
+- Added deterministic conclusion semantics: `explicit_conclusion`, `derived_conclusion`, `tentative_conclusion`, `superseded_conclusion`, `no_conclusion_established`.
+- Added deterministic carry-forward applicability semantics: `applicable_now`, `partially_applicable`, `not_applicable_now`, `applicability_uncertain`, `superseded_by_new_context`.
+- Snapshot/focus/trace now carry aligned thread-weave state, and `trace-last` includes `thread_weave_state_derived`.
+- Detour (`kitértünk ...`) and return-to-main (`a főszál továbbra is ...`) declarations are captured as retained thread-weave updates, and direct relation answers align with snapshot/focus/trace state.
