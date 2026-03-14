@@ -62,3 +62,16 @@ Operationally validate lifecycle semantics with Hungarian cues (`parkoljuk`, `vi
 - `printf "szia syntaris\nszia syntaris én Árpi vagyok\nmit tudsz rólam biztosan?\n" | python -m syntaris.cli --config "$CFG" talk --live`
 - `python -m syntaris.cli --config "$CFG" trace-last`
 - If constrained console encoding forces replacement, verify trace includes `live_output_sanitized`; if live turn fails pre-persist, verify `live_turn_failed` is present as bounded failure accounting.
+
+
+## REBUILD-031 live stdin parity smoke
+- `@'
+szia syntaris én Árpi vagyok
+'@ | python -m syntaris.cli --config "$CFG" talk --live`
+- `python -m syntaris.cli --config "$CFG" trace-last`
+- `@'
+szia syntaris
+szia syntaris én Árpi vagyok
+mit tudsz rólam biztosan?
+'@ | python -m syntaris.cli --config "$CFG" talk --live`
+- Validate no mojibake in persisted prompt/trace and verify `live_input_repaired` appears when ingress decoding required repair.

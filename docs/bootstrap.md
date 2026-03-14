@@ -45,3 +45,7 @@ No new bootstrap command is required. Maintenance/applicability semantics are de
 ## REBUILD-030 live text boundary note
 - Bootstrap services are unchanged.
 - Runtime now includes deterministic surrogate-safe text normalization and console-safe live rendering fallback for constrained terminals.
+
+
+## REBUILD-031 live ingress note
+- Bootstrap services remain unchanged. Runtime now includes deterministic live stdin decode/repair boundary for Windows pipeline fidelity (HU-first).

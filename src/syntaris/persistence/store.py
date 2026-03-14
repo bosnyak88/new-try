@@ -1180,11 +1180,12 @@ class PersistenceStore:
                 WHERE turn_id = 0
                 AND session_id = ?
                 AND thread_id = ?
-                AND created_at >= ?
-                ORDER BY trace_id ASC
+                ORDER BY trace_id DESC
+                LIMIT 20
                 """,
-                (turn.session_id, turn.thread_id, turn.created_at.isoformat()),
+                (turn.session_id, turn.thread_id),
             ).fetchall()
+            loop_rows = list(reversed(loop_rows))
 
             trace_events = [
                 TraceEventRecord(

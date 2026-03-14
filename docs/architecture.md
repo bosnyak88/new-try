@@ -112,3 +112,8 @@ Schema impact: none for REBUILD-027 (v7 unchanged).
 - CLI remains a thin boundary, but it now enforces a console-safe rendering boundary for live output and records `live_output_sanitized` trace when codepage degradation is applied.
 - Persistence boundary now enforces surrogate-safe normalization before turn writes.
 - Live loop now emits bounded `live_turn_failed` trace on pre-persist failures, instead of silent crash-only behavior.
+
+
+## REBUILD-031 live ingress doctrine
+- Live stdin ingress may decode from bytes using deterministic encoding candidates with bounded mojibake repair before turn execution.
+- Input repair/degradation is trace-visible (`live_input_repaired`) to preserve audit honesty for semantic parity claims.

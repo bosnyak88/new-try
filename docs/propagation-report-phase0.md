@@ -123,3 +123,22 @@ Schema migration: not required in this phase (v7 unchanged).
 
 ### Scope control
 - Narrow live-runtime follow-up only (no identity/presence/onboarding redesign, no executor/workspace expansion).
+
+
+## REBUILD-031 propagation note (Windows stdin mojibake/parity follow-up)
+
+### Changed
+- `src/syntaris/cli.py`: live non-tty path now decodes stdin bytes deterministically and records `live_input_repaired` trace when repair/degradation happened.
+- `src/syntaris/orchestration/text_normalize.py`: added `decode_live_input_line` with bounded encoding candidates + mojibake repair scoring.
+- `src/syntaris/persistence/store.py`: `trace-last` now includes recent loop-level events for same thread/session without time-cutoff loss so ingress-repair signals remain inspectable.
+- Added regressions: `tests/test_live_input_decoding.py`, `tests/test_live_parity.py`.
+
+### Reviewed unchanged
+- `src/syntaris/orchestration/turns.py`, `src/syntaris/orchestration/live_loop.py`, `src/syntaris/reply/*`, contracts/schema remained stable for this narrow ingress parity fix.
+
+### Schema/contracts
+- Schema unchanged (v7).
+- No contract redesign; only ingress decoding/trace observability behavior adjusted.
+
+### Scope control
+- Narrow live-ingress parity fix only; no presence/persona/onboarding redesign and no evidence/maintenance feature expansion.

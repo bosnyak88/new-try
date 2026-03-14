@@ -19,6 +19,15 @@ class ConsoleTextResult:
     reason: str | None = None
 
 
+@dataclass(frozen=True)
+class LiveInputDecodeResult:
+    text: str
+    source_encoding: str
+    repaired: bool
+    degraded: bool
+    reason: str | None = None
+
+
 _DIRECT_MOJIBAKE_MAP = {
     "Ã¡": "á",
     "Ã©": "é",
@@ -175,3 +184,72 @@ def render_console_text(text: str, encoding: str | None) -> ConsoleTextResult:
         encoded = normalized.encode(target_encoding, errors="replace")
         safe_text = encoded.decode(target_encoding, errors="replace")
         return ConsoleTextResult(text=safe_text, degraded=True, reason=f"console_encoding_replace:{target_encoding}")
+
+
+def decode_live_input_line(raw: bytes, preferred_encoding: str | None = None) -> LiveInputDecodeResult:
+    if raw == b"":
+        return LiveInputDecodeResult(text="", source_encoding="eof", repaired=False, degraded=False)
+
+    candidate_encodings: list[str] = []
+    if raw.startswith(b"\xff\xfe") or raw.startswith(b"\xfe\xff"):
+        candidate_encodings.extend(["utf-16", "utf-16-le", "utf-16-be"])
+    candidate_encodings.extend(["utf-8-sig", "utf-8"])
+    if preferred_encoding:
+        candidate_encodings.append(preferred_encoding)
+    candidate_encodings.extend(["cp65001", "cp1250", "cp1252", "latin1"])
+
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for enc in candidate_encodings:
+        key = enc.lower()
+        if key not in seen:
+            seen.add(key)
+            ordered.append(enc)
+
+    best: tuple[int, str, str, bool] | None = None
+    for enc in ordered:
+        try:
+            decoded = raw.decode(enc)
+        except UnicodeDecodeError:
+            continue
+        decoded_line = decoded.rstrip("\r\n")
+        normalized = normalize_text(decoded_line)
+        repaired = normalized.canonical_text
+        marker_penalty = 1 if contains_degraded_text(repaired) else 0
+        replacement_penalty = repaired.count("�")
+        score = marker_penalty * 20 + replacement_penalty
+        if best is None or score < best[0]:
+            best = (score, enc, repaired, normalized.repaired)
+            if score == 0 and enc.lower() in {"utf-8", "utf-8-sig", "cp65001", "utf-16", "utf-16-le", "utf-16-be"}:
+                break
+
+    if best is None:
+        fallback = raw.decode(preferred_encoding or "utf-8", errors="replace").rstrip("\r\n")
+        repaired = normalize_text(fallback).canonical_text
+        return LiveInputDecodeResult(
+            text=repaired,
+            source_encoding=(preferred_encoding or "utf-8") + ":replace",
+            repaired=True,
+            degraded=True,
+            reason="decode_replace_fallback",
+        )
+
+    score, enc, repaired, normalized_repaired = best
+    normalized_enc = enc.lower()
+    repaired_flag = normalized_repaired or normalized_enc not in {"utf-8", "utf-8-sig", "cp65001", "utf-16", "utf-16-le", "utf-16-be"} or score > 0
+    degraded = score > 0
+    reason = None
+    if degraded:
+        reason = f"decoded_with_repair:{enc}"
+    elif normalized_repaired:
+        reason = f"decoded_text_repaired:{enc}"
+    elif repaired_flag:
+        reason = f"decoded_non_utf:{enc}"
+
+    return LiveInputDecodeResult(
+        text=repaired,
+        source_encoding=enc,
+        repaired=repaired_flag,
+        degraded=degraded,
+        reason=reason,
+    )

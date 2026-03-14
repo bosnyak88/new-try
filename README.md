@@ -76,3 +76,7 @@ Current baseline intentionally does **not** include:
 - Live console output now uses deterministic console-safe rendering so unencodable Unicode does not crash `talk --live` on constrained codepages (e.g. Windows cp1250).
 - Live/persistence text normalization now replaces invalid surrogate code points before DB writes, preventing `surrogates not allowed` crashes in `create_turn`.
 - Live-loop failure handling now emits bounded degraded user-visible errors and persisted `live_turn_failed`/`live_output_sanitized` trace signals for honest runtime audit.
+
+## REBUILD-031 live stdin decoding parity
+- Added deterministic live stdin byte decoding with bounded mojibake repair for Windows/PowerShell-style piped input so Hungarian prompts survive ingress in `talk --live`.
+- Once/live semantic parity for self-intro prompts is now preserved by fixing input fidelity before interpretation/persistence, with explicit `live_input_repaired` trace when ingress repair occurs.
