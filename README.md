@@ -71,3 +71,8 @@ Current baseline intentionally does **not** include:
 - Live loop emits `live_surface_degraded` trace when visibility fallback is applied, keeping trace honest about runtime rendering degradation.
 - Llama HTTP response extraction now handles structured `content` payload variants and falls back deterministically on malformed/empty content.
 - Deterministic core behavior (recall/compare/snapshot/focus/evidence/maintenance/applicability) remains unchanged; this pass is runtime visibility stabilization only.
+
+## REBUILD-030 live text-boundary hardening
+- Live console output now uses deterministic console-safe rendering so unencodable Unicode does not crash `talk --live` on constrained codepages (e.g. Windows cp1250).
+- Live/persistence text normalization now replaces invalid surrogate code points before DB writes, preventing `surrogates not allowed` crashes in `create_turn`.
+- Live-loop failure handling now emits bounded degraded user-visible errors and persisted `live_turn_failed`/`live_output_sanitized` trace signals for honest runtime audit.

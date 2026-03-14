@@ -12,6 +12,13 @@ class TextNormalizationResult:
     repaired: bool
 
 
+@dataclass(frozen=True)
+class ConsoleTextResult:
+    text: str
+    degraded: bool
+    reason: str | None = None
+
+
 _DIRECT_MOJIBAKE_MAP = {
     "Ã¡": "á",
     "Ã©": "é",
@@ -114,16 +121,32 @@ def _repair_common_mojibake(text: str) -> str:
     return text
 
 
+def _replace_surrogates(text: str) -> tuple[str, bool]:
+    if not text:
+        return text, False
+    changed = False
+    chars: list[str] = []
+    for ch in text:
+        codepoint = ord(ch)
+        if 0xD800 <= codepoint <= 0xDFFF:
+            chars.append("\uFFFD")
+            changed = True
+        else:
+            chars.append(ch)
+    return "".join(chars), changed
+
+
 def normalize_text(text: str) -> TextNormalizationResult:
-    raw_text = text
-    stripped = text.strip()
+    safe_raw, surrogate_replaced = _replace_surrogates(text)
+    raw_text = safe_raw
+    stripped = safe_raw.strip()
     repaired = _repair_common_mojibake(stripped)
     canonical = unicodedata.normalize("NFC", repaired)
     return TextNormalizationResult(
         raw_text=raw_text,
         canonical_text=canonical,
         display_text=canonical,
-        repaired=canonical != stripped,
+        repaired=canonical != stripped or surrogate_replaced,
     )
 
 
@@ -140,3 +163,15 @@ def normalize_hungarian_for_match(text: str) -> str:
 
 def preprocess_turn_message(text: str) -> str:
     return normalize_text(text).canonical_text
+
+
+def render_console_text(text: str, encoding: str | None) -> ConsoleTextResult:
+    normalized = clean_display_text(text)
+    target_encoding = encoding or "utf-8"
+    try:
+        normalized.encode(target_encoding)
+        return ConsoleTextResult(text=normalized, degraded=False)
+    except UnicodeEncodeError:
+        encoded = normalized.encode(target_encoding, errors="replace")
+        safe_text = encoded.decode(target_encoding, errors="replace")
+        return ConsoleTextResult(text=safe_text, degraded=True, reason=f"console_encoding_replace:{target_encoding}")

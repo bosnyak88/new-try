@@ -40,3 +40,8 @@ No new bootstrap command is required. Maintenance/applicability semantics are de
 ## REBUILD-029 live runtime note
 - Bootstrap assumptions are unchanged: no extra service is required.
 - Live-mode visibility now degrades explicitly when a processed turn yields empty text, while deterministic fallback remains valid without live LLM.
+
+
+## REBUILD-030 live text boundary note
+- Bootstrap services are unchanged.
+- Runtime now includes deterministic surrogate-safe text normalization and console-safe live rendering fallback for constrained terminals.

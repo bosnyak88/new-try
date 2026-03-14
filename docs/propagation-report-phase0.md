@@ -102,3 +102,24 @@ Schema migration: not required in this phase (v7 unchanged).
 ### Scope control
 - Kept separate from presence/persona/onboarding architecture work.
 - Kept separate from executor/tooling/reminder concerns.
+
+
+## REBUILD-030 propagation note (Windows live text-boundary follow-up)
+
+### Changed
+- `src/syntaris/orchestration/text_normalize.py`: added surrogate replacement and console-safe rendering helpers.
+- `src/syntaris/persistence/store.py`: create-turn writes now use normalized surrogate-safe raw/canonical text; `read_last_turn_trace` now surfaces loop-level trace signals (`turn_id=0`) for bounded live failure visibility.
+- `src/syntaris/orchestration/live_loop.py`: bounded exception handling around live turn execution with explicit degraded message + `live_turn_failed` trace, while keeping existing REBUILD-029 visibility guard.
+- `src/syntaris/cli.py`: live output now goes through console-safe emission; sanitization emits `live_output_sanitized` trace.
+- Added regressions: `tests/test_live_windows_console.py`, `tests/test_live_text_sanitization.py`, `tests/test_live_trace_honesty.py`.
+
+### Reviewed unchanged
+- `src/syntaris/orchestration/turns.py`, `src/syntaris/reply/*` (except previous REBUILD-029 hardening), contracts enums/DTOs, schema versioning migration files.
+- REBUILD-026 evidence and REBUILD-027/028 maintenance routes reviewed for regressions.
+
+### Schema/contracts
+- Schema unchanged (v7).
+- No contract redesign; behavior change implemented at normalization/live boundary + trace event payload level.
+
+### Scope control
+- Narrow live-runtime follow-up only (no identity/presence/onboarding redesign, no executor/workspace expansion).

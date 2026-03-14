@@ -1018,6 +1018,8 @@ class PersistenceStore:
         created_at: datetime | None = None,
     ) -> TurnResult:
         created_at = created_at or utc_now()
+        normalized_user = normalize_text(user_message)
+        normalized_reply = normalize_text(assistant_reply)
         with sqlite3.connect(self.db_path) as conn:
             turn_count = int(
                 conn.execute(
@@ -1036,10 +1038,10 @@ class PersistenceStore:
                     thread_id,
                     mode,
                     turn_index,
-                    normalize_text(user_message).canonical_text,
-                    user_message,
-                    normalize_text(assistant_reply).canonical_text,
-                    assistant_reply,
+                    normalized_user.canonical_text,
+                    normalized_user.raw_text,
+                    normalized_reply.canonical_text,
+                    normalized_reply.raw_text,
                     reply_backend,
                     int(degraded),
                     created_at.isoformat(),
@@ -1054,8 +1056,8 @@ class PersistenceStore:
             thread_key=thread_key,
             mode=mode,
             turn_index=turn_index,
-            user_message=normalize_text(user_message).canonical_text,
-            assistant_reply=normalize_text(assistant_reply).canonical_text,
+            user_message=normalized_user.canonical_text,
+            assistant_reply=normalized_reply.canonical_text,
             reply_backend=reply_backend,
             degraded=degraded,
             created_at=created_at,
@@ -1123,7 +1125,26 @@ class PersistenceStore:
                 """
             ).fetchone()
             if turn_row is None:
-                return LastTurnTraceView(turn=None, trace_events=[])
+                rows = conn.execute(
+                    "SELECT * FROM trace_events WHERE turn_id = 0 ORDER BY trace_id DESC LIMIT 20"
+                ).fetchall()
+                rows = list(reversed(rows))
+                trace_events = [
+                    TraceEventRecord(
+                        trace_id=int(row["trace_id"]),
+                        session_id=int(row["session_id"]),
+                        thread_id=int(row["thread_id"]),
+                        turn_id=int(row["turn_id"]),
+                        mode=str(row["mode"]),
+                        event_name=str(row["event_name"]),
+                        backend=str(row["backend"]),
+                        degraded=bool(row["degraded"]),
+                        payload=str(row["payload"]),
+                        created_at=datetime.fromisoformat(str(row["created_at"])),
+                    )
+                    for row in rows
+                ]
+                return LastTurnTraceView(turn=None, trace_events=trace_events)
 
             turn = TurnResult(
                 turn_id=int(turn_row["turn_id"]),
@@ -1153,6 +1174,17 @@ class PersistenceStore:
                 "SELECT * FROM trace_events WHERE turn_id = ? ORDER BY trace_id ASC",
                 (turn.turn_id,),
             ).fetchall()
+            loop_rows = conn.execute(
+                """
+                SELECT * FROM trace_events
+                WHERE turn_id = 0
+                AND session_id = ?
+                AND thread_id = ?
+                AND created_at >= ?
+                ORDER BY trace_id ASC
+                """,
+                (turn.session_id, turn.thread_id, turn.created_at.isoformat()),
+            ).fetchall()
 
             trace_events = [
                 TraceEventRecord(
@@ -1169,4 +1201,19 @@ class PersistenceStore:
                 )
                 for row in rows
             ]
+            trace_events.extend(
+                TraceEventRecord(
+                    trace_id=int(row["trace_id"]),
+                    session_id=int(row["session_id"]),
+                    thread_id=int(row["thread_id"]),
+                    turn_id=int(row["turn_id"]),
+                    mode=str(row["mode"]),
+                    event_name=str(row["event_name"]),
+                    backend=str(row["backend"]),
+                    degraded=bool(row["degraded"]),
+                    payload=str(row["payload"]),
+                    created_at=datetime.fromisoformat(str(row["created_at"])),
+                )
+                for row in loop_rows
+            )
             return LastTurnTraceView(turn=turn, trace_events=trace_events)

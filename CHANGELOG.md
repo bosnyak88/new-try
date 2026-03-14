@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- REBUILD-030: fixed Windows live output boundary with console-safe rendering fallback so `talk --live` no longer crashes on unencodable Unicode in constrained codepages.
+- REBUILD-030: fixed live input/persistence boundary by replacing invalid surrogate code points before turn persistence; prevents `surrogates not allowed` crashes.
+- REBUILD-030: added bounded live failure accounting via `live_turn_failed` and output-sanitization audit via `live_output_sanitized`; updated `trace-last` to surface loop-level (`turn_id=0`) events when needed.
 - REBUILD-029: stabilized `talk --live` response visibility so processed turns cannot silently render as blank output; added explicit degraded live-surface fallback + `live_surface_degraded` trace event.
 - REBUILD-029: hardened llama-http reply extraction for structured/malformed payload variants and deterministic fallback on empty content.
 - REBUILD-029: added deterministic regressions for live visibility, degraded handling, greeting first-turn stability, and once/live parity spot-check.
@@ -56,6 +59,9 @@
 
 
 ## Unreleased
+- REBUILD-030: fixed Windows live output boundary with console-safe rendering fallback so `talk --live` no longer crashes on unencodable Unicode in constrained codepages.
+- REBUILD-030: fixed live input/persistence boundary by replacing invalid surrogate code points before turn persistence; prevents `surrogates not allowed` crashes.
+- REBUILD-030: added bounded live failure accounting via `live_turn_failed` and output-sanitization audit via `live_output_sanitized`; updated `trace-last` to surface loop-level (`turn_id=0`) events when needed.
 - REBUILD-029: stabilized `talk --live` response visibility so processed turns cannot silently render as blank output; added explicit degraded live-surface fallback + `live_surface_degraded` trace event.
 - REBUILD-029: hardened llama-http reply extraction for structured/malformed payload variants and deterministic fallback on empty content.
 - REBUILD-029: added deterministic regressions for live visibility, degraded handling, greeting first-turn stability, and once/live parity spot-check.

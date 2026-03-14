@@ -106,3 +106,9 @@ Schema impact: none for REBUILD-027 (v7 unchanged).
 ## REBUILD-029 live visibility note
 - Live-loop output remains a thin boundary above shared turn execution, but applies a visibility guard for empty replies and records `live_surface_degraded` trace when guardrails are used.
 - No cognition logic moved into `cli.py`; routing/state/trace boundaries remain unchanged.
+
+
+## REBUILD-030 live boundary doctrine
+- CLI remains a thin boundary, but it now enforces a console-safe rendering boundary for live output and records `live_output_sanitized` trace when codepage degradation is applied.
+- Persistence boundary now enforces surrogate-safe normalization before turn writes.
+- Live loop now emits bounded `live_turn_failed` trace on pre-persist failures, instead of silent crash-only behavior.
