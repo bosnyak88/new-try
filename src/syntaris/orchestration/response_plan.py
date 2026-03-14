@@ -82,6 +82,11 @@ def _continuity_resume_line(gap_kind: str) -> str:
 def _personal_entry_lines(signal: PersonalEntryKind, display_name: str, focus: str | None, direction: str | None, time_context: TimeContext | None = None, workframe_state: WorkframeState | None = None) -> list[str]:
     if signal == PersonalEntryKind.GREETING:
         greet = _daypart_greeting(time_context.daypart.value) if time_context is not None else "Szia"
+        if workframe_state is not None and workframe_state.objective_status.value == "active" and workframe_state.objective_text:
+            return [
+                f"{greet}{display_name}. Vissza tudunk kapcsolni a mostani szálra: {clean_display_text(workframe_state.objective_text)}.",
+                "Mondhatod azt is, hogy: folytassuk innen.",
+            ]
         return [f"{greet}{display_name}. Miben segítsek most?"]
     if signal == PersonalEntryKind.SELF_INTRO:
         return [f"Szia{display_name}. Örülök, hogy így mutatkoztál be — miben induljunk el most?"]
@@ -150,6 +155,15 @@ def _memory_query_lines(query: MemoryQueryKind, memory: PersonalMemoryView) -> l
         if memory.system_role:
             return [f"A kimondott szerepem: {memory.system_role}."]
         return ["A szerepemről még nincs egyértelmű, explicit állításod eltárolva."]
+    if query == MemoryQueryKind.HOW_HELP:
+        lines = ["Ebben tudok segíteni determinisztikus, bizonyítékhoz kötött módban:"]
+        lines.append("• tisztázni, pontosan hol tartunk és mi a következő megalapozott lépés")
+        lines.append("• visszahozni a jelenlegi/előző szál röviden, ha van hozzá mentett kontextus")
+        lines.append("• szétválasztani a biztos forrást a következtetéstől")
+        if memory.system_role:
+            lines.append(f"• a kimondott szerepem szerint: {memory.system_role}")
+        lines.append("Nem találok ki állapotot: csak explicit vagy ténylegesen megőrzött kontextusra támaszkodom.")
+        return lines
     if query == MemoryQueryKind.CURRENT_FOCUS:
         if memory.current_focus and memory.current_focus_status == ScopedStateStatus.ACTIVE:
             return [f"A mostani fókusz aktívan: {clean_display_text(memory.current_focus)}."]

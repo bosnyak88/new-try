@@ -18,6 +18,8 @@ from syntaris.orchestration.text_normalize import normalize_hungarian_for_match
 
 _CURRENT_RECALL_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("recall_current_hol_tartottunk", re.compile(r"^hol\s+tartottunk\??$", re.IGNORECASE)),
+    ("recall_current_na_hol_tartottunk", re.compile(r"^na\s+hol\s+tartottunk\??$", re.IGNORECASE)),
+    ("recall_current_hol_is_tartottunk", re.compile(r"^hol\s+is\s+tartottunk\??$", re.IGNORECASE)),
     ("recall_current_mirol_beszeltunk", re.compile(r"^mir[őo]l\s+besz[ée]lt[üu]nk\s+az\s+el[őo]bb\??$", re.IGNORECASE)),
 )
 
@@ -130,6 +132,13 @@ def _memory_query_kind(normalized: str) -> MemoryQueryKind | None:
         return MemoryQueryKind.WHAT_KNOWN_CERTAIN
     if normalized in {"mi a kapcsolatunk", "mi a kapcsolatunk?"}:
         return MemoryQueryKind.RELATIONSHIP
+    if normalized in {
+        "miben segitesz nekem",
+        "miben segitesz nekem?",
+        "miben tudsz segiteni",
+        "miben tudsz segiteni?",
+    }:
+        return MemoryQueryKind.HOW_HELP
     if normalized in {"mi a szereped", "mi a szereped?"}:
         return MemoryQueryKind.SYSTEM_ROLE
     if normalized in {"mi a mostani fokusz", "mi a mostani fokusz?"}:
@@ -197,7 +206,15 @@ def interpret_turn(message: str) -> TurnInterpretation:
     )
     return_entry = any(
         phrase in normalized
-        for phrase in ("folytassuk innen", "vissza syntarisra", "vissza szintarisra")
+        for phrase in (
+            "folytassuk innen",
+            "na folytassuk",
+            "na folytassuk innen",
+            "vissza syntaris",
+            "vissza syntarisra",
+            "vissza szintaris",
+            "vissza szintarisra",
+        )
     )
     greeting = normalized in {"szia", "szia syntaris", "szia szintaris", "jo reggelt", "jo estet", "jo ejt", "szep jo reggelt"} or normalized.startswith("szia syntaris ")
 
@@ -222,8 +239,48 @@ def interpret_turn(message: str) -> TurnInterpretation:
 
     resume_intake = any(
         phrase in normalized
-        for phrase in ("folytassuk a syntarist", "menjunk tovabb innen", "vegyuk fel innen a fonalat")
+        for phrase in (
+            "folytassuk a syntarist",
+            "menjunk tovabb innen",
+            "vegyuk fel innen a fonalat",
+            "vegyuk fel a fonalat",
+        )
     )
+
+    if any(
+        phrase in normalized
+        for phrase in ("hol tartottunk", "na hol tartottunk", "hol is tartottunk", "hol tartunk")
+    ):
+        return TurnInterpretation(
+            kind=TurnInterpretationKind.RECALL_CURRENT,
+            pattern_name="recall_current_normalized",
+            recall_request=RecallRequest(target=RecallTargetKind.CURRENT),
+            relative_time_terms=relative_terms,
+        )
+
+    if any(
+        phrase in normalized
+        for phrase in ("az elozo szalon mi volt", "elozo szalon mi volt")
+    ):
+        return TurnInterpretation(
+            kind=TurnInterpretationKind.RECALL_PREVIOUS,
+            pattern_name="recall_previous_normalized",
+            recall_request=RecallRequest(target=RecallTargetKind.PREVIOUS),
+            relative_time_terms=relative_terms,
+        )
+
+    if any(
+        phrase in normalized
+        for phrase in (
+            "hasonlitsd ossze a mostanit az elozo szallal",
+            "hasonlitsd ossze a mostanit az elozo szall",
+        )
+    ):
+        return TurnInterpretation(
+            kind=TurnInterpretationKind.COMPARE_PREVIOUS,
+            pattern_name="compare_previous_normalized",
+            relative_time_terms=relative_terms,
+        )
 
     captures = _claim_captures(owner_name, system_name, owner_framing, system_role, declared_focus, declared_direction, temporary_state, personal_chat_intake)
 
@@ -307,25 +364,18 @@ def interpret_turn(message: str) -> TurnInterpretation:
             relative_time_terms=relative_terms,
         )
 
-    if (
-        "elozo szalon mi volt" in normalized
-        or normalized in {"az elozo szalon mi volt", "elozo szalon mi volt"}
-        or ("elå" in raw_lower and "szã" in raw_lower and "mi volt" in raw_lower)
-    ):
+    if ("elå" in raw_lower and "szã" in raw_lower and "mi volt" in raw_lower):
         return TurnInterpretation(
             kind=TurnInterpretationKind.RECALL_PREVIOUS,
-            pattern_name="recall_previous_normalized",
+            pattern_name="recall_previous_mojibake",
             recall_request=RecallRequest(target=RecallTargetKind.PREVIOUS),
             relative_time_terms=relative_terms,
         )
 
-    if (
-        "hasonlitsd ossze a mostanit az elozo szallal" in normalized
-        or ("hasonlã" in raw_lower and "ssze" in raw_lower and "elå" in raw_lower and "szã" in raw_lower)
-    ):
+    if ("hasonlã" in raw_lower and "ssze" in raw_lower and "elå" in raw_lower and "szã" in raw_lower):
         return TurnInterpretation(
             kind=TurnInterpretationKind.COMPARE_PREVIOUS,
-            pattern_name="compare_previous_normalized",
+            pattern_name="compare_previous_mojibake",
             relative_time_terms=relative_terms,
         )
 

@@ -213,3 +213,23 @@ Schema migration: not required in this phase (v7 unchanged).
 
 ### Scope control
 - Narrow completion on existing REBUILD-033 branch/PR only; no architecture redesign or A/B/workspace/tooling expansion.
+
+
+## REBUILD-034 propagation snapshot
+### Changed
+- `src/syntaris/orchestration/turn_interpret.py`: widened deterministic HU recognition for continuation/return prompts (`na folytassuk`, `vissza syntaris`, `hol tartottunk` variants) and added `miben segítesz nekem?` memory-query intake.
+- `src/syntaris/orchestration/response_plan.py`: strengthened greeting + re-entry phrasing with active-context continuation cues; added conservative deterministic `HOW_HELP` response family.
+- `src/syntaris/contracts/runtime.py`: additive `MemoryQueryKind.HOW_HELP` enum value for coherent identity/relationship/help follow-up surface.
+- Added deterministic regressions: `tests/test_presence_entry.py`, `tests/test_continue_from_here.py`, `tests/test_presence_followups.py`, `tests/test_live_presence_parity.py`, `tests/test_return_thread_surface_trace.py`.
+
+### Reviewed unchanged
+- `src/syntaris/orchestration/turns.py`, `src/syntaris/orchestration/live_loop.py`, `src/syntaris/cli.py` (boundary/orchestration split preserved).
+- `src/syntaris/persistence/*` and schema remained unchanged (v7), as existing retained-state substrate already supported truthful continuation and memory-query answers.
+- Evidence/maintenance families stayed on existing deterministic routing/response contracts and were revalidated via targeted suites.
+
+### Schema/contracts
+- Schema unchanged (v7).
+- Contracts changed minimally and additively (`MemoryQueryKind.HOW_HELP` only), no runtime contract breakage.
+
+### Scope control
+- Presence/conversation-surface baseline only; no execution orchestration, workspace-shell/tool bridge, or UI expansion scope added.
