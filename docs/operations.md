@@ -42,3 +42,7 @@ Also verify `thread-snapshot --current` and `thread-focus --current` include `th
 - `python -m syntaris.cli --config config/syntaris.example.toml trace-last`
 
 Expected: source-grounded lines are explicit, inferred/unresolved parts stay separated, and trace reports ingest/chunk/key-line counts.
+
+
+## REBUILD-027 operations note
+Operationally validate lifecycle semantics with Hungarian cues (`parkoljuk`, `vissza a főszálra`, `lezártuk`) and applicability prompts (`mi maradt érvényes`, `felülírja az új helyzet?`). Confirm `thread-snapshot`, `thread-focus`, and `trace-last` all show aligned maintenance status.

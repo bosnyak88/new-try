@@ -85,3 +85,18 @@ Propagation shape:
 - trace `evidence_pack_built` includes ingest/chunk/key-line counters
 
 Schema impact: **none** for REBUILD-026 (schema remains v7).
+
+
+## Post-027 maintenance/applicability baseline
+Authoritative deterministic maintenance model extends `ThreadWeaveState` with lifecycle semantics:
+- temporary-state lifecycle: `currently_active_temporary_state`, `aging_or_stale_temporary_state`, `resolved_temporary_state`, `superseded_temporary_state`, `archived_inactive_state`
+- thread lifecycle: `active`, `parked`, `abandoned`, `closed`, `reopenable`
+- conclusion validity: `still_valid`, `partially_valid`, `no_longer_valid_in_current_context`, `superseded_by_newer_context`, `historical_reminder_value_only`
+
+Propagation shape:
+- orchestration derives lifecycle/applicability once (`thread_weave.py`)
+- response layer surfaces active vs historical vs superseded distinctions
+- persistence serializes/deserializes the additional `ThreadWeaveState` fields
+- trace `thread_weave_state_derived` carries lifecycle/validity payloads for honest auditability
+
+Schema impact: none for REBUILD-027 (v7 unchanged).

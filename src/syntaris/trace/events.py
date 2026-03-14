@@ -247,7 +247,10 @@ def build_turn_trace_events(
                     "related_thread_key": thread_weave_trace.related_thread_key,
                     "detour_thread_key": thread_weave_trace.detour_thread_key,
                     "conclusion_status": thread_weave_trace.conclusion_status,
+                    "conclusion_validity": thread_weave_trace.conclusion_validity,
                     "applicability_status": thread_weave_trace.applicability_status,
+                    "temporary_state_lifecycle": thread_weave_trace.temporary_state_lifecycle,
+                    "thread_lifecycle": thread_weave_trace.thread_lifecycle,
                     "query_family": thread_weave_trace.query_family,
                 },
             }

@@ -21,10 +21,11 @@ from syntaris.orchestration.text_normalize import normalize_hungarian_for_match
 _OBJECTIVE_ACTIVE = re.compile(r"(?:a\s+cel\s+most|celunk\s+most|mostani\s+cel(?:unk)?)\s+(?:az\s+)?(.+)$")
 _OBJECTIVE_PROPOSED = re.compile(r"(?:lehet\s+a\s+cel|javasolt\s+cel|talan\s+a\s+cel|jo\s+lenne)\s+(?:az\s+)?(.+)$")
 _BLOCKER_EXPLICIT = re.compile(
-    r"(?:fo\s+problema\s+hogy|fo\s+problema\s+most\s+az\s+hogy|ebben\s+most\s+az\s+a\s+fo\s+problema\s+hogy|miben\s+akadtunk\s+el\s*:?|elakadtunk\s+abban\s+hogy)\s+(.+)$"
+    r"(?:fo\s+problema\s+hogy|fo\s+problema\s+most\s+az\s+hogy|ebben\s+most\s+az\s+a\s+fo\s+problema\s+hogy|miben\s+akadtunk\s+el\s*:?|elakadtunk\s+abban\s+hogy|a\s+blocker\s+most|blocker\s+most)\s+(?:az\s+)?(.+)$"
 )
 _BLOCKER_HEDGED = re.compile(r"(?:lehet\s+hogy)\s+(.+?)\s+(?:a\s+blokk|blokkol|a\s+fo\s+problema)")
 _NEXT_STEP_HEDGED = re.compile(r"(?:talan\s+az\s+lenne\s+a\s+kovetkezo\s+lepes\s+hogy)\s+(.+)$")
+_BLOCKER_REPLACED_CONTEXT = re.compile(r"most\s+mar\s+mas\s+a\s+helyzet\s*:\s*(.+?)\s+megszunt\s*,\s*(?:a\s+)?(.+?)\s+maradt\s+gond$")
 
 
 @dataclass(frozen=True)
@@ -84,13 +85,13 @@ def detect_query_signals(message: str) -> WorkframeQuerySignals:
     n = normalize_hungarian_for_match(message).strip()
     simple = " es " not in n and "," not in n
     return WorkframeQuerySignals(
-        asks_blocker=simple and n in {"mi a fo problema", "mi a fo problema?", "miben akadtunk el", "miben akadtunk el?", "mi blokkol most", "mi blokkol most?"},
+        asks_blocker=simple and n in {"mi a fo problema", "mi a fo problema?", "miben akadtunk el", "miben akadtunk el?", "mi blokkol most", "mi blokkol most?", "mi a blocker most", "mi a blocker most?"},
         asks_next_step=simple and n in {"mit kell most tenni", "mit kell most tenni?", "mi a kovetkezo lepes", "mi a kovetkezo lepes?"},
         asks_plan=simple and n in {"irj egy rovid tervet", "irj egy rovid tervet?", "rovid tervet", "rovid tervet?"},
         asks_current_objective=n in {"mi a mostani cel", "mi a mostani cel?"},
         asks_current_work=n in {"min dolgozunk most", "min dolgozunk most?", "akkor most min dolgozunk", "akkor most min dolgozunk?"},
         asks_current_posture=n in {"ez most chat vagy munka", "ez most chat vagy munka?"},
-        asks_current_blocker=n in {"mi a mostani fo problema", "mi a mostani fo problema?"},
+        asks_current_blocker=n in {"mi a mostani fo problema", "mi a mostani fo problema?", "mi a blocker most", "mi a blocker most?"},
         asks_current_next_step=n in {"mi a mostani kovetkezo lepes", "mi a mostani kovetkezo lepes?"},
         asks_history_objective=n in {"mi volt az aktiv cel", "mi volt az aktiv cel?"},
         asks_history_blocker=n in {"mi volt a fo problema", "mi volt a fo problema?"},
@@ -109,10 +110,10 @@ def detect_query_signals(message: str) -> WorkframeQuerySignals:
 def detect_update_signals(message: str) -> WorkframeUpdateSignals:
     n = normalize_hungarian_for_match(message).strip()
     return WorkframeUpdateSignals(
-        declares_work=any(phrase in n for phrase in ("most ezen dolgozunk", "ezen dolgozunk most", "most ezen a feladaton dolgozunk")),
+        declares_work=any(phrase in n for phrase in ("most ezen dolgozunk", "ezen dolgozunk most", "most ezen a feladaton dolgozunk")) or ("dolgozunk" in n and "?" not in n),
         declares_objective=_OBJECTIVE_ACTIVE.search(n) is not None,
         declares_chat=any(phrase in n for phrase in ("most csak beszelgetunk", "most csak dumalunk", "most inkabb beszelgetunk")),
-        declares_blocker_explicit=_BLOCKER_EXPLICIT.search(n) is not None,
+        declares_blocker_explicit=_BLOCKER_EXPLICIT.search(n) is not None or _BLOCKER_REPLACED_CONTEXT.search(n) is not None,
         resume_here=(n == "folytassuk innen"),
         hedged_blocker=("lehet hogy" in n and "blokk" in n) or (_BLOCKER_HEDGED.search(n) is not None),
         hedged_objective=("jo lenne" in n and "ticket" in n) or ("jo lenne" in n and "cel" in n),
@@ -130,7 +131,7 @@ def _detect_workframe(message: str, current: WorkframeKind) -> WorkframeKind:
         return WorkframeKind.PLANNING
     if any(phrase in n for phrase in ("jegyezd meg", "rogzitsd", "irasban hagyjuk", "mentsd el")):
         return WorkframeKind.CAPTURE
-    if any(phrase in n for phrase in ("most ezen dolgozunk", "dolgozunk", "ticket", "feladat", "cel most", "a cel most")):
+    if any(phrase in n for phrase in ("most ezen dolgozunk", "dolgozunk", "ticket", "feladat", "cel most", "a cel most", "blocker most", "maintenance")):
         return WorkframeKind.WORK
     return current
 
@@ -191,6 +192,12 @@ def derive_workframe_state(turns: list[ThreadContextTurn], current_message: str)
                 missing_info_lines = [f"A fő blokker alapján még hiányzik valami a haladáshoz: {blocker_text}."]
                 evidence_gap_status = EvidenceGapStatus.IMPLIED
                 evidence_gap_lines = ["A fő blokker alapján további bizonyíték/adat kell a biztos továbblépéshez."]
+        elif (replacement := _BLOCKER_REPLACED_CONTEXT.search(n)) is not None:
+            blocker_status = WorkframeBlockerStatus.EXPLICIT
+            blocker_text = f"{_trim(replacement.group(2))} maradt gond"
+            missing_info_status = MissingInfoStatus.NONE
+            if blocker_text:
+                assumption_status = AssumptionStatus.SUPPORTED
         elif (_BLOCKER_HEDGED.search(n) is not None) and blocker_status == WorkframeBlockerStatus.NONE:
             blocker_status = WorkframeBlockerStatus.IMPLIED
             blocker_text = "Lehetséges blokkerről beszéltünk, de nem biztos állításként."

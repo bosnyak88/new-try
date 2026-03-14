@@ -1,6 +1,12 @@
 # Changelog
 
 ## Unreleased
+- REBUILD-028: fixed maintenance-route hijack where explicit maintenance/blocker turns containing time references ("most/ma") could fall back to generic clarification.
+- REBUILD-028: added blocker replacement parsing (old blocker resolved + new blocker remains), and completed applicability/conclusion query handling for the Scenario-A maintenance flow.
+- REBUILD-028: added focused regressions for maintenance update routing, blocker persistence/replacement, and state/trace/snapshot alignment.
+- REBUILD-027: deterministic maintenance baseline for memory/thread/conclusion lifecycle with explicit applicability gate propagation.
+- Added lifecycle semantics to `ThreadWeaveState` (temporary-state lifecycle, thread lifecycle, conclusion validity) and aligned response/persistence/trace behavior.
+- Added deterministic regressions for memory maintenance, thread lifecycle cues (park/return/close), and applicability gate behavior.
 - REBUILD-026 follow-up: raw multiline evidence turn now acknowledges ingest explicitly, and evidence query family returns grounded non-filler answers (error/inference/important-part/blocker/recall).
 - REBUILD-026 follow-up: added deterministic CLI multiline ingress path (`talk --once-file`, `talk --once-stdin`) and removed evidence-query filler fallback when no evidence is ingested.
 
@@ -47,6 +53,12 @@
 
 
 ## Unreleased
+- REBUILD-028: fixed maintenance-route hijack where explicit maintenance/blocker turns containing time references ("most/ma") could fall back to generic clarification.
+- REBUILD-028: added blocker replacement parsing (old blocker resolved + new blocker remains), and completed applicability/conclusion query handling for the Scenario-A maintenance flow.
+- REBUILD-028: added focused regressions for maintenance update routing, blocker persistence/replacement, and state/trace/snapshot alignment.
+- REBUILD-027: deterministic maintenance baseline for memory/thread/conclusion lifecycle with explicit applicability gate propagation.
+- Added lifecycle semantics to `ThreadWeaveState` (temporary-state lifecycle, thread lifecycle, conclusion validity) and aligned response/persistence/trace behavior.
+- Added deterministic regressions for memory maintenance, thread lifecycle cues (park/return/close), and applicability gate behavior.
 - REBUILD-026 follow-up: raw multiline evidence turn now acknowledges ingest explicitly, and evidence query family returns grounded non-filler answers (error/inference/important-part/blocker/recall).
 - Added deterministic REBUILD-023 workframe baseline (mode/objective/blocker/next-step derivation) with trace visibility via `workframe_state_derived`.
 
