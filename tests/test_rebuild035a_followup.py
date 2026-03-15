@@ -90,10 +90,15 @@ def test_once_file_evidence_followup_and_historical_reuse(tmp_path, monkeypatch,
     assert "nincs korábban ténylegesen ingesztált" not in support
     assert "runtimeerror" in support or "database lock" in support
 
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "mi csak következtetés?"])
+    assert cli.main() == 0
+    inference = json.loads(capsys.readouterr().out)["reply"].lower()
+    assert "nincs korábban ténylegesen ingesztált" not in inference
+
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "ez most raw blokk vagy helyi fájl?"])
     assert cli.main() == 0
     source_kind = json.loads(capsys.readouterr().out)["reply"].lower()
-    assert "forrás típusa" in source_kind
+    assert "once-file import" in source_kind or "helyi fájl" in source_kind
 
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once-file", str(plan_path)])
     assert cli.main() == 0
@@ -103,6 +108,16 @@ def test_once_file_evidence_followup_and_historical_reuse(tmp_path, monkeypatch,
     assert cli.main() == 0
     now = json.loads(capsys.readouterr().out)["reply"]
     assert str(plan_path) in now
+
+    missing = sandbox / "missing.log"
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once-file", str(missing)])
+    assert cli.main() == 2
+    capsys.readouterr()
+
+    monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "miből dolgozol most?"])
+    assert cli.main() == 0
+    after_failed = json.loads(capsys.readouterr().out)["reply"]
+    assert str(plan_path) in after_failed
 
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "talk", "--once", "mi biztosan látszik a korábbi logból?"])
     assert cli.main() == 0

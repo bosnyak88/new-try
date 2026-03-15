@@ -362,16 +362,26 @@ def _source_awareness_lines(message: str, evidence_pack: EvidencePack) -> list[s
         return ["Most nincs aktív, beolvasott forrásom."]
 
     origin = None
+    kind_hint = None
     for ref in ingest.evidence_source_references:
-        if ref.source_label == "artifact_origin":
+        if ref.source_label == "artifact_origin" and origin is None:
             origin = clean_display_text(ref.excerpt)
-            break
+        if ref.source_label == "artifact_kind" and kind_hint is None:
+            kind_hint = clean_display_text(ref.excerpt)
     if origin:
-        kind = "helyi fájl" if "/" in origin or "\\" in origin else "fájlforrás"
+        if kind_hint == "once_file_import":
+            kind = "once-file import (helyi fájl)"
+        elif kind_hint == "local_text_file":
+            kind = "helyi fájl"
+        elif kind_hint == "raw_paste":
+            kind = "raw_paste"
+        else:
+            kind = "helyi fájl" if "/" in origin or "\\" in origin else "fájlforrás"
         reuse_line = ""
         if ingest.ingest_status.value != "raw_text_evidence":
             reuse_line = " (korábban beolvasott artifact)"
         return [f"Most ebből dolgozom{reuse_line}: {origin}", f"Forrás típusa: {kind}."]
+
 
     if ingest.ingest_status.value == "raw_text_evidence":
         return ["Most a legutóbbi nyers forrásblokk alapján dolgozom.", "Forrás típusa: raw_paste."]

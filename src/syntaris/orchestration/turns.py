@@ -134,15 +134,29 @@ def _resolve_requested_source_kind(request: TalkRequest) -> ArtifactSourceKind |
     return None
 
 
-def _select_artifact_for_followup(store: PersistenceStore, *, thread_id: int, explicit_history: bool) -> object | None:
-    meaningful = store.list_meaningful_source_artifacts(thread_id=thread_id, limit=6)
+def _is_historical_log_prompt(message: str) -> bool:
+    lower = normalize_hungarian_for_match(message).lower()
+    return any(phrase in lower for phrase in ("korabbi log", "korabbi konzol", "elozo log", "elozo konzol", "abbol a logbol", "abbol a konzolbol"))
+
+
+def _artifact_looks_log_like(artifact) -> bool:
+    origin = (artifact.source_origin or "").lower()
+    return any(token in origin for token in (".log", "log", "trace", "console", "konzol"))
+
+
+def _select_artifact_for_followup(store: PersistenceStore, *, thread_id: int, explicit_history: bool, message: str) -> object | None:
+    meaningful = store.list_meaningful_source_artifacts(thread_id=thread_id, limit=8)
     if not meaningful:
         return None
-    if explicit_history:
-        if len(meaningful) > 1:
-            return meaningful[1]
+    if not explicit_history:
         return meaningful[0]
-    return meaningful[0]
+
+    candidates = meaningful[1:] if len(meaningful) > 1 else meaningful
+    if _is_historical_log_prompt(message):
+        for artifact in candidates:
+            if _artifact_looks_log_like(artifact):
+                return artifact
+    return candidates[0]
 
 
 def _ingest_from_artifact_message(store: PersistenceStore, artifact, config) -> object | None:
@@ -150,7 +164,7 @@ def _ingest_from_artifact_message(store: PersistenceStore, artifact, config) -> 
     if text is None:
         return None
     ingest = ingest_text_evidence(text, config, artifact_ids=[artifact.artifact_id], force=True)
-    refs = list(ingest.evidence_source_references)
+    refs = [EvidenceSourceReference(source_label="artifact_kind", excerpt=artifact.source_kind.value), *list(ingest.evidence_source_references)]
     if artifact.source_origin:
         refs = [EvidenceSourceReference(source_label="artifact_origin", excerpt=artifact.source_origin), *refs]
     return type(ingest)(
@@ -527,6 +541,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             evidence_summary=ingest_result.evidence_summary,
             evidence_source_references=[
                 EvidenceSourceReference(source_label="artifact_origin", excerpt=request.source_origin),
+                EvidenceSourceReference(source_label="artifact_kind", excerpt=(_resolve_requested_source_kind(request).value if _resolve_requested_source_kind(request) is not None else ArtifactSourceKind.RAW_PASTE.value)),
                 *ingest_result.evidence_source_references,
             ],
             unresolved_evidence=ingest_result.unresolved_evidence,
@@ -542,12 +557,14 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
             allow_implicit_artifact = (
                 store.turn_has_meaningful_artifact(turn_id=last_turn.turn_id)
                 or _is_source_awareness_prompt(last_turn.user_message)
+                or _is_evidence_followup_prompt(last_turn.user_message)
             )
         if explicit_history or allow_implicit_artifact:
             selected = _select_artifact_for_followup(
                 store,
                 thread_id=resolved.state_after.thread_id,
                 explicit_history=explicit_history,
+                message=normalized_message,
             )
             if selected is not None:
                 loaded = _ingest_from_artifact_message(store, selected, context.config.conversation)

@@ -319,3 +319,29 @@ Schema migration: not required in this phase (v7 unchanged).
 
 ### Deferred with reason
 - No additional runtime feature changes in 035b; this follow-up is isolation/precedence hardening only.
+
+## REBUILD-035c once-file follow-up + historical-log selection stabilization snapshot
+### Why 035b was not sufficient
+- 035b fixed ambient env leakage and restored suite isolation, but Gate-1 runtime still showed two semantic gaps:
+  - `mi csak következtetés?` could still fall back to generic no-ingest after valid once-file evidence context.
+  - explicit historical `korábbi logból` selection could drift to arbitrary prior text artifacts after later source events / failed once-file handoff.
+
+### Changed
+- `src/syntaris/orchestration/turns.py`:
+  - strengthened follow-up continuity so consecutive evidence follow-up turns can stay on meaningful artifact-backed source context (without reopening stale-substitution behavior).
+  - added explicit historical log ranking preference for `korábbi log/konzol` prompts, selecting earlier log-like artifacts ahead of arbitrary prior text artifacts.
+  - carried `artifact_kind` reference metadata into ingest context for downstream truthful source-kind verbalization.
+- `src/syntaris/orchestration/response_plan.py`:
+  - source-awareness phrasing now preserves explicit once-file semantics (`once-file import (helyi fájl)`) when available.
+- `tests/test_rebuild035a_followup.py`:
+  - extended deterministic coverage for once-file -> `mi csak következtetés?`, failed once-file honesty preservation, and stable explicit historical log selection.
+
+### Reviewed unchanged
+- 035b precedence/isolation hardening in `src/syntaris/config/loader.py` retained.
+- no new CLI command surface added; no shell/UI/execution scope broadening.
+
+### Removed
+- None.
+
+### Deferred with reason
+- No broader artifact ranking framework added; only explicit historical log intent stabilization needed for this follow-up.
