@@ -123,3 +123,5 @@ Ez a térkép ezt gyorsítja fel.
 ## Delta Journal
 
 - 2026-03-15 | REBUILD-036 | Traceability bővítés: Gate 2 követelmények leképezése response_plan.py, workframe_state.py, turns.py, trace/events.py, test_rebuild036_gate2.py és validation log felé. | Miért: követelmény-visszaszármaztatás fenntartása.
+
+- 2026-03-15 | REBUILD-036 finisher | Traceability kiterjesztés: finisher acceptance 1-9 -> konkrét kód- és tesztpontok + finisher validation log | Miért: visszakereshető lezárás.

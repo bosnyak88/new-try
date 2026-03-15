@@ -157,3 +157,5 @@ Ha a kör nem bizonyíthatóan tiszta, nem szabad végső ítéletet alapozni r�
 ## Delta Journal
 
 - 2026-03-15 | REBUILD-036 | Reprodukciós kör hozzáadva: tiszta temp config+DB, ticket smoke lista, live smoke, trace-last/thread-snapshot ellenőrzés | Miért: kontaminációmentes bizonyítás.
+
+- 2026-03-15 | REBUILD-036 finisher | Finisher-run log és problémás-turn trace/snapshot proof kör hozzáadva | Miért: reply/trace/snapshot koherencia bizonyítása.

@@ -123,3 +123,5 @@ Ahol piros vonal van, ott nincs „majd később megoldjuk” kategória.
 ## Delta Journal
 
 - 2026-03-15 | REBUILD-036 | Eval pontok kiegészítve: explicit style obey, direct-answer-first, chat-lock tartás, ack-collapse risk=0 cél | Miért: Gate 2 belépő küszöb objektivizálása.
+
+- 2026-03-15 | REBUILD-036 finisher | Eval bizonyíték hozzáadva a 7 kötelező finisher scenarióra (violation=0 célok) | Miért: red-line zárás mérhető igazolása.

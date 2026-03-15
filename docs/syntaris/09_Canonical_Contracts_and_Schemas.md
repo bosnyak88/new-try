@@ -252,3 +252,5 @@ Ha a kód ezt más nevekkel valósítja meg, a semantikai megfelelést akkor is 
 ## Delta Journal
 
 - 2026-03-15 | REBUILD-036 | Canonical response-plan/trace mezők bővítve (style_constraints, chat_lock_*, direct_answer_*, clarification_*, anti_hijack_guarded, ack_collapse_risk, final_*). | Miért: reply/trace/snapshot koherencia és visszakereshetőség.
+
+- 2026-03-15 | REBUILD-036 finisher | checked, no change | Miért: finisher a már bevezetett contract mezők viselkedését javítja, új mező nem kellett.

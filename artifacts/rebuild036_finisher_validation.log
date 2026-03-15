@@ -1,0 +1,1916 @@
+# REBUILD-036 finisher validation
+CFG=config/syntaris.example.toml
+SYNTARIS_DATA_DIR=/workspace/new-try/.tmp_rebuild036_finisher/data
+SYNTARIS_DB_PATH=/workspace/new-try/.tmp_rebuild036_finisher/data/runtime.db
+
+## init-db
+{
+  "db_path": "/workspace/new-try/.tmp_rebuild036_finisher/data/runtime.db",
+  "schema_initialized": true,
+  "schema_version": 8
+}
+
+## targeted smoke
+{
+  "kind": "structured",
+  "reply": "L\u00e9nyeg:\n\u2022 Nincs el\u00e9g c\u00e9lzott kontextus ehhez a r\u00e9szhez.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 1,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "ne bontsd biztosra meg felt\u00e9telez\u00e9sre, csak mondd el",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "turn": {
+    "turn_id": 1,
+    "session_id": 1,
+    "thread_id": 1,
+    "thread_key": "default",
+    "mode": "chat",
+    "turn_index": 1,
+    "user_message": "ne bontsd biztosra meg felt\u00e9telez\u00e9sre, csak mondd el",
+    "assistant_reply": "L\u00e9nyeg:\n\u2022 Nincs el\u00e9g c\u00e9lzott kontextus ehhez a r\u00e9szhez.",
+    "backend": "deterministic",
+    "degraded": false
+  },
+  "trace_events": [
+    {
+      "trace_id": 1,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "route_decision_computed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"action\": \"continue_active\", \"after_previous_thread_id\": null, \"after_previous_thread_key\": null, \"after_thread_id\": 1, \"after_thread_key\": \"default\", \"before_previous_thread_id\": null, \"before_previous_thread_key\": null, \"before_thread_id\": 1, \"before_thread_key\": \"default\", \"created_thread\": false, \"execution_message\": \"ne bontsd biztosra meg felt\\u00e9telez\\u00e9sre, csak mondd el\", \"match_pattern\": null, \"pending_resolution\": \"none\", \"reason\": \"no_routing_phrase_match\", \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 2,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "active_state_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"mode\": \"chat\", \"previous_thread_id\": null, \"previous_thread_key\": null, \"session_id\": 1, \"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 3,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_resolved_or_created",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 4,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_context_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"last_turn_id\": null, \"recent_turn_count\": 0, \"source\": \"execution_target\", \"thread_id\": 1, \"thread_key\": \"default\", \"turn_count\": 0}"
+    },
+    {
+      "trace_id": 5,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "reply_generated",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"backend\": \"deterministic\", \"degraded\": false, \"mode\": \"chat\"}"
+    },
+    {
+      "trace_id": 6,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_persisted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"turn_id\": 1, \"turn_index\": 1}"
+    },
+    {
+      "trace_id": 7,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_execution_source",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"source\": \"talk_once\"}"
+    },
+    {
+      "trace_id": 8,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_interpreted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"claim_capture_count\": 0, \"clarification_reason\": null, \"declared_direction\": null, \"declared_focus\": null, \"kind\": \"ordinary\", \"memory_query\": null, \"owner_name\": null, \"owner_relation\": null, \"pattern_name\": null, \"personal_entry_kind\": null, \"relative_time_terms\": []}"
+    },
+    {
+      "trace_id": 9,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "recall_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_emitted\": false, \"loaded_from_persistence\": false, \"refreshed_snapshot\": false, \"request_target\": null, \"requested\": false, \"resolved_target\": \"none\", \"thread_id\": null, \"thread_key\": null, \"used_snapshot\": false}"
+    },
+    {
+      "trace_id": 10,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "response_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"ack_collapse_risk\": false, \"anti_hijack_guarded\": false, \"chat_lock_active\": false, \"chat_lock_strength\": \"none\", \"clarification_emitted\": false, \"clarification_needed\": false, \"clarification_reason\": null, \"continuity_class\": \"new_or_unknown\", \"daypart\": \"delutan\", \"direct_answer_present\": true, \"direct_answer_required\": false, \"final_thread_arbitration\": \"continue_active\", \"final_workframe\": \"chat\", \"focus_used\": true, \"gap_kind\": \"unknown\", \"kind\": \"structured\", \"relative_grounding\": [], \"reply_shape\": \"structured\", \"section_count\": 3, \"style_constraints\": [\"no_certainty_split\"]}"
+    },
+    {
+      "trace_id": 11,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_focus_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"filtered_control_turn_count\": 0, \"filtered_pending_turn_count\": 0, \"filtered_recap_turn_count\": 0, \"included_turn_count\": 0, \"loaded\": true, \"loaded_from_persistence\": false, \"source_turn_count\": 0, \"thread_id\": 1, \"thread_key\": \"default\", \"update_reason\": null, \"updated\": false}"
+    },
+    {
+      "trace_id": 12,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "workframe_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"assumption_count\": 0, \"assumption_status\": \"unknown_or_not_established\", \"blocker_status\": \"none\", \"blocker_text\": null, \"decision_count\": 0, \"decision_state\": \"no_decision_established\", \"evidence_gap_count\": 0, \"evidence_gap_status\": \"evidence_sufficient\", \"missing_info_count\": 0, \"missing_info_status\": \"no_missing_info_established\", \"next_step_line_count\": 0, \"next_step_status\": \"none\", \"objective_status\": \"none\", \"objective_text\": null, \"open_question_count\": 0, \"open_question_status\": \"no_open_question_established\", \"query_family\": null, \"uncertainty_marked\": false, \"workframe\": \"chat\"}"
+    },
+    {
+      "trace_id": 13,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_weave_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"applicability_status\": \"applicability_uncertain\", \"conclusion_status\": \"no_conclusion_established\", \"conclusion_validity\": \"historical_reminder_value_only\", \"detour_thread_key\": null, \"main_thread_key\": \"default\", \"query_family\": null, \"related_thread_key\": null, \"relation\": \"relation_unknown\", \"temporary_state_lifecycle\": \"aging_or_stale_temporary_state\", \"thread_lifecycle\": \"active\"}"
+    },
+    {
+      "trace_id": 14,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "comparison_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"candidate_count\": 2, \"candidate_kinds\": [\"structured\", \"direct\"], \"winner_kind\": \"structured\", \"winner_score\": 7}"
+    },
+    {
+      "trace_id": 15,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "answer_strategy_selected",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_cause\": null, \"clarification_planned\": false, \"confidence\": \"high\", \"selected_candidate_kind\": \"structured\", \"selected_strategy\": \"structured_answer\"}"
+    },
+    {
+      "trace_id": 16,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "objective_framed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"is_multi_part\": true, \"kind\": \"mixed_multi_part\", \"secondary_kinds\": [\"status_check\"]}"
+    },
+    {
+      "trace_id": 17,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "decomposition_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"unit_count\": 2, \"unit_kinds\": [\"status_check\", \"status_check\"]}"
+    },
+    {
+      "trace_id": 18,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "evidence_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"artifact_ids\": [], \"chunk_count\": 0, \"ingest_status\": \"no_evidence_ingested\", \"item_count\": 4, \"key_line_count\": 0, \"support_distribution\": {\"supported\": 2, \"unresolved\": 2}}"
+    },
+    {
+      "trace_id": 19,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "synthesis_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"partial\": true, \"section_count\": 3, \"section_keys\": [\"core_point\", \"supported_facts\", \"unresolved_parts\"]}"
+    }
+  ]
+}
+{
+  "request": {
+    "target": "current",
+    "thread_key": null,
+    "limit": null,
+    "refresh": false,
+    "source": "cli_thread_snapshot"
+  },
+  "found": true,
+  "loaded_from_persistence": false,
+  "snapshot": {
+    "session_id": 1,
+    "thread_id": 1,
+    "thread_key": "default",
+    "mode": "chat",
+    "turn_count": 1,
+    "last_turn_id": 1,
+    "snapshot_built_at": "2026-03-15T15:26:52.548677+00:00",
+    "source_metadata": {
+      "source_turn_count": 1,
+      "included_turn_count": 1,
+      "filtered_recap_turn_count": 0,
+      "filtered_pending_turn_count": 0,
+      "filtered_control_turn_count": 0
+    },
+    "previous_thread_id": null,
+    "previous_thread_key": null,
+    "snapshot_text": "Thread snapshot: default (session=1, thread_id=1, turn_count=1, last_turn_id=1, built_at=2026-03-15T15:26:52.548677+00:00)\n- #1 user=ne bontsd biztosra meg felt\u00e9telez\u00e9sre, csak mondd el | assistant=L\u00e9nyeg:\n\u2022 Nincs el\u00e9g c\u00e9lzott kontextus ehhez a r\u00e9szhez.",
+    "workframe_state": {
+      "workframe": "chat",
+      "objective_status": "none",
+      "objective_text": null,
+      "blocker_status": "none",
+      "blocker_text": null,
+      "next_step_status": "none",
+      "next_step_lines": []
+    },
+    "thread_weave_state": {
+      "relation": "relation_unknown",
+      "main_thread_key": "default",
+      "related_thread_key": null,
+      "detour_thread_key": null,
+      "conclusion_status": "no_conclusion_established",
+      "conclusion_text": null,
+      "applicability_status": "applicability_uncertain",
+      "applicability_reason": "Kev\u00e9s stabil jel van arr\u00f3l, hogy a kor\u00e1bbi konkl\u00fazi\u00f3 most is \u00e9rv\u00e9nyes."
+    },
+    "snapshot_lines": [
+      {
+        "turn_id": 1,
+        "turn_index": 1,
+        "user_message": "ne bontsd biztosra meg felt\u00e9telez\u00e9sre, csak mondd el",
+        "assistant_reply": "L\u00e9nyeg:\n\u2022 Nincs el\u00e9g c\u00e9lzott kontextus ehhez a r\u00e9szhez."
+      }
+    ]
+  }
+}
+
+{
+  "kind": "recall",
+  "reply": "R\u00f6viden itt tartunk:\nne bontsd biztosra meg felt\u00e9telez\u00e9sre, csak mondd el\nL\u00e9nyeg:\n\u2022 Nincs el\u00e9g c\u00e9lzott kontextus ehhez a r\u00e9szhez.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 2,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "mit mondtam eddig err\u0151l r\u00f6viden?",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "turn": {
+    "turn_id": 2,
+    "session_id": 1,
+    "thread_id": 1,
+    "thread_key": "default",
+    "mode": "chat",
+    "turn_index": 2,
+    "user_message": "mit mondtam eddig err\u0151l r\u00f6viden?",
+    "assistant_reply": "R\u00f6viden itt tartunk:\nne bontsd biztosra meg felt\u00e9telez\u00e9sre, csak mondd el\nL\u00e9nyeg:\n\u2022 Nincs el\u00e9g c\u00e9lzott kontextus ehhez a r\u00e9szhez.",
+    "backend": "deterministic",
+    "degraded": false
+  },
+  "trace_events": [
+    {
+      "trace_id": 20,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "route_decision_computed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"action\": \"continue_active\", \"after_previous_thread_id\": null, \"after_previous_thread_key\": null, \"after_thread_id\": 1, \"after_thread_key\": \"default\", \"before_previous_thread_id\": null, \"before_previous_thread_key\": null, \"before_thread_id\": 1, \"before_thread_key\": \"default\", \"created_thread\": false, \"execution_message\": \"mit mondtam eddig err\\u0151l r\\u00f6viden?\", \"match_pattern\": null, \"pending_resolution\": \"none\", \"reason\": \"no_routing_phrase_match\", \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 21,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "active_state_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"mode\": \"chat\", \"previous_thread_id\": null, \"previous_thread_key\": null, \"session_id\": 1, \"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 22,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_resolved_or_created",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 23,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_context_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"last_turn_id\": 1, \"recent_turn_count\": 1, \"source\": \"execution_target\", \"thread_id\": 1, \"thread_key\": \"default\", \"turn_count\": 1}"
+    },
+    {
+      "trace_id": 24,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "reply_generated",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"backend\": \"deterministic\", \"degraded\": false, \"mode\": \"chat\"}"
+    },
+    {
+      "trace_id": 25,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_persisted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"turn_id\": 2, \"turn_index\": 2}"
+    },
+    {
+      "trace_id": 26,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_execution_source",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"source\": \"talk_once\"}"
+    },
+    {
+      "trace_id": 27,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_interpreted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"claim_capture_count\": 0, \"clarification_reason\": null, \"declared_direction\": null, \"declared_focus\": null, \"kind\": \"recall_current\", \"memory_query\": null, \"owner_name\": null, \"owner_relation\": null, \"pattern_name\": \"recall_current_brief_summary\", \"personal_entry_kind\": null, \"relative_time_terms\": []}"
+    },
+    {
+      "trace_id": 28,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "recall_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_emitted\": false, \"loaded_from_persistence\": false, \"refreshed_snapshot\": true, \"request_target\": \"current\", \"requested\": true, \"resolved_target\": \"current\", \"thread_id\": 1, \"thread_key\": \"default\", \"used_snapshot\": true}"
+    },
+    {
+      "trace_id": 29,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "response_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"ack_collapse_risk\": false, \"anti_hijack_guarded\": false, \"chat_lock_active\": false, \"chat_lock_strength\": \"none\", \"clarification_emitted\": false, \"clarification_needed\": false, \"clarification_reason\": null, \"continuity_class\": \"same_session\", \"daypart\": \"delutan\", \"direct_answer_present\": true, \"direct_answer_required\": true, \"final_thread_arbitration\": \"continue_active\", \"final_workframe\": \"chat\", \"focus_used\": true, \"gap_kind\": \"immediate\", \"kind\": \"recall\", \"relative_grounding\": [], \"reply_shape\": \"direct\", \"section_count\": 1, \"style_constraints\": [\"brief\"]}"
+    },
+    {
+      "trace_id": 30,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_focus_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"filtered_control_turn_count\": 0, \"filtered_pending_turn_count\": 0, \"filtered_recap_turn_count\": 0, \"included_turn_count\": 1, \"loaded\": true, \"loaded_from_persistence\": false, \"source_turn_count\": 1, \"thread_id\": 1, \"thread_key\": \"default\", \"update_reason\": null, \"updated\": false}"
+    },
+    {
+      "trace_id": 31,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "workframe_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"assumption_count\": 0, \"assumption_status\": \"unknown_or_not_established\", \"blocker_status\": \"none\", \"blocker_text\": null, \"decision_count\": 0, \"decision_state\": \"no_decision_established\", \"evidence_gap_count\": 0, \"evidence_gap_status\": \"evidence_sufficient\", \"missing_info_count\": 0, \"missing_info_status\": \"no_missing_info_established\", \"next_step_line_count\": 0, \"next_step_status\": \"none\", \"objective_status\": \"none\", \"objective_text\": null, \"open_question_count\": 0, \"open_question_status\": \"no_open_question_established\", \"query_family\": null, \"uncertainty_marked\": false, \"workframe\": \"chat\"}"
+    },
+    {
+      "trace_id": 32,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_weave_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"applicability_status\": \"applicability_uncertain\", \"conclusion_status\": \"no_conclusion_established\", \"conclusion_validity\": \"historical_reminder_value_only\", \"detour_thread_key\": null, \"main_thread_key\": \"default\", \"query_family\": null, \"related_thread_key\": null, \"relation\": \"relation_unknown\", \"temporary_state_lifecycle\": \"aging_or_stale_temporary_state\", \"thread_lifecycle\": \"active\"}"
+    },
+    {
+      "trace_id": 33,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "comparison_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"candidate_count\": 2, \"candidate_kinds\": [\"recall\", \"direct\"], \"winner_kind\": \"recall\", \"winner_score\": 8}"
+    },
+    {
+      "trace_id": 34,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "answer_strategy_selected",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_cause\": null, \"clarification_planned\": false, \"confidence\": \"high\", \"selected_candidate_kind\": \"recall\", \"selected_strategy\": \"recall_answer\"}"
+    },
+    {
+      "trace_id": 35,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "objective_framed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"is_multi_part\": false, \"kind\": \"summarize\", \"secondary_kinds\": []}"
+    },
+    {
+      "trace_id": 36,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "decomposition_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"unit_count\": 1, \"unit_kinds\": [\"summarize\"]}"
+    },
+    {
+      "trace_id": 37,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "evidence_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"artifact_ids\": [], \"chunk_count\": 0, \"ingest_status\": \"no_evidence_ingested\", \"item_count\": 3, \"key_line_count\": 0, \"support_distribution\": {\"supported\": 2, \"weak_support\": 1}}"
+    },
+    {
+      "trace_id": 38,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "synthesis_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"partial\": false, \"section_count\": 3, \"section_keys\": [\"core_point\", \"supported_facts\", \"uncertain_parts\"]}"
+    }
+  ]
+}
+
+{
+  "kind": "recall",
+  "reply": "R\u00f6viden itt tartunk:\nmit mondtam eddig err\u0151l r\u00f6viden?\nR\u00f6viden itt tartunk:\nne bontsd biztosra meg felt\u00e9telez\u00e9sre, csak mondd el\nL\u00e9nyeg:\n\u2022 Nincs el\u00e9g c\u00e9lzott kontextus ehhez a r\u00e9szhez.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 3,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "eml\u00e9kszel mire jutottunk, de r\u00f6viden mondd",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "turn": {
+    "turn_id": 3,
+    "session_id": 1,
+    "thread_id": 1,
+    "thread_key": "default",
+    "mode": "chat",
+    "turn_index": 3,
+    "user_message": "eml\u00e9kszel mire jutottunk, de r\u00f6viden mondd",
+    "assistant_reply": "R\u00f6viden itt tartunk:\nmit mondtam eddig err\u0151l r\u00f6viden?\nR\u00f6viden itt tartunk:\nne bontsd biztosra meg felt\u00e9telez\u00e9sre, csak mondd el\nL\u00e9nyeg:\n\u2022 Nincs el\u00e9g c\u00e9lzott kontextus ehhez a r\u00e9szhez.",
+    "backend": "deterministic",
+    "degraded": false
+  },
+  "trace_events": [
+    {
+      "trace_id": 39,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "route_decision_computed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"action\": \"continue_active\", \"after_previous_thread_id\": null, \"after_previous_thread_key\": null, \"after_thread_id\": 1, \"after_thread_key\": \"default\", \"before_previous_thread_id\": null, \"before_previous_thread_key\": null, \"before_thread_id\": 1, \"before_thread_key\": \"default\", \"created_thread\": false, \"execution_message\": \"eml\\u00e9kszel mire jutottunk, de r\\u00f6viden mondd\", \"match_pattern\": null, \"pending_resolution\": \"none\", \"reason\": \"no_routing_phrase_match\", \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 40,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "active_state_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"mode\": \"chat\", \"previous_thread_id\": null, \"previous_thread_key\": null, \"session_id\": 1, \"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 41,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_resolved_or_created",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 42,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_context_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"last_turn_id\": 2, \"recent_turn_count\": 2, \"source\": \"execution_target\", \"thread_id\": 1, \"thread_key\": \"default\", \"turn_count\": 2}"
+    },
+    {
+      "trace_id": 43,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "reply_generated",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"backend\": \"deterministic\", \"degraded\": false, \"mode\": \"chat\"}"
+    },
+    {
+      "trace_id": 44,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_persisted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"turn_id\": 3, \"turn_index\": 3}"
+    },
+    {
+      "trace_id": 45,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_execution_source",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"source\": \"talk_once\"}"
+    },
+    {
+      "trace_id": 46,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_interpreted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"claim_capture_count\": 0, \"clarification_reason\": null, \"declared_direction\": null, \"declared_focus\": null, \"kind\": \"recall_current\", \"memory_query\": null, \"owner_name\": null, \"owner_relation\": null, \"pattern_name\": \"recall_current_brief_summary\", \"personal_entry_kind\": null, \"relative_time_terms\": []}"
+    },
+    {
+      "trace_id": 47,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "recall_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_emitted\": false, \"loaded_from_persistence\": false, \"refreshed_snapshot\": true, \"request_target\": \"current\", \"requested\": true, \"resolved_target\": \"current\", \"thread_id\": 1, \"thread_key\": \"default\", \"used_snapshot\": true}"
+    },
+    {
+      "trace_id": 48,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "response_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"ack_collapse_risk\": false, \"anti_hijack_guarded\": false, \"chat_lock_active\": false, \"chat_lock_strength\": \"none\", \"clarification_emitted\": false, \"clarification_needed\": false, \"clarification_reason\": null, \"continuity_class\": \"same_session\", \"daypart\": \"delutan\", \"direct_answer_present\": true, \"direct_answer_required\": true, \"final_thread_arbitration\": \"continue_active\", \"final_workframe\": \"chat\", \"focus_used\": true, \"gap_kind\": \"immediate\", \"kind\": \"recall\", \"relative_grounding\": [], \"reply_shape\": \"direct\", \"section_count\": 1, \"style_constraints\": [\"brief\"]}"
+    },
+    {
+      "trace_id": 49,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_focus_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"filtered_control_turn_count\": 0, \"filtered_pending_turn_count\": 0, \"filtered_recap_turn_count\": 0, \"included_turn_count\": 1, \"loaded\": true, \"loaded_from_persistence\": false, \"source_turn_count\": 2, \"thread_id\": 1, \"thread_key\": \"default\", \"update_reason\": null, \"updated\": false}"
+    },
+    {
+      "trace_id": 50,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "workframe_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"assumption_count\": 0, \"assumption_status\": \"unknown_or_not_established\", \"blocker_status\": \"none\", \"blocker_text\": null, \"decision_count\": 0, \"decision_state\": \"no_decision_established\", \"evidence_gap_count\": 0, \"evidence_gap_status\": \"evidence_sufficient\", \"missing_info_count\": 0, \"missing_info_status\": \"no_missing_info_established\", \"next_step_line_count\": 0, \"next_step_status\": \"none\", \"objective_status\": \"none\", \"objective_text\": null, \"open_question_count\": 0, \"open_question_status\": \"no_open_question_established\", \"query_family\": null, \"uncertainty_marked\": false, \"workframe\": \"chat\"}"
+    },
+    {
+      "trace_id": 51,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_weave_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"applicability_status\": \"applicability_uncertain\", \"conclusion_status\": \"no_conclusion_established\", \"conclusion_validity\": \"historical_reminder_value_only\", \"detour_thread_key\": null, \"main_thread_key\": \"default\", \"query_family\": null, \"related_thread_key\": null, \"relation\": \"relation_unknown\", \"temporary_state_lifecycle\": \"aging_or_stale_temporary_state\", \"thread_lifecycle\": \"active\"}"
+    },
+    {
+      "trace_id": 52,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "comparison_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"candidate_count\": 2, \"candidate_kinds\": [\"recall\", \"direct\"], \"winner_kind\": \"recall\", \"winner_score\": 8}"
+    },
+    {
+      "trace_id": 53,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "answer_strategy_selected",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_cause\": null, \"clarification_planned\": false, \"confidence\": \"high\", \"selected_candidate_kind\": \"recall\", \"selected_strategy\": \"recall_answer\"}"
+    },
+    {
+      "trace_id": 54,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "objective_framed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"is_multi_part\": false, \"kind\": \"summarize\", \"secondary_kinds\": []}"
+    },
+    {
+      "trace_id": 55,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "decomposition_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"unit_count\": 1, \"unit_kinds\": [\"summarize\"]}"
+    },
+    {
+      "trace_id": 56,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "evidence_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"artifact_ids\": [], \"chunk_count\": 0, \"ingest_status\": \"no_evidence_ingested\", \"item_count\": 3, \"key_line_count\": 0, \"support_distribution\": {\"supported\": 2, \"weak_support\": 1}}"
+    },
+    {
+      "trace_id": 57,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "synthesis_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"partial\": false, \"section_count\": 3, \"section_keys\": [\"core_point\", \"supported_facts\", \"uncertain_parts\"]}"
+    }
+  ]
+}
+
+{
+  "kind": "turn",
+  "reply": "Rendben, maradjunk k\u00f6tetlen besz\u00e9lget\u00e9sben.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 4,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "most ne dolgzunk csak beszelgesunk pls",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "turn": {
+    "turn_id": 4,
+    "session_id": 1,
+    "thread_id": 1,
+    "thread_key": "default",
+    "mode": "chat",
+    "turn_index": 4,
+    "user_message": "most ne dolgzunk csak beszelgesunk pls",
+    "assistant_reply": "Rendben, maradjunk k\u00f6tetlen besz\u00e9lget\u00e9sben.",
+    "backend": "deterministic",
+    "degraded": false
+  },
+  "trace_events": [
+    {
+      "trace_id": 58,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "route_decision_computed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"action\": \"continue_active\", \"after_previous_thread_id\": null, \"after_previous_thread_key\": null, \"after_thread_id\": 1, \"after_thread_key\": \"default\", \"before_previous_thread_id\": null, \"before_previous_thread_key\": null, \"before_thread_id\": 1, \"before_thread_key\": \"default\", \"created_thread\": false, \"execution_message\": \"most ne dolgzunk csak beszelgesunk pls\", \"match_pattern\": null, \"pending_resolution\": \"none\", \"reason\": \"no_routing_phrase_match\", \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 59,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "active_state_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"mode\": \"chat\", \"previous_thread_id\": null, \"previous_thread_key\": null, \"session_id\": 1, \"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 60,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_resolved_or_created",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 61,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_context_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"last_turn_id\": 3, \"recent_turn_count\": 3, \"source\": \"execution_target\", \"thread_id\": 1, \"thread_key\": \"default\", \"turn_count\": 3}"
+    },
+    {
+      "trace_id": 62,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "reply_generated",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"backend\": \"deterministic\", \"degraded\": false, \"mode\": \"chat\"}"
+    },
+    {
+      "trace_id": 63,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_persisted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"turn_id\": 4, \"turn_index\": 4}"
+    },
+    {
+      "trace_id": 64,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_execution_source",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"source\": \"talk_once\"}"
+    },
+    {
+      "trace_id": 65,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_interpreted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"claim_capture_count\": 0, \"clarification_reason\": null, \"declared_direction\": null, \"declared_focus\": null, \"kind\": \"ordinary\", \"memory_query\": null, \"owner_name\": null, \"owner_relation\": null, \"pattern_name\": null, \"personal_entry_kind\": null, \"relative_time_terms\": [\"most\"]}"
+    },
+    {
+      "trace_id": 66,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "recall_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_emitted\": false, \"loaded_from_persistence\": false, \"refreshed_snapshot\": false, \"request_target\": null, \"requested\": false, \"resolved_target\": \"none\", \"thread_id\": null, \"thread_key\": null, \"used_snapshot\": false}"
+    },
+    {
+      "trace_id": 67,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "response_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"ack_collapse_risk\": false, \"anti_hijack_guarded\": false, \"chat_lock_active\": true, \"chat_lock_strength\": \"strong\", \"clarification_emitted\": false, \"clarification_needed\": false, \"clarification_reason\": null, \"continuity_class\": \"same_session\", \"daypart\": \"delutan\", \"direct_answer_present\": true, \"direct_answer_required\": false, \"final_thread_arbitration\": \"continue_active\", \"final_workframe\": \"chat\", \"focus_used\": true, \"gap_kind\": \"immediate\", \"kind\": \"ordinary\", \"relative_grounding\": [\"most:jelen id\\u0151pont\"], \"reply_shape\": \"casual\", \"section_count\": 1, \"style_constraints\": [\"casual_only\"]}"
+    },
+    {
+      "trace_id": 68,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_focus_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"filtered_control_turn_count\": 0, \"filtered_pending_turn_count\": 0, \"filtered_recap_turn_count\": 0, \"included_turn_count\": 1, \"loaded\": true, \"loaded_from_persistence\": false, \"source_turn_count\": 3, \"thread_id\": 1, \"thread_key\": \"default\", \"update_reason\": null, \"updated\": false}"
+    },
+    {
+      "trace_id": 69,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "workframe_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"assumption_count\": 0, \"assumption_status\": \"unknown_or_not_established\", \"blocker_status\": \"none\", \"blocker_text\": null, \"decision_count\": 0, \"decision_state\": \"no_decision_established\", \"evidence_gap_count\": 0, \"evidence_gap_status\": \"evidence_sufficient\", \"missing_info_count\": 0, \"missing_info_status\": \"no_missing_info_established\", \"next_step_line_count\": 0, \"next_step_status\": \"none\", \"objective_status\": \"none\", \"objective_text\": null, \"open_question_count\": 0, \"open_question_status\": \"no_open_question_established\", \"query_family\": null, \"uncertainty_marked\": false, \"workframe\": \"chat\"}"
+    },
+    {
+      "trace_id": 70,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_weave_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"applicability_status\": \"applicability_uncertain\", \"conclusion_status\": \"no_conclusion_established\", \"conclusion_validity\": \"historical_reminder_value_only\", \"detour_thread_key\": null, \"main_thread_key\": \"default\", \"query_family\": null, \"related_thread_key\": null, \"relation\": \"relation_unknown\", \"temporary_state_lifecycle\": \"aging_or_stale_temporary_state\", \"thread_lifecycle\": \"active\"}"
+    },
+    {
+      "trace_id": 71,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "comparison_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"candidate_count\": 1, \"candidate_kinds\": [\"direct\"], \"winner_kind\": \"direct\", \"winner_score\": 2}"
+    },
+    {
+      "trace_id": 72,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "answer_strategy_selected",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_cause\": null, \"clarification_planned\": false, \"confidence\": \"low\", \"selected_candidate_kind\": \"direct\", \"selected_strategy\": \"direct_answer\"}"
+    },
+    {
+      "trace_id": 73,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "objective_framed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"is_multi_part\": false, \"kind\": \"explain\", \"secondary_kinds\": []}"
+    },
+    {
+      "trace_id": 74,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "decomposition_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"unit_count\": 1, \"unit_kinds\": [\"explain\"]}"
+    },
+    {
+      "trace_id": 75,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "evidence_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"artifact_ids\": [], \"chunk_count\": 0, \"ingest_status\": \"no_evidence_ingested\", \"item_count\": 2, \"key_line_count\": 0, \"support_distribution\": {\"supported\": 1, \"weak_support\": 1}}"
+    },
+    {
+      "trace_id": 76,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "synthesis_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"partial\": false, \"section_count\": 3, \"section_keys\": [\"core_point\", \"supported_facts\", \"uncertain_parts\"]}"
+    }
+  ]
+}
+
+{
+  "kind": "turn",
+  "reply": "Rendben, most besz\u00e9lget\u0151 m\u00f3dban maradunk. Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett f\u0151 blokker.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 5,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "csak reag\u00e1lj norm\u00e1lisan, meg am\u00fagy mi a blocker",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "turn": {
+    "turn_id": 5,
+    "session_id": 1,
+    "thread_id": 1,
+    "thread_key": "default",
+    "mode": "chat",
+    "turn_index": 5,
+    "user_message": "csak reag\u00e1lj norm\u00e1lisan, meg am\u00fagy mi a blocker",
+    "assistant_reply": "Rendben, most besz\u00e9lget\u0151 m\u00f3dban maradunk. Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett f\u0151 blokker.",
+    "backend": "deterministic",
+    "degraded": false
+  },
+  "trace_events": [
+    {
+      "trace_id": 77,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "route_decision_computed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"action\": \"continue_active\", \"after_previous_thread_id\": null, \"after_previous_thread_key\": null, \"after_thread_id\": 1, \"after_thread_key\": \"default\", \"before_previous_thread_id\": null, \"before_previous_thread_key\": null, \"before_thread_id\": 1, \"before_thread_key\": \"default\", \"created_thread\": false, \"execution_message\": \"csak reag\\u00e1lj norm\\u00e1lisan, meg am\\u00fagy mi a blocker\", \"match_pattern\": null, \"pending_resolution\": \"none\", \"reason\": \"no_routing_phrase_match\", \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 78,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "active_state_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"mode\": \"chat\", \"previous_thread_id\": null, \"previous_thread_key\": null, \"session_id\": 1, \"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 79,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_resolved_or_created",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 80,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_context_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"last_turn_id\": 4, \"recent_turn_count\": 4, \"source\": \"execution_target\", \"thread_id\": 1, \"thread_key\": \"default\", \"turn_count\": 4}"
+    },
+    {
+      "trace_id": 81,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "reply_generated",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"backend\": \"deterministic\", \"degraded\": false, \"mode\": \"chat\"}"
+    },
+    {
+      "trace_id": 82,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_persisted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"turn_id\": 5, \"turn_index\": 5}"
+    },
+    {
+      "trace_id": 83,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_execution_source",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"source\": \"talk_once\"}"
+    },
+    {
+      "trace_id": 84,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_interpreted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"claim_capture_count\": 0, \"clarification_reason\": null, \"declared_direction\": null, \"declared_focus\": null, \"kind\": \"ordinary\", \"memory_query\": null, \"owner_name\": null, \"owner_relation\": null, \"pattern_name\": null, \"personal_entry_kind\": null, \"relative_time_terms\": [\"ma\"]}"
+    },
+    {
+      "trace_id": 85,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "recall_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_emitted\": false, \"loaded_from_persistence\": false, \"refreshed_snapshot\": false, \"request_target\": null, \"requested\": false, \"resolved_target\": \"none\", \"thread_id\": null, \"thread_key\": null, \"used_snapshot\": false}"
+    },
+    {
+      "trace_id": 86,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "response_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"ack_collapse_risk\": false, \"anti_hijack_guarded\": false, \"chat_lock_active\": true, \"chat_lock_strength\": \"strong\", \"clarification_emitted\": false, \"clarification_needed\": false, \"clarification_reason\": null, \"continuity_class\": \"same_session\", \"daypart\": \"delutan\", \"direct_answer_present\": true, \"direct_answer_required\": false, \"final_thread_arbitration\": \"continue_active\", \"final_workframe\": \"chat\", \"focus_used\": true, \"gap_kind\": \"immediate\", \"kind\": \"personal_entry\", \"relative_grounding\": [\"ma:mai nap (2026-03-15)\"], \"reply_shape\": \"casual\", \"section_count\": 1, \"style_constraints\": [\"no_list\", \"casual_only\"]}"
+    },
+    {
+      "trace_id": 87,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_focus_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"filtered_control_turn_count\": 0, \"filtered_pending_turn_count\": 0, \"filtered_recap_turn_count\": 0, \"included_turn_count\": 1, \"loaded\": true, \"loaded_from_persistence\": false, \"source_turn_count\": 4, \"thread_id\": 1, \"thread_key\": \"default\", \"update_reason\": null, \"updated\": false}"
+    },
+    {
+      "trace_id": 88,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "workframe_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"assumption_count\": 0, \"assumption_status\": \"unknown_or_not_established\", \"blocker_status\": \"none\", \"blocker_text\": null, \"decision_count\": 0, \"decision_state\": \"no_decision_established\", \"evidence_gap_count\": 0, \"evidence_gap_status\": \"evidence_sufficient\", \"missing_info_count\": 0, \"missing_info_status\": \"no_missing_info_established\", \"next_step_line_count\": 0, \"next_step_status\": \"none\", \"objective_status\": \"none\", \"objective_text\": null, \"open_question_count\": 0, \"open_question_status\": \"no_open_question_established\", \"query_family\": \"workframe_action_query\", \"uncertainty_marked\": false, \"workframe\": \"chat\"}"
+    },
+    {
+      "trace_id": 89,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_weave_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"applicability_status\": \"applicability_uncertain\", \"conclusion_status\": \"no_conclusion_established\", \"conclusion_validity\": \"historical_reminder_value_only\", \"detour_thread_key\": null, \"main_thread_key\": \"default\", \"query_family\": null, \"related_thread_key\": null, \"relation\": \"relation_unknown\", \"temporary_state_lifecycle\": \"aging_or_stale_temporary_state\", \"thread_lifecycle\": \"active\"}"
+    },
+    {
+      "trace_id": 90,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "comparison_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"candidate_count\": 1, \"candidate_kinds\": [\"direct\"], \"winner_kind\": \"direct\", \"winner_score\": 2}"
+    },
+    {
+      "trace_id": 91,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "answer_strategy_selected",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_cause\": null, \"clarification_planned\": false, \"confidence\": \"low\", \"selected_candidate_kind\": \"direct\", \"selected_strategy\": \"direct_answer\"}"
+    },
+    {
+      "trace_id": 92,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "objective_framed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"is_multi_part\": false, \"kind\": \"explain\", \"secondary_kinds\": []}"
+    },
+    {
+      "trace_id": 93,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "decomposition_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"unit_count\": 1, \"unit_kinds\": [\"explain\"]}"
+    },
+    {
+      "trace_id": 94,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "evidence_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"artifact_ids\": [], \"chunk_count\": 0, \"ingest_status\": \"no_evidence_ingested\", \"item_count\": 2, \"key_line_count\": 0, \"support_distribution\": {\"supported\": 1, \"weak_support\": 1}}"
+    },
+    {
+      "trace_id": 95,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "synthesis_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"partial\": false, \"section_count\": 3, \"section_keys\": [\"core_point\", \"supported_facts\", \"uncertain_parts\"]}"
+    }
+  ]
+}
+{
+  "request": {
+    "target": "current",
+    "thread_key": null,
+    "limit": null,
+    "refresh": false,
+    "source": "cli_thread_snapshot"
+  },
+  "found": true,
+  "loaded_from_persistence": false,
+  "snapshot": {
+    "session_id": 1,
+    "thread_id": 1,
+    "thread_key": "default",
+    "mode": "chat",
+    "turn_count": 5,
+    "last_turn_id": 5,
+    "snapshot_built_at": "2026-03-15T15:27:01.639896+00:00",
+    "source_metadata": {
+      "source_turn_count": 5,
+      "included_turn_count": 5,
+      "filtered_recap_turn_count": 0,
+      "filtered_pending_turn_count": 0,
+      "filtered_control_turn_count": 0
+    },
+    "previous_thread_id": null,
+    "previous_thread_key": null,
+    "snapshot_text": "Thread snapshot: default (session=1, thread_id=1, turn_count=5, last_turn_id=5, built_at=2026-03-15T15:27:01.639896+00:00)\n- #1 user=ne bontsd biztosra meg felt\u00e9telez\u00e9sre, csak mondd el | assistant=L\u00e9nyeg:\n\u2022 Nincs el\u00e9g c\u00e9lzott kontextus ehhez a r\u00e9szhez.\n- #2 user=mit mondtam eddig err\u0151l r\u00f6viden? | assistant=R\u00f6viden itt tartunk: ne bontsd biztosra meg felt\u00e9telez\u00e9sre, csak mondd el\n- #3 user=eml\u00e9kszel mire jutottunk, de r\u00f6viden mondd | assistant=R\u00f6viden itt tartunk: mit mondtam eddig err\u0151l r\u00f6viden?\n- #4 user=most ne dolgzunk csak beszelgesunk pls | assistant=Rendben, maradjunk k\u00f6tetlen besz\u00e9lget\u00e9sben.\n- #5 user=csak reag\u00e1lj norm\u00e1lisan, meg am\u00fagy mi a blocker | assistant=Rendben, most besz\u00e9lget\u0151 m\u00f3dban maradunk. Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett f\u0151 blokker.",
+    "workframe_state": {
+      "workframe": "chat",
+      "objective_status": "none",
+      "objective_text": null,
+      "blocker_status": "none",
+      "blocker_text": null,
+      "next_step_status": "none",
+      "next_step_lines": []
+    },
+    "thread_weave_state": {
+      "relation": "relation_unknown",
+      "main_thread_key": "default",
+      "related_thread_key": null,
+      "detour_thread_key": null,
+      "conclusion_status": "no_conclusion_established",
+      "conclusion_text": null,
+      "applicability_status": "applicability_uncertain",
+      "applicability_reason": "Kev\u00e9s stabil jel van arr\u00f3l, hogy a kor\u00e1bbi konkl\u00fazi\u00f3 most is \u00e9rv\u00e9nyes."
+    },
+    "snapshot_lines": [
+      {
+        "turn_id": 1,
+        "turn_index": 1,
+        "user_message": "ne bontsd biztosra meg felt\u00e9telez\u00e9sre, csak mondd el",
+        "assistant_reply": "L\u00e9nyeg:\n\u2022 Nincs el\u00e9g c\u00e9lzott kontextus ehhez a r\u00e9szhez."
+      },
+      {
+        "turn_id": 2,
+        "turn_index": 2,
+        "user_message": "mit mondtam eddig err\u0151l r\u00f6viden?",
+        "assistant_reply": "R\u00f6viden itt tartunk: ne bontsd biztosra meg felt\u00e9telez\u00e9sre, csak mondd el"
+      },
+      {
+        "turn_id": 3,
+        "turn_index": 3,
+        "user_message": "eml\u00e9kszel mire jutottunk, de r\u00f6viden mondd",
+        "assistant_reply": "R\u00f6viden itt tartunk: mit mondtam eddig err\u0151l r\u00f6viden?"
+      },
+      {
+        "turn_id": 4,
+        "turn_index": 4,
+        "user_message": "most ne dolgzunk csak beszelgesunk pls",
+        "assistant_reply": "Rendben, maradjunk k\u00f6tetlen besz\u00e9lget\u00e9sben."
+      },
+      {
+        "turn_id": 5,
+        "turn_index": 5,
+        "user_message": "csak reag\u00e1lj norm\u00e1lisan, meg am\u00fagy mi a blocker",
+        "assistant_reply": "Rendben, most besz\u00e9lget\u0151 m\u00f3dban maradunk. Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett f\u0151 blokker."
+      }
+    ]
+  }
+}
+
+{
+  "kind": "turn",
+  "reply": "Most m\u00e9g nincs stabilan r\u00f6gz\u00edtett k\u00f6vetkez\u0151 l\u00e9p\u00e9s; ha adsz egy c\u00e9lmondatot, azonnal sz\u0171k\u00edtem.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 6,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "mi a k\u00f6vetkez\u0151 l\u00e9p\u00e9s?",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "turn": {
+    "turn_id": 6,
+    "session_id": 1,
+    "thread_id": 1,
+    "thread_key": "default",
+    "mode": "chat",
+    "turn_index": 6,
+    "user_message": "mi a k\u00f6vetkez\u0151 l\u00e9p\u00e9s?",
+    "assistant_reply": "Most m\u00e9g nincs stabilan r\u00f6gz\u00edtett k\u00f6vetkez\u0151 l\u00e9p\u00e9s; ha adsz egy c\u00e9lmondatot, azonnal sz\u0171k\u00edtem.",
+    "backend": "deterministic",
+    "degraded": false
+  },
+  "trace_events": [
+    {
+      "trace_id": 96,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "route_decision_computed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"action\": \"continue_active\", \"after_previous_thread_id\": null, \"after_previous_thread_key\": null, \"after_thread_id\": 1, \"after_thread_key\": \"default\", \"before_previous_thread_id\": null, \"before_previous_thread_key\": null, \"before_thread_id\": 1, \"before_thread_key\": \"default\", \"created_thread\": false, \"execution_message\": \"mi a k\\u00f6vetkez\\u0151 l\\u00e9p\\u00e9s?\", \"match_pattern\": null, \"pending_resolution\": \"none\", \"reason\": \"no_routing_phrase_match\", \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 97,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "active_state_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"mode\": \"chat\", \"previous_thread_id\": null, \"previous_thread_key\": null, \"session_id\": 1, \"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 98,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_resolved_or_created",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 99,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_context_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"last_turn_id\": 5, \"recent_turn_count\": 5, \"source\": \"execution_target\", \"thread_id\": 1, \"thread_key\": \"default\", \"turn_count\": 5}"
+    },
+    {
+      "trace_id": 100,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "reply_generated",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"backend\": \"deterministic\", \"degraded\": false, \"mode\": \"chat\"}"
+    },
+    {
+      "trace_id": 101,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_persisted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"turn_id\": 6, \"turn_index\": 6}"
+    },
+    {
+      "trace_id": 102,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_execution_source",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"source\": \"talk_once\"}"
+    },
+    {
+      "trace_id": 103,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_interpreted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"claim_capture_count\": 0, \"clarification_reason\": null, \"declared_direction\": null, \"declared_focus\": null, \"kind\": \"ordinary\", \"memory_query\": null, \"owner_name\": null, \"owner_relation\": null, \"pattern_name\": null, \"personal_entry_kind\": null, \"relative_time_terms\": []}"
+    },
+    {
+      "trace_id": 104,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "recall_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_emitted\": false, \"loaded_from_persistence\": false, \"refreshed_snapshot\": false, \"request_target\": null, \"requested\": false, \"resolved_target\": \"none\", \"thread_id\": null, \"thread_key\": null, \"used_snapshot\": false}"
+    },
+    {
+      "trace_id": 105,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "response_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"ack_collapse_risk\": false, \"anti_hijack_guarded\": false, \"chat_lock_active\": false, \"chat_lock_strength\": \"none\", \"clarification_emitted\": false, \"clarification_needed\": false, \"clarification_reason\": null, \"continuity_class\": \"same_session\", \"daypart\": \"delutan\", \"direct_answer_present\": true, \"direct_answer_required\": true, \"final_thread_arbitration\": \"continue_active\", \"final_workframe\": \"planning\", \"focus_used\": true, \"gap_kind\": \"immediate\", \"kind\": \"ordinary\", \"relative_grounding\": [], \"reply_shape\": \"direct\", \"section_count\": 1, \"style_constraints\": []}"
+    },
+    {
+      "trace_id": 106,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_focus_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"filtered_control_turn_count\": 0, \"filtered_pending_turn_count\": 0, \"filtered_recap_turn_count\": 0, \"included_turn_count\": 1, \"loaded\": true, \"loaded_from_persistence\": false, \"source_turn_count\": 5, \"thread_id\": 1, \"thread_key\": \"default\", \"update_reason\": null, \"updated\": false}"
+    },
+    {
+      "trace_id": 107,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "workframe_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"assumption_count\": 0, \"assumption_status\": \"unknown_or_not_established\", \"blocker_status\": \"uncertainty_or_missing_info\", \"blocker_text\": null, \"decision_count\": 0, \"decision_state\": \"no_decision_established\", \"evidence_gap_count\": 0, \"evidence_gap_status\": \"evidence_sufficient\", \"missing_info_count\": 0, \"missing_info_status\": \"no_missing_info_established\", \"next_step_line_count\": 0, \"next_step_status\": \"none\", \"objective_status\": \"related_context\", \"objective_text\": null, \"open_question_count\": 0, \"open_question_status\": \"no_open_question_established\", \"query_family\": \"workframe_action_query\", \"uncertainty_marked\": false, \"workframe\": \"planning\"}"
+    },
+    {
+      "trace_id": 108,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_weave_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"applicability_status\": \"applicability_uncertain\", \"conclusion_status\": \"no_conclusion_established\", \"conclusion_validity\": \"historical_reminder_value_only\", \"detour_thread_key\": null, \"main_thread_key\": \"default\", \"query_family\": null, \"related_thread_key\": null, \"relation\": \"relation_unknown\", \"temporary_state_lifecycle\": \"aging_or_stale_temporary_state\", \"thread_lifecycle\": \"active\"}"
+    },
+    {
+      "trace_id": 109,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "comparison_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"candidate_count\": 1, \"candidate_kinds\": [\"direct\"], \"winner_kind\": \"direct\", \"winner_score\": 2}"
+    },
+    {
+      "trace_id": 110,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "answer_strategy_selected",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_cause\": null, \"clarification_planned\": false, \"confidence\": \"low\", \"selected_candidate_kind\": \"direct\", \"selected_strategy\": \"direct_answer\"}"
+    },
+    {
+      "trace_id": 111,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "objective_framed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"is_multi_part\": false, \"kind\": \"next_step\", \"secondary_kinds\": []}"
+    },
+    {
+      "trace_id": 112,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "decomposition_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"unit_count\": 1, \"unit_kinds\": [\"next_step\"]}"
+    },
+    {
+      "trace_id": 113,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "evidence_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"artifact_ids\": [], \"chunk_count\": 0, \"ingest_status\": \"no_evidence_ingested\", \"item_count\": 3, \"key_line_count\": 0, \"support_distribution\": {\"supported\": 1, \"unresolved\": 1, \"weak_support\": 1}}"
+    },
+    {
+      "trace_id": 114,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "synthesis_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"partial\": true, \"section_count\": 5, \"section_keys\": [\"core_point\", \"supported_facts\", \"uncertain_parts\", \"unresolved_parts\", \"next_step\"]}"
+    }
+  ]
+}
+
+{
+  "kind": "turn",
+  "reply": "\u00c9rtem, ez most megterhel\u0151nek hangzik. Ha szeretn\u00e9d, maradjunk r\u00f6viden itt, vagy menj\u00fcnk egy apr\u00f3, k\u00f6nny\u0171 k\u00f6vetkez\u0151 l\u00e9p\u00e9ssel.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 7,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "f\u00e1radt vagyok",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "turn": {
+    "turn_id": 7,
+    "session_id": 1,
+    "thread_id": 1,
+    "thread_key": "default",
+    "mode": "chat",
+    "turn_index": 7,
+    "user_message": "f\u00e1radt vagyok",
+    "assistant_reply": "\u00c9rtem, ez most megterhel\u0151nek hangzik. Ha szeretn\u00e9d, maradjunk r\u00f6viden itt, vagy menj\u00fcnk egy apr\u00f3, k\u00f6nny\u0171 k\u00f6vetkez\u0151 l\u00e9p\u00e9ssel.",
+    "backend": "deterministic",
+    "degraded": false
+  },
+  "trace_events": [
+    {
+      "trace_id": 115,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "route_decision_computed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"action\": \"continue_active\", \"after_previous_thread_id\": null, \"after_previous_thread_key\": null, \"after_thread_id\": 1, \"after_thread_key\": \"default\", \"before_previous_thread_id\": null, \"before_previous_thread_key\": null, \"before_thread_id\": 1, \"before_thread_key\": \"default\", \"created_thread\": false, \"execution_message\": \"f\\u00e1radt vagyok\", \"match_pattern\": null, \"pending_resolution\": \"none\", \"reason\": \"no_routing_phrase_match\", \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 116,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "active_state_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"mode\": \"chat\", \"previous_thread_id\": null, \"previous_thread_key\": null, \"session_id\": 1, \"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 117,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_resolved_or_created",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 118,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_context_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"last_turn_id\": 6, \"recent_turn_count\": 5, \"source\": \"execution_target\", \"thread_id\": 1, \"thread_key\": \"default\", \"turn_count\": 6}"
+    },
+    {
+      "trace_id": 119,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "reply_generated",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"backend\": \"deterministic\", \"degraded\": false, \"mode\": \"chat\"}"
+    },
+    {
+      "trace_id": 120,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_persisted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"turn_id\": 7, \"turn_index\": 7}"
+    },
+    {
+      "trace_id": 121,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_execution_source",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"source\": \"talk_once\"}"
+    },
+    {
+      "trace_id": 122,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_interpreted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"claim_capture_count\": 0, \"clarification_reason\": null, \"declared_direction\": null, \"declared_focus\": null, \"kind\": \"ordinary\", \"memory_query\": null, \"owner_name\": null, \"owner_relation\": null, \"pattern_name\": null, \"personal_entry_kind\": null, \"relative_time_terms\": []}"
+    },
+    {
+      "trace_id": 123,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "recall_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_emitted\": false, \"loaded_from_persistence\": false, \"refreshed_snapshot\": false, \"request_target\": null, \"requested\": false, \"resolved_target\": \"none\", \"thread_id\": null, \"thread_key\": null, \"used_snapshot\": false}"
+    },
+    {
+      "trace_id": 124,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "response_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"ack_collapse_risk\": false, \"anti_hijack_guarded\": false, \"chat_lock_active\": false, \"chat_lock_strength\": \"none\", \"clarification_emitted\": false, \"clarification_needed\": false, \"clarification_reason\": null, \"continuity_class\": \"same_session\", \"daypart\": \"delutan\", \"direct_answer_present\": true, \"direct_answer_required\": false, \"final_thread_arbitration\": \"continue_active\", \"final_workframe\": \"planning\", \"focus_used\": true, \"gap_kind\": \"immediate\", \"kind\": \"ordinary\", \"relative_grounding\": [], \"reply_shape\": \"direct\", \"section_count\": 1, \"style_constraints\": []}"
+    },
+    {
+      "trace_id": 125,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_focus_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"filtered_control_turn_count\": 0, \"filtered_pending_turn_count\": 0, \"filtered_recap_turn_count\": 0, \"included_turn_count\": 1, \"loaded\": true, \"loaded_from_persistence\": false, \"source_turn_count\": 6, \"thread_id\": 1, \"thread_key\": \"default\", \"update_reason\": null, \"updated\": false}"
+    },
+    {
+      "trace_id": 126,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "workframe_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"assumption_count\": 0, \"assumption_status\": \"unknown_or_not_established\", \"blocker_status\": \"uncertainty_or_missing_info\", \"blocker_text\": null, \"decision_count\": 0, \"decision_state\": \"no_decision_established\", \"evidence_gap_count\": 0, \"evidence_gap_status\": \"evidence_sufficient\", \"missing_info_count\": 0, \"missing_info_status\": \"no_missing_info_established\", \"next_step_line_count\": 0, \"next_step_status\": \"none\", \"objective_status\": \"related_context\", \"objective_text\": null, \"open_question_count\": 0, \"open_question_status\": \"no_open_question_established\", \"query_family\": null, \"uncertainty_marked\": false, \"workframe\": \"planning\"}"
+    },
+    {
+      "trace_id": 127,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_weave_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"applicability_status\": \"applicability_uncertain\", \"conclusion_status\": \"no_conclusion_established\", \"conclusion_validity\": \"historical_reminder_value_only\", \"detour_thread_key\": null, \"main_thread_key\": \"default\", \"query_family\": null, \"related_thread_key\": null, \"relation\": \"relation_unknown\", \"temporary_state_lifecycle\": \"aging_or_stale_temporary_state\", \"thread_lifecycle\": \"active\"}"
+    },
+    {
+      "trace_id": 128,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "comparison_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"candidate_count\": 1, \"candidate_kinds\": [\"direct\"], \"winner_kind\": \"direct\", \"winner_score\": 2}"
+    },
+    {
+      "trace_id": 129,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "answer_strategy_selected",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_cause\": null, \"clarification_planned\": false, \"confidence\": \"low\", \"selected_candidate_kind\": \"direct\", \"selected_strategy\": \"direct_answer\"}"
+    },
+    {
+      "trace_id": 130,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "objective_framed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"is_multi_part\": false, \"kind\": \"explain\", \"secondary_kinds\": []}"
+    },
+    {
+      "trace_id": 131,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "decomposition_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"unit_count\": 1, \"unit_kinds\": [\"explain\"]}"
+    },
+    {
+      "trace_id": 132,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "evidence_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"artifact_ids\": [], \"chunk_count\": 0, \"ingest_status\": \"no_evidence_ingested\", \"item_count\": 2, \"key_line_count\": 0, \"support_distribution\": {\"supported\": 1, \"weak_support\": 1}}"
+    },
+    {
+      "trace_id": 133,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "synthesis_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"partial\": false, \"section_count\": 3, \"section_keys\": [\"core_point\", \"supported_facts\", \"uncertain_parts\"]}"
+    }
+  ]
+}
+
+## live smoke
+Rendben, maradjunk kötetlen beszélgetésben.
+Rendben, most beszélgető módban maradunk. Most nincs egyértelműen rögzített fő blokker.
+Értem, ez most megterhelőnek hangzik. Ha szeretnéd, maradjunk röviden itt, vagy menjünk egy apró, könnyű következő lépéssel.
+{"event": "loop_exit"}
+
+## final thread-snapshot --current
+{
+  "request": {
+    "target": "current",
+    "thread_key": null,
+    "limit": null,
+    "refresh": false,
+    "source": "cli_thread_snapshot"
+  },
+  "found": true,
+  "loaded_from_persistence": false,
+  "snapshot": {
+    "session_id": 1,
+    "thread_id": 1,
+    "thread_key": "default",
+    "mode": "chat",
+    "turn_count": 10,
+    "last_turn_id": 10,
+    "snapshot_built_at": "2026-03-15T15:27:07.753719+00:00",
+    "source_metadata": {
+      "source_turn_count": 8,
+      "included_turn_count": 8,
+      "filtered_recap_turn_count": 0,
+      "filtered_pending_turn_count": 0,
+      "filtered_control_turn_count": 0
+    },
+    "previous_thread_id": null,
+    "previous_thread_key": null,
+    "snapshot_text": "Thread snapshot: default (session=1, thread_id=1, turn_count=10, last_turn_id=10, built_at=2026-03-15T15:27:07.753719+00:00)\n- #3 user=eml\u00e9kszel mire jutottunk, de r\u00f6viden mondd | assistant=R\u00f6viden itt tartunk: mit mondtam eddig err\u0151l r\u00f6viden?\n- #4 user=most ne dolgzunk csak beszelgesunk pls | assistant=Rendben, maradjunk k\u00f6tetlen besz\u00e9lget\u00e9sben.\n- #5 user=csak reag\u00e1lj norm\u00e1lisan, meg am\u00fagy mi a blocker | assistant=Rendben, most besz\u00e9lget\u0151 m\u00f3dban maradunk. Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett f\u0151 blokker.\n- #6 user=mi a k\u00f6vetkez\u0151 l\u00e9p\u00e9s? | assistant=Most m\u00e9g nincs stabilan r\u00f6gz\u00edtett k\u00f6vetkez\u0151 l\u00e9p\u00e9s; ha adsz egy c\u00e9lmondatot, azonnal sz\u0171k\u00edtem.\n- #7 user=f\u00e1radt vagyok | assistant=\u00c9rtem, ez most megterhel\u0151nek hangzik. Ha szeretn\u00e9d, maradjunk r\u00f6viden itt, vagy menj\u00fcnk egy apr\u00f3, k\u00f6nny\u0171 k\u00f6vetkez\u0151 l\u00e9p\u00e9ssel.\n- #8 user=most ne dolgzunk csak beszelgesunk pls | assistant=Rendben, maradjunk k\u00f6tetlen besz\u00e9lget\u00e9sben.\n- #9 user=csak reag\u00e1lj norm\u00e1lisan, meg am\u00fagy mi a blocker | assistant=Rendben, most besz\u00e9lget\u0151 m\u00f3dban maradunk. Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett f\u0151 blokker.\n- #10 user=f\u00e1radt vagyok | assistant=\u00c9rtem, ez most megterhel\u0151nek hangzik. Ha szeretn\u00e9d, maradjunk r\u00f6viden itt, vagy menj\u00fcnk egy apr\u00f3, k\u00f6nny\u0171 k\u00f6vetkez\u0151 l\u00e9p\u00e9ssel.",
+    "workframe_state": {
+      "workframe": "chat",
+      "objective_status": "none",
+      "objective_text": null,
+      "blocker_status": "none",
+      "blocker_text": null,
+      "next_step_status": "none",
+      "next_step_lines": []
+    },
+    "thread_weave_state": {
+      "relation": "relation_unknown",
+      "main_thread_key": "default",
+      "related_thread_key": null,
+      "detour_thread_key": null,
+      "conclusion_status": "no_conclusion_established",
+      "conclusion_text": null,
+      "applicability_status": "applicability_uncertain",
+      "applicability_reason": "Kev\u00e9s stabil jel van arr\u00f3l, hogy a kor\u00e1bbi konkl\u00fazi\u00f3 most is \u00e9rv\u00e9nyes."
+    },
+    "snapshot_lines": [
+      {
+        "turn_id": 3,
+        "turn_index": 3,
+        "user_message": "eml\u00e9kszel mire jutottunk, de r\u00f6viden mondd",
+        "assistant_reply": "R\u00f6viden itt tartunk: mit mondtam eddig err\u0151l r\u00f6viden?"
+      },
+      {
+        "turn_id": 4,
+        "turn_index": 4,
+        "user_message": "most ne dolgzunk csak beszelgesunk pls",
+        "assistant_reply": "Rendben, maradjunk k\u00f6tetlen besz\u00e9lget\u00e9sben."
+      },
+      {
+        "turn_id": 5,
+        "turn_index": 5,
+        "user_message": "csak reag\u00e1lj norm\u00e1lisan, meg am\u00fagy mi a blocker",
+        "assistant_reply": "Rendben, most besz\u00e9lget\u0151 m\u00f3dban maradunk. Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett f\u0151 blokker."
+      },
+      {
+        "turn_id": 6,
+        "turn_index": 6,
+        "user_message": "mi a k\u00f6vetkez\u0151 l\u00e9p\u00e9s?",
+        "assistant_reply": "Most m\u00e9g nincs stabilan r\u00f6gz\u00edtett k\u00f6vetkez\u0151 l\u00e9p\u00e9s; ha adsz egy c\u00e9lmondatot, azonnal sz\u0171k\u00edtem."
+      },
+      {
+        "turn_id": 7,
+        "turn_index": 7,
+        "user_message": "f\u00e1radt vagyok",
+        "assistant_reply": "\u00c9rtem, ez most megterhel\u0151nek hangzik. Ha szeretn\u00e9d, maradjunk r\u00f6viden itt, vagy menj\u00fcnk egy apr\u00f3, k\u00f6nny\u0171 k\u00f6vetkez\u0151 l\u00e9p\u00e9ssel."
+      },
+      {
+        "turn_id": 8,
+        "turn_index": 8,
+        "user_message": "most ne dolgzunk csak beszelgesunk pls",
+        "assistant_reply": "Rendben, maradjunk k\u00f6tetlen besz\u00e9lget\u00e9sben."
+      },
+      {
+        "turn_id": 9,
+        "turn_index": 9,
+        "user_message": "csak reag\u00e1lj norm\u00e1lisan, meg am\u00fagy mi a blocker",
+        "assistant_reply": "Rendben, most besz\u00e9lget\u0151 m\u00f3dban maradunk. Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett f\u0151 blokker."
+      },
+      {
+        "turn_id": 10,
+        "turn_index": 10,
+        "user_message": "f\u00e1radt vagyok",
+        "assistant_reply": "\u00c9rtem, ez most megterhel\u0151nek hangzik. Ha szeretn\u00e9d, maradjunk r\u00f6viden itt, vagy menj\u00fcnk egy apr\u00f3, k\u00f6nny\u0171 k\u00f6vetkez\u0151 l\u00e9p\u00e9ssel."
+      }
+    ]
+  }
+}

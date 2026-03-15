@@ -100,3 +100,5 @@ Ha egy fogalom többféleképpen is értelmezhető, ezt a dokumentumot kell hasz
 ## Delta Journal
 
 - 2026-03-15 | REBUILD-036 | checked, no change | Miért: új mezők a meglévő naming mintát követik, terminológia nem változott.
+
+- 2026-03-15 | REBUILD-036 finisher | checked, no change | Miért: terminológia nem változott, csak routing/preference viselkedés.
