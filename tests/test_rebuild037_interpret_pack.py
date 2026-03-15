@@ -1,7 +1,7 @@
 import json
 
 from syntaris.contracts.runtime import AppConfig, AppPaths, ConversationConfig, LLMConfig, ReplyConfig, RuntimeContext, TalkRequest
-from syntaris.orchestration.interpret_pack import build_interpret_pack
+from syntaris.orchestration.interpret_pack import build_interpret_pack, to_runtime_interpret_pack
 from syntaris.orchestration.talk import talk_once, trace_last
 
 
@@ -47,3 +47,22 @@ def test_ambiguous_resume_prefers_clarification_over_confident_wrong_route(tmp_p
     runtime = _runtime(tmp_path)
     result = talk_once(runtime, TalkRequest(message="nem tudom pontosan mit akarok, de folytassuk innen és mondd el röviden"))
     assert "pontosíts" in result.turn.assistant_reply.lower() or "pontosits" in result.turn.assistant_reply.lower()
+
+
+def test_neutral_input_keeps_previous_workframe_not_forced_to_chat():
+    pack = build_interpret_pack("ok", previous_workframe="work")
+    assert pack.selected_workframe == "work"
+
+
+def test_neutral_input_does_not_force_direct_answer_intent():
+    pack = build_interpret_pack("hmm")
+    assert pack.selected_intent != "direct_answer"
+    assert pack.selected_intent == "unknown"
+
+
+def test_runtime_contract_mapping_is_explicit_and_lossless():
+    pack = build_interpret_pack("oké, ne listázd, röviden mondd, amúgy mi a blocker", previous_workframe="work")
+    runtime_pack = to_runtime_interpret_pack(pack)
+    assert runtime_pack.selected_intent == pack.selected_intent
+    assert runtime_pack.selected_workframe == pack.selected_workframe
+    assert [c.name for c in runtime_pack.workframe_candidates] == [c.workframe for c in pack.workframe_candidates]

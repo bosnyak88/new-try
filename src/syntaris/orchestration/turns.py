@@ -43,7 +43,7 @@ from syntaris.orchestration.followup_resolution import resolve_followup_referenc
 from syntaris.orchestration.thread_focus import build_thread_focus_view, refresh_thread_focus
 from syntaris.orchestration.deliberation import assemble_deliberation_input
 from syntaris.orchestration.answer_strategy import build_comparison_pack, select_answer_strategy
-from syntaris.orchestration.interpret_pack import build_interpret_pack
+from syntaris.orchestration.interpret_pack import build_interpret_pack, to_runtime_interpret_pack
 from syntaris.orchestration.thread_snapshot import build_thread_snapshot_view, refresh_snapshot_for_transition
 from syntaris.orchestration.turn_interpret import interpret_turn
 from syntaris.orchestration.thread_recall import resolve_recall_request
@@ -488,7 +488,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         previous_workframe=(context_load.pack.workframe_state.workframe.value if context_load.pack.workframe_state is not None else "chat"),
         has_previous_thread=resolved.state_after.previous_thread_id is not None,
     )
-    interpretation = replace(interpretation, interpret_pack=interpret_pack)
+    interpretation = replace(interpretation, interpret_pack=to_runtime_interpret_pack(interpret_pack))
     last_turn_at = store.read_last_turn_at(resolved.state_after.thread_id)
     time_context = build_time_context(context, last_turn_at=last_turn_at, relative_terms=interpretation.relative_time_terms)
     personal_memory = store.get_personal_memory(

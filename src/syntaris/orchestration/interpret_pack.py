@@ -3,6 +3,9 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from syntaris.contracts.runtime import InterpretCandidate as RuntimeInterpretCandidate
+from syntaris.contracts.runtime import InterpretPack as RuntimeInterpretPack
+from syntaris.contracts.runtime import InterpretUnit as RuntimeInterpretUnit
 from syntaris.orchestration.text_normalize import normalize_hungarian_for_match
 
 
@@ -49,6 +52,55 @@ class InterpretPack:
     selected_thread: str
     selected_reason: str
     rejected_reasons: list[str]
+
+
+def to_runtime_interpret_pack(pack: InterpretPack) -> RuntimeInterpretPack:
+    """Explicit canonical mapping from orchestration interpret-pack to runtime contract."""
+    return RuntimeInterpretPack(
+        utterance_units=[RuntimeInterpretUnit(text=u.text, role=u.role) for u in pack.utterance_units],
+        candidate_intents=[RuntimeInterpretCandidate(name=i.name, score=i.score, reason=i.reason) for i in pack.candidate_intents],
+        workframe_candidates=[RuntimeInterpretCandidate(name=i.workframe, score=i.score, reason=i.reason) for i in pack.workframe_candidates],
+        thread_candidates=[RuntimeInterpretCandidate(name=i.relation, score=i.score, reason=i.reason) for i in pack.thread_candidates],
+        style_constraints_effective=list(pack.style_constraints_effective),
+        evidence_need=pack.evidence_need,
+        memory_need=pack.memory_need,
+        risk_flags=list(pack.risk_flags),
+        unknown_points=list(pack.unknown_points),
+        selected_intent=pack.selected_intent,
+        selected_workframe=pack.selected_workframe,
+        selected_thread=pack.selected_thread,
+        selected_reason=pack.selected_reason,
+        rejected_reasons=list(pack.rejected_reasons),
+    )
+
+
+def _select_intent(candidates: list[CandidateIntent], unknown_points: list[str]) -> str:
+    if not candidates:
+        return "unknown"
+    top = candidates[0]
+    if top.score <= 0:
+        return "unknown"
+    if top.name == "direct_answer" and top.score <= 1 and unknown_points:
+        return "clarification_or_unknown"
+    return top.name
+
+
+def _select_workframe(candidates: list[WorkframeCandidate], previous_workframe: str) -> str:
+    if not candidates:
+        return previous_workframe
+    top = candidates[0]
+    if top.score <= 0:
+        return previous_workframe
+    return top.workframe
+
+
+def _select_thread(candidates: list[ThreadCandidate]) -> str:
+    if not candidates:
+        return "uncertain"
+    top = candidates[0]
+    if top.score <= 0:
+        return "uncertain"
+    return top.relation
 
 
 def _segment_units(message: str) -> list[UtteranceUnit]:
@@ -169,9 +221,9 @@ def build_interpret_pack(message: str, *, previous_workframe: str = "chat", has_
     if any(u.role == "uncertainty" for u in units):
         unknown_points.append("user_goal_unspecified")
 
-    selected_intent = intents[0].name if intents else "direct_answer"
-    selected_workframe = workframes[0].workframe if workframes else previous_workframe
-    selected_thread = threads[0].relation if threads else "current"
+    selected_intent = _select_intent(intents, unknown_points)
+    selected_workframe = _select_workframe(workframes, previous_workframe)
+    selected_thread = _select_thread(threads)
     selected_reason = f"intent={selected_intent};workframe={selected_workframe};thread={selected_thread}"
     rejected = [f"{i.name}:{i.reason}" for i in intents[1:3]]
 
