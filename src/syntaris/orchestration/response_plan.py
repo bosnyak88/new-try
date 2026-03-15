@@ -578,7 +578,7 @@ def _is_hijack_prone(message: str) -> bool:
 
 def _is_reflective_personal_input(message: str) -> bool:
     n = normalize_hungarian_for_match(message).lower()
-    return any(term in n for term in ("faradt vagyok", "kimerult vagyok", "szetesek", "nehez nap", "stresszes vagyok"))
+    return any(term in n for term in ("faradt vagyok", "kimerult vagyok", "szetesek", "szetesett", "nehez nap", "stresszes vagyok"))
 
 
 def _reflective_fallback_lines(message: str) -> list[str] | None:
@@ -614,6 +614,56 @@ def _brief_recap_lines(focus: ThreadFocusPack | None) -> list[str] | None:
     lines = ["Röviden itt tartunk:"]
     lines.extend(picked)
     return lines
+
+
+def _is_next_step_request(message: str) -> bool:
+    n = normalize_hungarian_for_match(message).lower()
+    return any(phrase in n for phrase in ("mi a kovetkezo lepes", "mit kell most tenni", "most mi legyen a kovetkezo"))
+
+
+def _is_surface_hijack_blocked(message: str, style_constraints: list[str]) -> bool:
+    n = normalize_hungarian_for_match(message).lower()
+    return (
+        _is_next_step_request(message)
+        or _is_reflective_personal_input(message)
+        or "casual_only" in style_constraints
+        or "csak reagalj normalisan" in n
+    )
+
+
+def _compose_mixed_continuity_lines(
+    message: str,
+    focus: ThreadFocusPack | None,
+    workframe_state: WorkframeState | None,
+) -> list[str] | None:
+    if focus is None and workframe_state is None:
+        return None
+    reflective = _reflective_fallback_lines(message)
+    asks_next = _is_next_step_request(message)
+    asks_recap = _needs_brief_recap(message) or "hol tartunk" in normalize_hungarian_for_match(message).lower() or "mire jutottunk" in normalize_hungarian_for_match(message).lower()
+    has_mixed_trigger = asks_next or reflective is not None or "casual_only" in _extract_style_constraints(message)
+    if not ((asks_recap and has_mixed_trigger) or (asks_next and asks_recap) or (reflective is not None and asks_recap)):
+        return None
+
+    lines: list[str] = []
+    if reflective is not None:
+        lines.extend(reflective[:1])
+
+    recap = _brief_recap_lines(focus)
+    if recap is not None:
+        lines.extend(recap[:2])
+    elif asks_recap:
+        lines.append("Röviden: van előzményünk, de most kevés biztos recap-pont látszik.")
+
+    if asks_next:
+        if workframe_state is not None and workframe_state.next_step_lines:
+            lines.append(f"Következő lépésnek ezt látom: {clean_display_text(workframe_state.next_step_lines[0])}")
+        elif workframe_state is not None and workframe_state.blocker_text:
+            lines.append(f"Még nincs stabil következő lépés, előbb ezt kell tisztázni: {clean_display_text(workframe_state.blocker_text)}")
+        else:
+            lines.append("Most még nincs stabil next-stepem; egy rövid célmondattal pontosíts, és abból adok konkrét lépést.")
+
+    return lines or None
 
 
 def _natural_workframe_answer(message: str, state: WorkframeState) -> list[str] | None:
@@ -720,8 +770,9 @@ def build_response_plan(
     chat_lock_strength = "strong" if chat_lock_active else "none"
     direct_answer_required = _is_direct_question(interpretation_text)
     anti_hijack_guarded = _is_hijack_prone(interpretation_text) or ("hijack_trigger_cluster" in (getattr(interpret_pack, "risk_flags", []) or []))
+    surface_hijack_guarded = _is_surface_hijack_blocked(interpretation_text, style_constraints)
 
-    def _mkplan(*, kind: ResponsePlanKind, sections: list[ResponsePlanSection], followup_prompt: str | None = None, focus_used: bool = False) -> ResponsePlan:
+    def _mkplan(*, kind: ResponsePlanKind, sections: list[ResponsePlanSection], followup_prompt: str | None = None, focus_used: bool = False, composition_recap_used: bool = False, composition_next_step_used: bool = False, composition_reflective_lead_used: bool = False, surface_hijack_guarded: bool = False) -> ResponsePlan:
         adjusted_sections = [ResponsePlanSection(title=s.title, lines=_enforce_style_constraints(s.lines, style_constraints)) for s in sections]
         if "no_certainty_split" in style_constraints and not any(sec.lines for sec in adjusted_sections):
             adjusted_sections = [ResponsePlanSection(title="style_override", lines=["Rendben, bontás nélkül röviden elmondom."])]
@@ -748,8 +799,12 @@ def build_response_plan(
             final_workframe=final_workframe,
             final_thread_arbitration=(getattr(interpret_pack, "selected_thread", None) or ("has_previous" if has_previous_thread else "continue_active")),
             reply_shape=reply_shape,
-            recap_source_turn_count=(focus.source_metadata.source_turn_count if (is_brief_recap and focus is not None) else None),
-            recap_included_turn_count=(focus.source_metadata.included_turn_count if (is_brief_recap and focus is not None) else None),
+            recap_source_turn_count=(focus.source_metadata.source_turn_count if ((is_brief_recap or composition_recap_used) and focus is not None) else None),
+            recap_included_turn_count=(focus.source_metadata.included_turn_count if ((is_brief_recap or composition_recap_used) and focus is not None) else None),
+            composition_recap_used=composition_recap_used or is_brief_recap,
+            composition_next_step_used=composition_next_step_used,
+            composition_reflective_lead_used=composition_reflective_lead_used,
+            surface_hijack_guarded=surface_hijack_guarded,
         )
 
     if thread_weave_state is not None and thread_weave_update_kind is not None:
@@ -873,13 +928,26 @@ def build_response_plan(
             focus_used=focus is not None,
         )
 
-    if _needs_brief_recap(interpretation_text):
+    mixed_lines = _compose_mixed_continuity_lines(interpretation_text, focus, workframe_state)
+    if mixed_lines is not None:
+        return _mkplan(
+            kind=ResponsePlanKind.ORDINARY,
+            sections=[ResponsePlanSection(title="mixed_continuity", lines=mixed_lines)],
+            focus_used=focus is not None,
+            composition_recap_used=any("roviden" in normalize_hungarian_for_match(line).lower() or "itt tartunk" in normalize_hungarian_for_match(line).lower() for line in mixed_lines),
+            composition_next_step_used=any("kovetkezo lepes" in normalize_hungarian_for_match(line).lower() or "next-step" in normalize_hungarian_for_match(line).lower() for line in mixed_lines),
+            composition_reflective_lead_used=_is_reflective_personal_input(interpretation_text),
+            surface_hijack_guarded=surface_hijack_guarded,
+        )
+
+    if _needs_brief_recap(interpretation_text) and not surface_hijack_guarded:
         recap_lines = _brief_recap_lines(focus)
         if recap_lines is not None:
             return _mkplan(
                 kind=ResponsePlanKind.RECALL,
                 sections=[ResponsePlanSection(title="brief_recap", lines=recap_lines)],
                 focus_used=focus is not None,
+                composition_recap_used=True,
             )
 
     if interpretation.memory_query is not None and personal_memory is not None:
@@ -963,13 +1031,16 @@ def build_response_plan(
                 lines = ["Értettem, célról beszélünk, de még pontosítás kell az aktív cél rögzítéséhez."]
             return _mkplan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="objective_update", lines=lines)], focus_used=focus is not None)
         if getattr(workframe_updates, "declares_chat", False):
-            lines = ["Rendben, most beszélgető módban maradunk."]
+            lines = ["Oké, maradjunk lazábban, beszélgetős tempóban."]
+            reflective = _reflective_fallback_lines(interpretation_text)
+            if reflective is not None:
+                lines = reflective[:1] + lines
             natural = _natural_workframe_answer(interpretation_text, workframe_state)
             if natural is not None:
                 lines.extend(natural)
             elif workframe_state.objective_status.value == "active" and workframe_state.objective_text:
                 lines.append(f"A korábbi aktív célt megőrzöm háttér-kontinuitásnak: {clean_display_text(workframe_state.objective_text)}.")
-            return _mkplan(kind=ResponsePlanKind.PERSONAL_ENTRY, sections=[ResponsePlanSection(title="chat_update", lines=lines)], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.PERSONAL_ENTRY, sections=[ResponsePlanSection(title="chat_update", lines=lines)], focus_used=focus is not None, composition_reflective_lead_used=_is_reflective_personal_input(interpretation_text), surface_hijack_guarded=surface_hijack_guarded)
         if getattr(workframe_updates, "declares_blocker_explicit", False):
             lines = ["Rendben, ezt explicit fő blokkert állításként rögzítem."]
             if workframe_state.blocker_text:

@@ -172,6 +172,10 @@ def build_turn_trace_events(
                     "reply_shape": response_plan_trace.reply_shape,
                     "recap_source_turn_count": response_plan_trace.recap_source_turn_count,
                     "recap_included_turn_count": response_plan_trace.recap_included_turn_count,
+                    "composition_recap_used": response_plan_trace.composition_recap_used,
+                    "composition_next_step_used": response_plan_trace.composition_next_step_used,
+                    "composition_reflective_lead_used": response_plan_trace.composition_reflective_lead_used,
+                    "surface_hijack_guarded": response_plan_trace.surface_hijack_guarded,
                 },
             }
         )
