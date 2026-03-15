@@ -153,3 +153,8 @@ Ez a dokumentum kötelezően frissítendő:
 
 Ha kérdés merül fel arról, hogy „hol tart most a rendszer?”, erre a dokumentumra kell nézni.
 Ha a válasz nem fér bele ide, akkor a dokumentum hiányos és bővítendő.
+
+
+## Delta Journal
+
+- 2026-03-15 | REBUILD-036 | Gate 2 starter státusz rögzítve: chat-lock/style-obedience/direct-answer-first/anti-hijack fókusz aktív | Miért: red-line interpretációs hibák determinisztikus kezelése.

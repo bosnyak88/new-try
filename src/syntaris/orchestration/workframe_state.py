@@ -112,7 +112,7 @@ def detect_update_signals(message: str) -> WorkframeUpdateSignals:
     return WorkframeUpdateSignals(
         declares_work=any(phrase in n for phrase in ("most ezen dolgozunk", "ezen dolgozunk most", "most ezen a feladaton dolgozunk")) or ("dolgozunk" in n and "?" not in n),
         declares_objective=_OBJECTIVE_ACTIVE.search(n) is not None,
-        declares_chat=any(phrase in n for phrase in ("most csak beszelgetunk", "most csak dumalunk", "most inkabb beszelgetunk")),
+        declares_chat=any(phrase in n for phrase in ("most csak beszelgetunk", "most csak dumalunk", "most inkabb beszelgetunk", "most ne dolgozzunk", "csak reagalj normalisan", "nem kerek listat")),
         declares_blocker_explicit=_BLOCKER_EXPLICIT.search(n) is not None or _BLOCKER_REPLACED_CONTEXT.search(n) is not None,
         resume_here=(n == "folytassuk innen"),
         hedged_blocker=("lehet hogy" in n and "blokk" in n) or (_BLOCKER_HEDGED.search(n) is not None),
@@ -123,8 +123,15 @@ def detect_update_signals(message: str) -> WorkframeUpdateSignals:
 
 def _detect_workframe(message: str, current: WorkframeKind) -> WorkframeKind:
     n = normalize_hungarian_for_match(message)
-    if any(phrase in n for phrase in ("most csak beszelgetunk", "csak beszelgetunk", "beszelgessunk", "szia syntaris", "szia")):
+    chat_lock_signals = (
+        "most ne dolgozzunk", "csak beszelgessunk", "nem kerek listat", "csak reagalj normalisan", "most csak beszelgetunk", "csak beszelgetunk", "beszelgessunk",
+    )
+    if any(phrase in n for phrase in chat_lock_signals) or n in {"szia syntaris", "szia"}:
         return WorkframeKind.CHAT
+    if current == WorkframeKind.CHAT and any(phrase in n for phrase in ("most", "fontos", "biztos", "emlekszel", "hol tartottunk", "folytassuk innen")):
+        strong_work = any(phrase in n for phrase in ("dolgozzunk", "feladat", "ticket", "konkret lepes", "terv kell", "kovetkezo lepes kell"))
+        if not strong_work:
+            return WorkframeKind.CHAT
     if any(phrase in n for phrase in ("hol tartottunk", "elozo szalon mi volt", "emlekezz")):
         return WorkframeKind.RECALL
     if any(phrase in n for phrase in ("rovid terv", "kovetkezo lepes", "tervezzunk", "mit kell most tenni")):

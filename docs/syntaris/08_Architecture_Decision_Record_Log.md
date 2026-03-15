@@ -146,3 +146,8 @@ A célja, hogy a csapat később is pontosan vissza tudja fejteni:
 - Következmény:
 - Érintett dokumentumok:
 - Kötelező frissítések:
+
+
+## Delta Journal
+
+- 2026-03-15 | REBUILD-036 | ADR update: Gate 2-ben a direct-answer-first és anti-hijack guard contract-szintű mezőkkel kötelező | Miért: ack-collapse és sablonhijack regressziók lezárása.

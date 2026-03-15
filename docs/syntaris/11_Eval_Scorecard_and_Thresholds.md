@@ -118,3 +118,8 @@ Minden fontos scorecard kör eredménye kerüljön be:
 
 A scorecard célja, hogy a Syntaris ne érzet alapján lépjen kaput.
 Ahol piros vonal van, ott nincs „majd később megoldjuk” kategória.
+
+
+## Delta Journal
+
+- 2026-03-15 | REBUILD-036 | Eval pontok kiegészítve: explicit style obey, direct-answer-first, chat-lock tartás, ack-collapse risk=0 cél | Miért: Gate 2 belépő küszöb objektivizálása.

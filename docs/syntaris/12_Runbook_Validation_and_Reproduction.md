@@ -152,3 +152,8 @@ Enélkül a ticket nem tekinthető teljesnek.
 
 A runbook célja, hogy a validáció reprodukálható és tiszta legyen.
 Ha a kör nem bizonyíthatóan tiszta, nem szabad végső ítéletet alapozni rá.
+
+
+## Delta Journal
+
+- 2026-03-15 | REBUILD-036 | Reprodukciós kör hozzáadva: tiszta temp config+DB, ticket smoke lista, live smoke, trace-last/thread-snapshot ellenőrzés | Miért: kontaminációmentes bizonyítás.

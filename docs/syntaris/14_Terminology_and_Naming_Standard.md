@@ -95,3 +95,8 @@ Kerülendő:
 ## 4. Rövid végső összefoglalás
 
 Ha egy fogalom többféleképpen is értelmezhető, ezt a dokumentumot kell használni a lezárására.
+
+
+## Delta Journal
+
+- 2026-03-15 | REBUILD-036 | checked, no change | Miért: új mezők a meglévő naming mintát követik, terminológia nem változott.

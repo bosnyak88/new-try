@@ -247,3 +247,8 @@ Minden komolyabb validációhoz kell:
 
 A contractok célja, hogy a csapat ugyanazt értse state, trace, source, response plan és memória alatt.
 Ha a kód ezt más nevekkel valósítja meg, a semantikai megfelelést akkor is fenn kell tartani.
+
+
+## Delta Journal
+
+- 2026-03-15 | REBUILD-036 | Canonical response-plan/trace mezők bővítve (style_constraints, chat_lock_*, direct_answer_*, clarification_*, anti_hijack_guarded, ack_collapse_risk, final_*). | Miért: reply/trace/snapshot koherencia és visszakereshetőség.

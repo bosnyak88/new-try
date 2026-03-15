@@ -505,6 +505,56 @@ def _current_ingest_ack_lines(evidence_pack: EvidencePack, evidence_ingest_from_
     ]
 
 
+
+
+_STYLE_SIGNAL_PATTERNS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("no_list", ("nem kerek listat", "ne listazz", "ne listaz", "csak reagalj normalisan", "normalisan reagalj")),
+    ("brief", ("roviden", "rovid valasz", "tomoren")),
+    ("no_certainty_split", ("ne bontsd biztosra", "ne bontsd biztos", "ne bontsd feltetelezesre", "ne bontsd biztosra meg feltetelezesre")),
+    ("casual_only", ("most ne dolgozzunk", "csak beszelgessunk", "csak beszelgetunk", "csak dumaljunk", "csak reagalj normalisan")),
+)
+
+
+def _extract_style_constraints(message: str) -> list[str]:
+    n = normalize_hungarian_for_match(message).lower()
+    found: list[str] = []
+    for name, patterns in _STYLE_SIGNAL_PATTERNS:
+        if any(pattern in n for pattern in patterns):
+            found.append(name)
+    return found
+
+
+def _is_direct_question(message: str) -> bool:
+    n = normalize_hungarian_for_match(message).lower()
+    return "?" in message or any(
+        n.startswith(prefix)
+        for prefix in ("mi ", "mit ", "hogyan", "hol ", "mikor", "emlekszel", "hol tartottunk", "mire jutottunk")
+    )
+
+
+def _enforce_style_constraints(lines: list[str], constraints: list[str]) -> list[str]:
+    out = list(lines)
+    if "no_certainty_split" in constraints:
+        out = [line for line in out if not line.lower().startswith("ami biztos") and not line.lower().startswith("ami nyitott") and not line.lower().startswith("ami inkabb")]
+    if "brief" in constraints and len(out) > 3:
+        out = out[:3]
+    if "no_list" in constraints or "casual_only" in constraints:
+        flattened: list[str] = []
+        for line in out:
+            cleaned = line.lstrip("•- ").strip()
+            if cleaned:
+                flattened.append(cleaned)
+        if flattened:
+            joined = " ".join(flattened)
+            out = [joined]
+    return out
+
+
+def _is_hijack_prone(message: str) -> bool:
+    n = normalize_hungarian_for_match(message).lower()
+    trigger_count = sum(1 for token in ("biztos", "most", "fontos", "emlekszel", "hol tartottunk", "folytassuk innen") if token in n)
+    return trigger_count >= 2 and len(n.split()) >= 5
+
 def _decision_readiness_lines(state: WorkframeState) -> list[str]:
     return [
         f"Hiányzó információ állapot: {state.missing_info_status.value}.",
@@ -588,6 +638,37 @@ def build_response_plan(
     evidence_ingest_from_current_turn: bool = False,
 ) -> ResponsePlan:
     interpretation_text = thread_weave_query_message or ""
+    style_constraints = _extract_style_constraints(interpretation_text)
+    chat_lock_active = "casual_only" in style_constraints
+    chat_lock_strength = "strong" if chat_lock_active else "none"
+    direct_answer_required = _is_direct_question(interpretation_text)
+    anti_hijack_guarded = _is_hijack_prone(interpretation_text)
+
+    def _mkplan(*, kind: ResponsePlanKind, sections: list[ResponsePlanSection], followup_prompt: str | None = None, focus_used: bool = False) -> ResponsePlan:
+        adjusted_sections = [ResponsePlanSection(title=s.title, lines=_enforce_style_constraints(s.lines, style_constraints)) for s in sections]
+        direct_answer_present = any(any(line.strip() and line.strip().lower() not in {"rendben.", "ok.", "oke."} for line in sec.lines) for sec in adjusted_sections)
+        clarification_needed = kind == ResponsePlanKind.CLARIFICATION
+        ack_collapse_risk = direct_answer_required and not direct_answer_present and not clarification_needed
+        reply_shape = "casual" if ("no_list" in style_constraints or "casual_only" in style_constraints) else ("structured" if kind in {ResponsePlanKind.STRUCTURED, ResponsePlanKind.UNCERTAINTY_LABELED} else "direct")
+        final_workframe = workframe_state.workframe.value if workframe_state is not None else None
+        return ResponsePlan(
+            kind=kind,
+            sections=adjusted_sections,
+            followup_prompt=followup_prompt,
+            focus_used=focus_used,
+            style_constraints=style_constraints,
+            chat_lock_active=chat_lock_active,
+            chat_lock_strength=chat_lock_strength,
+            direct_answer_required=direct_answer_required,
+            direct_answer_present=direct_answer_present,
+            clarification_needed=clarification_needed,
+            clarification_reason=(strategy.clarification_need.cause if clarification_needed else None),
+            anti_hijack_guarded=anti_hijack_guarded,
+            ack_collapse_risk=ack_collapse_risk,
+            final_workframe=final_workframe,
+            final_thread_arbitration=("has_previous" if has_previous_thread else "continue_active"),
+            reply_shape=reply_shape,
+        )
 
     if thread_weave_state is not None and thread_weave_update_kind is not None:
         if thread_weave_update_kind == "detour_declared":
@@ -597,9 +678,9 @@ def build_response_plan(
             if thread_weave_state.main_thread_key:
                 lines.append(f"Aktív főszál marad: {clean_display_text(thread_weave_state.main_thread_key)}")
             lines.append(f"Thread lifecycle: {thread_weave_state.thread_lifecycle.value}.")
-            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="thread_weave_update", lines=lines)], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="thread_weave_update", lines=lines)], focus_used=focus is not None)
         if thread_weave_update_kind == "park_declared":
-            return ResponsePlan(
+            return _mkplan(
                 kind=ResponsePlanKind.STRUCTURED,
                 sections=[ResponsePlanSection(title="thread_weave_update", lines=[
                     "Rendben, ezt parkolt szálként kezelem.",
@@ -609,7 +690,7 @@ def build_response_plan(
                 focus_used=focus is not None,
             )
         if thread_weave_update_kind == "close_declared":
-            return ResponsePlan(
+            return _mkplan(
                 kind=ResponsePlanKind.STRUCTURED,
                 sections=[ResponsePlanSection(title="thread_weave_update", lines=[
                     "Rendben, ezt lezárt részként kezelem.",
@@ -624,7 +705,7 @@ def build_response_plan(
             if thread_weave_state.detour_thread_key:
                 lines.append(f"A kitérő megmarad háttérként: {clean_display_text(thread_weave_state.detour_thread_key)}")
             lines.append(f"Thread lifecycle: {thread_weave_state.thread_lifecycle.value}.")
-            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="thread_weave_update", lines=lines)], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="thread_weave_update", lines=lines)], focus_used=focus is not None)
 
     if thread_weave_state is not None and thread_weave_query_family is not None:
         if thread_weave_query_family == "thread_relation_query":
@@ -647,7 +728,7 @@ def build_response_plan(
                     lines.append(f"Főszál: {clean_display_text(thread_weave_state.main_thread_key)}")
                 if thread_weave_state.detour_thread_key:
                     lines.append(f"Kitérő: {clean_display_text(thread_weave_state.detour_thread_key)}")
-            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="thread_relation", lines=lines)], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="thread_relation", lines=lines)], focus_used=focus is not None)
 
         if thread_weave_query_family == "conclusion_query":
             lines = [
@@ -659,7 +740,7 @@ def build_response_plan(
                 lines.append(f"Levonható tanulság (szál-szövésből): {clean_display_text(thread_weave_state.conclusion_text)}")
             else:
                 lines.append("Még nincs elég erős, megalapozott konklúzió rögzítve.")
-            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="conclusion", lines=lines)], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="conclusion", lines=lines)], focus_used=focus is not None)
 
         if thread_weave_query_family == "applicability_query":
             lines = [
@@ -671,10 +752,10 @@ def build_response_plan(
                 lines.append(f"Kiinduló konklúzió: {clean_display_text(thread_weave_state.conclusion_text)}")
             if thread_weave_state.applicability_reason:
                 lines.append(clean_display_text(thread_weave_state.applicability_reason))
-            return ResponsePlan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="applicability", lines=lines)], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="applicability", lines=lines)], focus_used=focus is not None)
     ingest_ack = _current_ingest_ack_lines(evidence_pack, evidence_ingest_from_current_turn)
     if ingest_ack is not None:
-        return ResponsePlan(
+        return _mkplan(
             kind=ResponsePlanKind.STRUCTURED,
             sections=[ResponsePlanSection(title="evidence_ingest_ack", lines=ingest_ack)],
             focus_used=focus is not None,
@@ -682,7 +763,7 @@ def build_response_plan(
 
     source_awareness = _source_awareness_lines(interpretation_text, evidence_pack)
     if source_awareness is not None:
-        return ResponsePlan(
+        return _mkplan(
             kind=ResponsePlanKind.STRUCTURED,
             sections=[ResponsePlanSection(title="source_awareness", lines=source_awareness)],
             focus_used=focus is not None,
@@ -690,28 +771,28 @@ def build_response_plan(
 
     grounded_lines = _evidence_grounded_lines(interpretation_text, evidence_pack, workframe_state)
     if grounded_lines is not None:
-        return ResponsePlan(
+        return _mkplan(
             kind=ResponsePlanKind.STRUCTURED,
             sections=[ResponsePlanSection(title="source_grounded_evidence", lines=grounded_lines)],
             focus_used=focus is not None,
         )
     no_evidence = _no_evidence_lines(interpretation_text, evidence_pack)
     if no_evidence is not None:
-        return ResponsePlan(
+        return _mkplan(
             kind=ResponsePlanKind.UNCERTAINTY_LABELED,
             sections=[ResponsePlanSection(title="no_evidence_ingested", lines=no_evidence)],
             focus_used=focus is not None,
         )
     ingest_intent = _ingest_intent_lines(interpretation_text)
     if ingest_intent is not None:
-        return ResponsePlan(
+        return _mkplan(
             kind=ResponsePlanKind.STRUCTURED,
             sections=[ResponsePlanSection(title="evidence_ingest_intent", lines=ingest_intent)],
             focus_used=focus is not None,
         )
 
     if interpretation.memory_query is not None and personal_memory is not None:
-        return ResponsePlan(
+        return _mkplan(
             kind=ResponsePlanKind.STRUCTURED,
             sections=[ResponsePlanSection(title="explicit_memory", lines=_memory_query_lines(interpretation.memory_query, personal_memory))],
             focus_used=focus is not None,
@@ -720,27 +801,27 @@ def build_response_plan(
     if workframe_state is not None and workframe_queries is not None:
         if getattr(workframe_queries, "asks_current_objective", False):
             lines = [f"A mostani cél: {clean_display_text(workframe_state.objective_text)}."] if workframe_state.objective_status.value == "active" and workframe_state.objective_text else ["Most nincs egyértelműen rögzített aktív cél."]
-            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="current_objective", lines=lines)], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="current_objective", lines=lines)], focus_used=focus is not None)
         if getattr(workframe_queries, "asks_current_work", False):
             lines = [f"Mostani munkakeret: {workframe_state.workframe.value}."]
             if workframe_state.objective_status.value == "active" and workframe_state.objective_text:
                 lines.append(f"Aktív cél: {clean_display_text(workframe_state.objective_text)}.")
             else:
                 lines.append("Aktív cél még nincs egyértelműen rögzítve.")
-            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="current_work", lines=lines)], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="current_work", lines=lines)], focus_used=focus is not None)
         if getattr(workframe_queries, "asks_current_posture", False):
-            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="current_posture", lines=[f"Mostani munkakeret: {workframe_state.workframe.value}."])], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="current_posture", lines=[f"Mostani munkakeret: {workframe_state.workframe.value}."])], focus_used=focus is not None)
         if getattr(workframe_queries, "asks_current_blocker", False):
             lines = [f"Mostani fő probléma: {clean_display_text(workframe_state.blocker_text)}."] if workframe_state.blocker_text else ["Most nincs egyértelműen rögzített fő probléma."]
-            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="current_blocker", lines=lines)], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="current_blocker", lines=lines)], focus_used=focus is not None)
         if getattr(workframe_queries, "asks_current_next_step", False):
             lines = [f"Mostani következő lépés: {clean_display_text(workframe_state.next_step_lines[0])}"] if workframe_state.next_step_lines else ["Most nincs megalapozottan rögzített következő lépés."]
-            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="current_next_step", lines=lines)], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="current_next_step", lines=lines)], focus_used=focus is not None)
         if any((getattr(workframe_queries, "asks_history_objective", False), getattr(workframe_queries, "asks_history_blocker", False), getattr(workframe_queries, "asks_history_next_step", False))):
             state = historical_workframe_state or workframe_state
-            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="historical_state", lines=_history_lines(state))], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="historical_state", lines=_history_lines(state))], focus_used=focus is not None)
         if getattr(workframe_queries, "asks_certainty_split", False) or getattr(workframe_queries, "asks_next_step_certainty", False):
-            return ResponsePlan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="certainty_split", lines=_certainty_lines(workframe_state))], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="certainty_split", lines=_certainty_lines(workframe_state))], focus_used=focus is not None)
         if any((
             getattr(workframe_queries, "asks_missing_info", False),
             getattr(workframe_queries, "asks_open_questions", False),
@@ -749,14 +830,14 @@ def build_response_plan(
             getattr(workframe_queries, "asks_evidence_gaps", False),
             getattr(workframe_queries, "asks_progress_block_reason", False),
         )):
-            return ResponsePlan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="decision_readiness", lines=_decision_readiness_lines(workframe_state))], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="decision_readiness", lines=_decision_readiness_lines(workframe_state))], focus_used=focus is not None)
 
     if interpretation.kind.value == "personal_entry" and interpretation.personal_entry is not None:
         signal = interpretation.personal_entry
         name = signal.owner_name or (owner_identity.owner_name if owner_identity is not None else None)
         display_name = f" {name}" if name else ""
         lines = _personal_entry_lines(signal.kind, display_name, signal.declared_focus, signal.declared_direction, time_context, workframe_state)
-        return ResponsePlan(
+        return _mkplan(
             kind=ResponsePlanKind.PERSONAL_ENTRY,
             sections=[ResponsePlanSection(title="personal_entry", lines=lines)],
             focus_used=focus is not None,
@@ -770,49 +851,49 @@ def build_response_plan(
                 lines.append(f"Aktív cél: {clean_display_text(workframe_state.objective_text)}.")
             else:
                 lines.append("Aktív cél még nincs kimondva, ezt pontosíthatjuk.")
-            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="workframe_update", lines=lines)], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="workframe_update", lines=lines)], focus_used=focus is not None)
         if getattr(workframe_updates, "declares_objective", False):
             if workframe_state.objective_status.value == "active" and workframe_state.objective_text:
                 lines = [f"Rendben, az aktív célt rögzítem: {clean_display_text(workframe_state.objective_text)}."]
             else:
                 lines = ["Értettem, célról beszélünk, de még pontosítás kell az aktív cél rögzítéséhez."]
-            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="objective_update", lines=lines)], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="objective_update", lines=lines)], focus_used=focus is not None)
         if getattr(workframe_updates, "declares_chat", False):
             lines = ["Rendben, most beszélgető módra váltunk."]
             if workframe_state.objective_status.value == "active" and workframe_state.objective_text:
                 lines.append(f"A korábbi aktív célt megőrzöm háttér-kontinuitásnak: {clean_display_text(workframe_state.objective_text)}.")
-            return ResponsePlan(kind=ResponsePlanKind.PERSONAL_ENTRY, sections=[ResponsePlanSection(title="chat_update", lines=lines)], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.PERSONAL_ENTRY, sections=[ResponsePlanSection(title="chat_update", lines=lines)], focus_used=focus is not None)
         if getattr(workframe_updates, "declares_blocker_explicit", False):
             lines = ["Rendben, ezt explicit fő blokkert állításként rögzítem."]
             if workframe_state.blocker_text:
                 lines.append(f"Fő blokker: {clean_display_text(workframe_state.blocker_text)}.")
             if workframe_state.objective_status.value == "active" and workframe_state.objective_text:
                 lines.append(f"Aktív cél változatlanul: {clean_display_text(workframe_state.objective_text)}.")
-            return ResponsePlan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="blocker_update", lines=lines)], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.STRUCTURED, sections=[ResponsePlanSection(title="blocker_update", lines=lines)], focus_used=focus is not None)
         if getattr(workframe_updates, "hedged_blocker", False):
             lines = ["Ezt lehetséges blokkerként kezelem, még nem biztos állításként."]
             if workframe_state.blocker_text:
                 lines.append(f"Jelölt blokker: {clean_display_text(workframe_state.blocker_text)}.")
-            return ResponsePlan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="hedged_blocker", lines=lines)], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="hedged_blocker", lines=lines)], focus_used=focus is not None)
         if getattr(workframe_updates, "hedged_objective", False):
             lines = ["Értem, ez egy lehetséges cél-javaslat, még nem végleges aktív cél."]
             if workframe_state.objective_text:
                 lines.append(f"Javasolt cél: {clean_display_text(workframe_state.objective_text)}.")
-            return ResponsePlan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="hedged_objective", lines=lines)], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="hedged_objective", lines=lines)], focus_used=focus is not None)
         if getattr(workframe_updates, "hedged_next_step", False):
             lines = ["Ezt javasolt következő lépésként kezelem, nem biztos döntésként."]
             if workframe_state.next_step_lines:
                 lines.append(f"Lehetséges következő lépés: {clean_display_text(workframe_state.next_step_lines[0])}")
-            return ResponsePlan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="hedged_next_step", lines=lines)], focus_used=focus is not None)
+            return _mkplan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="hedged_next_step", lines=lines)], focus_used=focus is not None)
 
     if interpretation.claim_capture:
-        return ResponsePlan(
+        return _mkplan(
             kind=ResponsePlanKind.ORDINARY,
             sections=[ResponsePlanSection(title="claim_capture", lines=_claim_capture_lines(interpretation))],
             focus_used=focus is not None,
         )
     if workframe_state is not None and workframe_queries is not None and (getattr(workframe_queries, "asks_blocker", False) or getattr(workframe_queries, "asks_next_step", False) or getattr(workframe_queries, "asks_plan", False)):
-        return ResponsePlan(
+        return _mkplan(
             kind=ResponsePlanKind.STRUCTURED,
             sections=[ResponsePlanSection(title="workframe", lines=_workframe_lines(workframe_state))],
             focus_used=focus is not None,
@@ -820,7 +901,7 @@ def build_response_plan(
 
 
     if interpretation.kind.value == "compare_previous" and not has_previous_thread:
-        return ResponsePlan(
+        return _mkplan(
             kind=ResponsePlanKind.CLARIFICATION,
             sections=[ResponsePlanSection(title="compare_previous_missing", lines=["Még nincs előző szál, ezért nem tudok megalapozott összehasonlítást adni."])],
             focus_used=focus is not None,
@@ -828,14 +909,14 @@ def build_response_plan(
 
     if strategy.strategy == AnswerStrategy.CLARIFICATION:
         question = strategy.clarification_question.question if strategy.clarification_question else (recall.clarification_message or "Pontosíts kérlek.")
-        return ResponsePlan(
+        return _mkplan(
             kind=ResponsePlanKind.CLARIFICATION,
             sections=[ResponsePlanSection(title="clarification", lines=[question])],
             focus_used=focus is not None,
         )
 
     if objective.kind.value == "clarify":
-        return ResponsePlan(
+        return _mkplan(
             kind=ResponsePlanKind.CLARIFICATION,
             sections=[ResponsePlanSection(title="clarification", lines=["Pontosíts kérlek röviden, mit hasonlítsak vagy melyik szálra gondolsz."])],
             focus_used=focus is not None,
@@ -849,7 +930,7 @@ def build_response_plan(
         for line in selected:
             lines.append(f"• #{line.turn_index}: {clean_display_text(line.user_message)} → {clean_display_text(line.assistant_reply)}")
         followup = "Innen menjünk tovább?" if context.config.conversation.response_followup_enabled else None
-        return ResponsePlan(
+        return _mkplan(
             kind=ResponsePlanKind.RECALL if interpretation.kind.value.startswith("recall") else ResponsePlanKind.RESUME,
             sections=[ResponsePlanSection(title="recall_summary", lines=lines)],
             followup_prompt=followup,
@@ -861,13 +942,13 @@ def build_response_plan(
         if not sections:
             sections = [ResponsePlanSection(title="ordinary", lines=["Rendben."])]
         kind = ResponsePlanKind.STRUCTURED if strategy.strategy != AnswerStrategy.UNCERTAINTY_LABELED_ANSWER else ResponsePlanKind.UNCERTAINTY_LABELED
-        return ResponsePlan(kind=kind, sections=sections, focus_used=focus is not None)
+        return _mkplan(kind=kind, sections=sections, focus_used=focus is not None)
 
     if strategy.strategy == AnswerStrategy.DIRECT_ANSWER:
         if _direct_should_use_synthesis(objective, decomposition, synthesis):
             sections = _synthesis_sections(synthesis)
             if sections:
-                return ResponsePlan(
+                return _mkplan(
                     kind=ResponsePlanKind.STRUCTURED,
                     sections=sections,
                     focus_used=focus is not None,
@@ -878,8 +959,11 @@ def build_response_plan(
             joined = ", ".join(interpretation.relative_time_terms)
             lines = [f"Értem az időhivatkozásokat ({clean_display_text(joined)}). Mondd, pontosan mire fókuszáljunk."]
         else:
-            lines = ["Rendben."]
-        return ResponsePlan(
+            if direct_answer_required:
+                lines = ["Rövid válasz: ezt a kérdést meg tudom válaszolni, de kérlek pontosítsd egy fél mondatban, mire kérdezel rá a leginkább."]
+            else:
+                lines = ["Rendben."]
+        return _mkplan(
             kind=ResponsePlanKind.ORDINARY,
             sections=[ResponsePlanSection(title="ordinary", lines=lines)],
             focus_used=focus is not None,
@@ -889,7 +973,7 @@ def build_response_plan(
         lines = ["Rendben, korrigálok és átirányítom a választ a kért irányra."]
         if "előző" in interpretation.kind.value or comparison_pack.winner_kind.value in {"correction_redirect", "resume"}:
             lines.append("Az előző szálhoz igazodva folytatom.")
-        return ResponsePlan(
+        return _mkplan(
             kind=ResponsePlanKind.CORRECTION_REDIRECT,
             sections=[ResponsePlanSection(title="correction_redirect", lines=lines)],
             focus_used=focus is not None,
@@ -898,7 +982,7 @@ def build_response_plan(
     ordinary_lines: list[str] = []
     if followup_target:
         ordinary_lines.append(f"Rendben, innen folytatjuk: {clean_display_text(followup_target)}")
-    return ResponsePlan(
+    return _mkplan(
         kind=ResponsePlanKind.ORDINARY,
         sections=[ResponsePlanSection(title="ordinary", lines=ordinary_lines)],
         focus_used=focus is not None,
