@@ -3,3 +3,15 @@ __pycache__/
 .pytest_cache/
 .venv/
 .env
+.syntaris/
+.tmp_*/
+.venv_rebuild*/
+_testlogs/
+_test_runs/
+*.pyc
+*.egg-info/
+import_persistence.log
+loop.txt
+routing_loop.txt
+rebuild*_loop.txt
+outside_rebuild*.txt
