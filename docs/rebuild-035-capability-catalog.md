@@ -29,5 +29,6 @@
 
 
 ## Environment overrides accepted by runtime
-- DB path: `SYNTARIS_DB_PATH` (primary) or `SYNTARIS_DB` (compat alias).
-- Allowed roots: `SYNTARIS_ARTIFACT_ALLOWED_ROOTS` (primary) or `SYNTARIS_SANDBOX_ROOTS` (compat alias).
+- DB path: `SYNTARIS_DB_PATH` (primary, always honored).
+- Allowed roots: `SYNTARIS_ARTIFACT_ALLOWED_ROOTS` (primary, always honored).
+- Compat aliases `SYNTARIS_DB` / `SYNTARIS_SANDBOX_ROOTS` are only honored with default/example config path (`config/syntaris.example.toml`) to prevent ambient env leakage over explicit temp test configs.

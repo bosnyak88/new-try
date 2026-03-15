@@ -22,6 +22,8 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
     resolved_path = Path(
         config_path or os.getenv("SYNTARIS_CONFIG_PATH", "config/syntaris.example.toml")
     )
+    default_cfg = Path("config/syntaris.example.toml")
+    compat_aliases_allowed = resolved_path.as_posix().endswith(default_cfg.as_posix())
 
     with resolved_path.open("rb") as handle:
         raw = tomli.load(handle)
@@ -41,7 +43,9 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
         port=_pick_int(os.getenv("SYNTARIS_LLM_PORT"), llm.get("port", 8080)),
     )
 
-    db_override = os.getenv("SYNTARIS_DB_PATH") or os.getenv("SYNTARIS_DB")
+    db_override = os.getenv("SYNTARIS_DB_PATH")
+    if db_override is None and compat_aliases_allowed:
+        db_override = os.getenv("SYNTARIS_DB")
     paths_config = AppPaths(
         data_dir=_pick(os.getenv("SYNTARIS_DATA_DIR"), paths.get("data_dir", "./.syntaris")),
         db_path=_pick(db_override, paths.get("db_path", "./.syntaris/runtime.db")),
@@ -56,7 +60,9 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
         ),
     )
 
-    artifact_roots_override = os.getenv("SYNTARIS_ARTIFACT_ALLOWED_ROOTS") or os.getenv("SYNTARIS_SANDBOX_ROOTS")
+    artifact_roots_override = os.getenv("SYNTARIS_ARTIFACT_ALLOWED_ROOTS")
+    if artifact_roots_override is None and compat_aliases_allowed:
+        artifact_roots_override = os.getenv("SYNTARIS_SANDBOX_ROOTS")
 
     conversation_config = ConversationConfig(
         default_thread_key=_pick(

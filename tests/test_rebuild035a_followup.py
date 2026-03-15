@@ -41,7 +41,7 @@ level = "info"
     )
 
 
-def test_env_aliases_enable_temp_db_and_allowed_roots_runtime(tmp_path, monkeypatch, capsys):
+def test_env_overrides_enable_temp_db_and_allowed_roots_runtime(tmp_path, monkeypatch, capsys):
     sandbox = tmp_path / "sandbox"
     sandbox.mkdir()
     log_path = sandbox / "build_error.log"
@@ -50,8 +50,8 @@ def test_env_aliases_enable_temp_db_and_allowed_roots_runtime(tmp_path, monkeypa
     env_db = tmp_path / "runtime_env.db"
     _write_config(config, tmp_path / "cfg.db", tmp_path / "data")
 
-    monkeypatch.setenv("SYNTARIS_DB", str(env_db))
-    monkeypatch.setenv("SYNTARIS_SANDBOX_ROOTS", str(sandbox))
+    monkeypatch.setenv("SYNTARIS_DB_PATH", str(env_db))
+    monkeypatch.setenv("SYNTARIS_ARTIFACT_ALLOWED_ROOTS", str(sandbox))
 
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "init-db"])
     assert cli.main() == 0
@@ -73,7 +73,7 @@ def test_once_file_evidence_followup_and_historical_reuse(tmp_path, monkeypatch,
     sandbox.mkdir()
     config = tmp_path / "syntaris.toml"
     _write_config(config, tmp_path / "runtime.db", tmp_path / "data")
-    monkeypatch.setenv("SYNTARIS_SANDBOX_ROOTS", str(sandbox))
+    monkeypatch.setenv("SYNTARIS_ARTIFACT_ALLOWED_ROOTS", str(sandbox))
 
     log_path = sandbox / "build_error.log"
     log_path.write_text("Traceback\nRuntimeError: database lock\n", encoding="utf-8")
@@ -117,7 +117,7 @@ def test_binary_refusal_inside_allowed_root_reports_supported_reason(tmp_path, m
     bin_path.write_bytes(bytes(range(32)))
     config = tmp_path / "syntaris.toml"
     _write_config(config, tmp_path / "runtime.db", tmp_path / "data")
-    monkeypatch.setenv("SYNTARIS_SANDBOX_ROOTS", str(sandbox))
+    monkeypatch.setenv("SYNTARIS_ARTIFACT_ALLOWED_ROOTS", str(sandbox))
 
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(config), "artifact-read", str(bin_path)])
     assert cli.main() == 2

@@ -299,3 +299,23 @@ Schema migration: not required in this phase (v7 unchanged).
 ### Deferred with reason
 - No broad artifact parser expansion (PDF/Office/binary adapters) in this follow-up; limited to acceptance-blocking runtime wiring and source-selection honesty.
 - No write-capable operations or shell/panel execution work; scope remains read-only source baseline.
+
+## REBUILD-035b isolation regression fix snapshot
+### Root cause
+- 035a introduced broad compatibility env alias acceptance (`SYNTARIS_DB`, `SYNTARIS_SANDBOX_ROOTS`) even when tests passed explicit temp config paths.
+- In ambient shells where these aliases were set, per-test temp config isolation was silently overridden, causing cross-family state contamination (db/root mismatch, thread carryover, snapshot/db inspection mismatch, evidence/live-trace drift).
+
+### Changed
+- `src/syntaris/config/loader.py`: narrowed alias precedence so primary env vars (`SYNTARIS_DB_PATH`, `SYNTARIS_ARTIFACT_ALLOWED_ROOTS`) remain globally honored, while compat aliases (`SYNTARIS_DB`, `SYNTARIS_SANDBOX_ROOTS`) apply only for default/example config path (`config/syntaris.example.toml`).
+- `tests/test_config_loader.py`: added deterministic regression to ensure ambient compat aliases do **not** override explicit temp config paths.
+- `docs/rebuild-035-capability-catalog.md`: clarified alias scope to prevent operator ambiguity.
+
+### Reviewed unchanged
+- `src/syntaris/cli.py`, `src/syntaris/orchestration/*`, `src/syntaris/persistence/*` behavior for source selection/evidence linkage remained unchanged in 035b; no feature broadening.
+- Existing 034/034a/035a behavioral families were revalidated through full suite.
+
+### Removed
+- None.
+
+### Deferred with reason
+- No additional runtime feature changes in 035b; this follow-up is isolation/precedence hardening only.
