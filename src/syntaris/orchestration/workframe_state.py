@@ -83,11 +83,14 @@ class WorkframeUpdateSignals:
 
 def detect_query_signals(message: str) -> WorkframeQuerySignals:
     n = normalize_hungarian_for_match(message).strip()
-    simple = " es " not in n and "," not in n
+    complex_joint = " es " in n
+    asks_blocker_single = any(phrase in n for phrase in ("mi a fo problema", "miben akadtunk el", "mi blokkol", "mi a blocker"))
+    asks_next_single = any(phrase in n for phrase in ("mit kell most tenni", "mi a kovetkezo lepes"))
+    asks_blocker_mixed = "meg amugy mi a blocker" in n
     return WorkframeQuerySignals(
-        asks_blocker=simple and n in {"mi a fo problema", "mi a fo problema?", "miben akadtunk el", "miben akadtunk el?", "mi blokkol most", "mi blokkol most?", "mi a blocker most", "mi a blocker most?"},
-        asks_next_step=simple and n in {"mit kell most tenni", "mit kell most tenni?", "mi a kovetkezo lepes", "mi a kovetkezo lepes?"},
-        asks_plan=simple and n in {"irj egy rovid tervet", "irj egy rovid tervet?", "rovid tervet", "rovid tervet?"},
+        asks_blocker=(asks_blocker_single and not complex_joint) or asks_blocker_mixed,
+        asks_next_step=(asks_next_single and not complex_joint),
+        asks_plan=("irj egy rovid tervet" in n) or (n in {"rovid tervet", "rovid tervet?"}),
         asks_current_objective=n in {"mi a mostani cel", "mi a mostani cel?"},
         asks_current_work=n in {"min dolgozunk most", "min dolgozunk most?", "akkor most min dolgozunk", "akkor most min dolgozunk?"},
         asks_current_posture=n in {"ez most chat vagy munka", "ez most chat vagy munka?"},
@@ -112,7 +115,7 @@ def detect_update_signals(message: str) -> WorkframeUpdateSignals:
     return WorkframeUpdateSignals(
         declares_work=any(phrase in n for phrase in ("most ezen dolgozunk", "ezen dolgozunk most", "most ezen a feladaton dolgozunk")) or ("dolgozunk" in n and "?" not in n),
         declares_objective=_OBJECTIVE_ACTIVE.search(n) is not None,
-        declares_chat=any(phrase in n for phrase in ("most csak beszelgetunk", "most csak dumalunk", "most inkabb beszelgetunk")),
+        declares_chat=any(phrase in n for phrase in ("most csak beszelgetunk", "most csak dumalunk", "most inkabb beszelgetunk", "most ne dolgozzunk", "csak reagalj normalisan", "nem kerek listat")),
         declares_blocker_explicit=_BLOCKER_EXPLICIT.search(n) is not None or _BLOCKER_REPLACED_CONTEXT.search(n) is not None,
         resume_here=(n == "folytassuk innen"),
         hedged_blocker=("lehet hogy" in n and "blokk" in n) or (_BLOCKER_HEDGED.search(n) is not None),
@@ -123,8 +126,16 @@ def detect_update_signals(message: str) -> WorkframeUpdateSignals:
 
 def _detect_workframe(message: str, current: WorkframeKind) -> WorkframeKind:
     n = normalize_hungarian_for_match(message)
-    if any(phrase in n for phrase in ("most csak beszelgetunk", "csak beszelgetunk", "beszelgessunk", "szia syntaris", "szia")):
+    chat_lock_signals = (
+        "most ne dolgozzunk", "most ne dolgzunk", "csak beszelgessunk", "nem kerek listat", "csak reagalj normalisan", "most csak beszelgetunk", "csak beszelgetunk", "beszelgessunk", "beszelgesunk", "pls",
+    )
+    casual_weight = sum(1 for token in ("beszelg", "dumal", "normalisan", "pls", "chat") if token in n)
+    if any(phrase in n for phrase in chat_lock_signals) or casual_weight >= 2 or n in {"szia syntaris", "szia"}:
         return WorkframeKind.CHAT
+    if current == WorkframeKind.CHAT and any(phrase in n for phrase in ("most", "fontos", "biztos", "emlekszel", "hol tartottunk", "folytassuk innen")):
+        strong_work = any(phrase in n for phrase in ("dolgozzunk", "feladat", "ticket", "konkret lepes", "terv kell", "kovetkezo lepes kell"))
+        if not strong_work:
+            return WorkframeKind.CHAT
     if any(phrase in n for phrase in ("hol tartottunk", "elozo szalon mi volt", "emlekezz")):
         return WorkframeKind.RECALL
     if any(phrase in n for phrase in ("rovid terv", "kovetkezo lepes", "tervezzunk", "mit kell most tenni")):

@@ -134,3 +134,12 @@ nem zárult le sikeresen.
 
 Ha a kérdés az, hogy a rendszer „mit tud most”, erre a dokumentumra kell nézni.
 Ha a fejlesztőcsapat ennél többet állít, bizonyítania kell, vagy frissítenie kell a katalógust.
+
+
+## Delta Journal
+
+- 2026-03-15 | REBUILD-036 | Képességfrissítés: response-plan arbitration meta (style/chat-lock/direct-answer/ack-risk) trace-elt | Miért: menümentes, de auditálható döntéskövetés.
+
+- 2026-03-15 | REBUILD-036 finisher | Képesség pontosítva: mixed-mode style+direct question együtt kezelve; recap kérdések direct-answer-first útvonalra kerülnek | Miért: természetes HU-first turnek stabilizálása.
+
+- 2026-03-15 | REBUILD-037 | Képesség bővítés: brief recap legalább 2 releváns pontot tud visszahozni, nem domináns meta-turn alapon | Miért: user-facing recap minőség.

@@ -14,7 +14,7 @@ from syntaris.contracts.runtime import (
 )
 from syntaris.orchestration.thread_snapshot import _is_control_turn, _is_pending_turn, _is_recap_turn
 from syntaris.persistence import PersistenceStore
-from syntaris.orchestration.text_normalize import clean_display_text, contains_degraded_text
+from syntaris.orchestration.text_normalize import clean_display_text, contains_degraded_text, normalize_hungarian_for_match
 from syntaris.orchestration.workframe_state import derive_workframe_state
 from syntaris.orchestration.thread_weave import derive_thread_weave_state
 
@@ -23,16 +23,60 @@ def _resolve_limit(context: RuntimeContext, limit: int | None) -> int:
     return max(1, limit) if limit is not None else context.config.conversation.focus_turn_window
 
 
-def _to_focus_lines(user_message: str, assistant_reply: str, max_lines: int) -> list[FocusLine]:
-    lines = [
-        FocusLine(key="active_topic_line", text=clean_display_text(user_message).strip()),
-        FocusLine(key="latest_answer_line", text=clean_display_text(assistant_reply).strip()),
-    ]
-    result: list[FocusLine] = []
-    for line in lines:
-        if line.text:
-            result.append(line)
-    return result[:max_lines]
+def _is_brief_recap_query(message: str) -> bool:
+    n = normalize_hungarian_for_match(message).lower()
+    return any(
+        phrase in n
+        for phrase in (
+            "mit mondtam eddig errol",
+            "mire jutottunk",
+            "roviden mondd",
+            "roviden",
+            "hol tartottunk",
+        )
+    )
+
+
+def _is_generic_ack(reply: str) -> bool:
+    normalized = clean_display_text(reply).strip().lower()
+    return normalized in {"rendben.", "ok.", "oke.", "értem.", "ertem."}
+
+
+def _turn_priority(turn) -> int:
+    user = normalize_hungarian_for_match(turn.user_message).lower()
+    assistant = normalize_hungarian_for_match(turn.assistant_reply).lower()
+    score = 0
+    if _is_brief_recap_query(turn.user_message):
+        score -= 5
+    if assistant.startswith("roviden itt tartunk"):
+        score -= 4
+    if any(token in user for token in ("blokker", "blocker", "mi a fo problema", "mi a kovetkezo lepes", "cel", "hianyzik")):
+        score += 4
+    if any(token in assistant for token in ("blokker", "fő blokker", "kovetkezo lepes", "következő", "aktiv cel", "aktív cél")):
+        score += 3
+    if any(token in user for token in ("faradt vagyok", "kimerult", "stresszes", "nehez")):
+        score += 3
+    if "beszelget" in user or "dumal" in user:
+        score += 2
+    if not _is_generic_ack(turn.assistant_reply):
+        score += 1
+    return score
+
+
+def _to_focus_lines(turns: list, max_lines: int) -> list[FocusLine]:
+    lines: list[FocusLine] = []
+    for idx, turn in enumerate(turns[:max_lines], start=1):
+        user = clean_display_text(turn.user_message).strip()
+        assistant = clean_display_text(turn.assistant_reply).strip()
+        text = assistant if assistant and not _is_generic_ack(assistant) else user
+        if text:
+            lines.append(FocusLine(key=f"recap_point_{idx}", text=text))
+    if turns:
+        latest = turns[-1]
+        latest_topic = clean_display_text(latest.user_message).strip()
+        if latest_topic:
+            lines.append(FocusLine(key="active_topic_line", text=latest_topic))
+    return lines[:max_lines]
 
 
 def build_thread_focus_pack(context: RuntimeContext, thread_id: int, mode: str, limit: int | None = None) -> ThreadFocusPack | None:
@@ -61,21 +105,23 @@ def build_thread_focus_pack(context: RuntimeContext, thread_id: int, mode: str, 
             continue
         candidates.append(turn)
 
-    selected = candidates[-1] if candidates else None
+    selected: list = []
+    if candidates:
+        max_selected = max(2, min(context.config.conversation.focus_line_limit, 3))
+        scored = sorted(candidates, key=lambda turn: (_turn_priority(turn), turn.turn_index), reverse=True)
+        selected_ids = {turn.turn_id for turn in scored[:max_selected]}
+        selected = [turn for turn in candidates if turn.turn_id in selected_ids][-max_selected:]
+
     focus_lines: list[FocusLine] = []
-    if selected is not None:
-        focus_lines = _to_focus_lines(
-            user_message=selected.user_message,
-            assistant_reply=selected.assistant_reply,
-            max_lines=max(1, context.config.conversation.focus_line_limit),
-        )
+    if selected:
+        focus_lines = _to_focus_lines(selected, max_lines=max(1, context.config.conversation.focus_line_limit))
 
     semantic_pack = store.build_thread_context_pack(thread_id=thread_id, mode=mode, turn_window=max(context_pack.turn_count, 1))
     semantic_turns = semantic_pack.recent_turns if semantic_pack is not None else context_pack.recent_turns
 
     metadata = FocusSourceMetadata(
         source_turn_count=len(context_pack.recent_turns),
-        included_turn_count=1 if selected is not None else 0,
+        included_turn_count=len(selected),
         filtered_recap_turn_count=filtered_recap,
         filtered_pending_turn_count=filtered_pending,
         filtered_control_turn_count=filtered_control,

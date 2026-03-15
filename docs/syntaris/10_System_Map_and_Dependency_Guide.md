@@ -196,3 +196,12 @@ Minden fő rétegnek vissza kell köszönnie legalább itt:
 
 A Syntaris nem egyetlen „okos fájl”, hanem több rétegű rendszer.
 A dependency guide célja, hogy ezt a rétegességet a kódban is megőrizze.
+
+
+## Delta Journal
+
+- 2026-03-15 | REBUILD-036 | Frissítve: interpret -> response_plan -> trace.events függési láncban új arbitration-meta átvezetés | Miért: rendszerszintű ticket scope dokumentálása.
+
+- 2026-03-15 | REBUILD-036 finisher | Frissítve: interpret/response-plan/workframe query precedence finomítás (mixed-mode és recap útvonal) | Miért: helyes arbitration sorrend dokumentálása.
+
+- 2026-03-15 | REBUILD-037 | System-map frissítés: thread_focus -> response_plan brief_recap útvonal és prioritásos kiválasztás | Miért: recap minőség pipeline dokumentálása.

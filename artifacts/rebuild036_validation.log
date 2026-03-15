@@ -1,0 +1,934 @@
+# REBUILD-036 validation log
+CFG=/tmp/tmp.6mCb43roax/syntaris.toml
+DB=/tmp/tmp.6mCb43roax/runtime.db
+
+## init-db
+{
+  "db_path": "/tmp/tmp.6mCb43roax/runtime.db",
+  "schema_initialized": true,
+  "schema_version": 8
+}
+
+## ticket smoke prompts
+{
+  "kind": "turn",
+  "reply": "Rendben, most besz\u00e9lget\u0151 m\u00f3dra v\u00e1ltunk. Mi az, ami most legink\u00e1bb foglalkoztat?",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 1,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "most ne dolgozzunk, csak besz\u00e9lgess\u00fcnk egy kicsit",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "kind": "turn",
+  "reply": "Rendben, most besz\u00e9lget\u0151 m\u00f3dra v\u00e1ltunk.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 2,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "nem k\u00e9rek list\u00e1t, csak reag\u00e1lj norm\u00e1lisan",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "kind": "turn",
+  "reply": "R\u00f6vid v\u00e1lasz: ezt a k\u00e9rd\u00e9st meg tudom v\u00e1laszolni, de k\u00e9rlek pontos\u00edtsd egy f\u00e9l mondatban, mire k\u00e9rdezel r\u00e1 a legink\u00e1bb.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 3,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "mit mondtam eddig err\u0151l r\u00f6viden?",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "kind": "structured",
+  "reply": "L\u00e9nyeg:\n\u2022 Mi legyen a k\u00f6vetkez\u0151 l\u00e9p\u00e9s?\nAmi biztos:\n\u2022 ok\u00e9, ebb\u0151l most a k\u00f6vetkez\u0151 l\u00e9p\u00e9sek kellenek\nAmi bizonytalanabb:\n\u2022 mit mondtam eddig err\u0151l r\u00f6viden?\nAmi nyitott:\n\u2022 Nincs el\u00e9g c\u00e9lzott kontextus ehhez a r\u00e9szhez.\nK\u00f6vetkez\u0151 l\u00e9p\u00e9s:\n\u2022 R\u00f6viden pontos\u00edtsd a hi\u00e1nyz\u00f3 adatot, ut\u00e1na mehet az egy\u00e9rtelm\u0171 v\u00e9grehajt\u00e1s.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 4,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "ok\u00e9, ebb\u0151l most a k\u00f6vetkez\u0151 l\u00e9p\u00e9sek kellenek",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "kind": "turn",
+  "reply": "Rendben.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 5,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "f\u00e1radt vagyok",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "kind": "turn",
+  "reply": "\u00c9rtem az id\u0151hivatkoz\u00e1sokat (most). Mondd, pontosan mire f\u00f3kusz\u00e1ljunk.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 6,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "nem tudom pontosan mit akarok most",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "kind": "recall",
+  "reply": "R\u00f6viden itt tartottunk:\n\u2022 #4: ok\u00e9, ebb\u0151l most a k\u00f6vetkez\u0151 l\u00e9p\u00e9sek kellenek \u2192 L\u00e9nyeg: \u2022 Mi legyen a k\u00f6vetkez\u0151 l\u00e9p\u00e9s?\n\u2022 #5: f\u00e1radt vagyok \u2192 Rendben.\n\u2022 #6: nem tudom pontosan mit akarok most \u2192 \u00c9rtem az id\u0151hivatkoz\u00e1sokat (most). Mondd, pontosan mire f\u00f3kusz\u00e1ljunk.\nInnen menj\u00fcnk tov\u00e1bb?",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 7,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "hol tartottunk?",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "kind": "turn",
+  "reply": "R\u00f6vid v\u00e1lasz: ezt a k\u00e9rd\u00e9st meg tudom v\u00e1laszolni, de k\u00e9rlek pontos\u00edtsd egy f\u00e9l mondatban, mire k\u00e9rdezel r\u00e1 a legink\u00e1bb.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 8,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "eml\u00e9kszel mire jutottunk, de r\u00f6viden mondd",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "kind": "structured",
+  "reply": "L\u00e9nyeg:\n\u2022 Mi t\u00e1maszthat\u00f3 al\u00e1 biztosan?\n\u2022 Mi marad felt\u00e9telez\u00e9s vagy nyitott pont?\n\u2022 ne bontsd biztosra meg felt\u00e9telez\u00e9sre, csak mondd el\nAmi bizonytalanabb:\n\u2022 eml\u00e9kszel mire jutottunk, de r\u00f6viden mondd\n\u2022 Nincs el\u00e9g c\u00e9lzott kontextus ehhez a r\u00e9szhez.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 9,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "ne bontsd biztosra meg felt\u00e9telez\u00e9sre, csak mondd el",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+
+## noisy HU (3)
+{
+  "kind": "turn",
+  "reply": "R\u00f6vid v\u00e1lasz: ezt a k\u00e9rd\u00e9st meg tudom v\u00e1laszolni, de k\u00e9rlek pontos\u00edtsd egy f\u00e9l mondatban, mire k\u00e9rdezel r\u00e1 a legink\u00e1bb.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 10,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "hol tartotunk amugy??",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "kind": "turn",
+  "reply": "R\u00f6vid v\u00e1lasz: ezt a k\u00e9rd\u00e9st meg tudom v\u00e1laszolni, de k\u00e9rlek pontos\u00edtsd egy f\u00e9l mondatban, mire k\u00e9rdezel r\u00e1 a legink\u00e1bb.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 11,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "emlekszel mire jutotunk vmi roviden",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "kind": "turn",
+  "reply": "\u00c9rtem az id\u0151hivatkoz\u00e1sokat (most). Mondd, pontosan mire f\u00f3kusz\u00e1ljunk.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 12,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "most ne dolgzunk csak beszelgesunk pls",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+
+## mixed-mode (3)
+{
+  "kind": "structured",
+  "reply": "L\u00e9nyeg:\n\u2022 Mi legyen a k\u00f6vetkez\u0151 l\u00e9p\u00e9s?\nAmi biztos:\n\u2022 f\u00e1radt vagyok, de az\u00e9rt ebb\u0151l mondd a k\u00f6vetkez\u0151 l\u00e9p\u00e9st r\u00f6viden\nAmi bizonytalanabb:\n\u2022 most ne dolgzunk csak beszelgesunk pls\nAmi nyitott:\n\u2022 Nincs el\u00e9g c\u00e9lzott kontextus ehhez a r\u00e9szhez.\nK\u00f6vetkez\u0151 l\u00e9p\u00e9s:\n\u2022 R\u00f6viden pontos\u00edtsd a hi\u00e1nyz\u00f3 adatot, ut\u00e1na mehet az egy\u00e9rtelm\u0171 v\u00e9grehajt\u00e1s.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 13,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "f\u00e1radt vagyok, de az\u00e9rt ebb\u0151l mondd a k\u00f6vetkez\u0151 l\u00e9p\u00e9st r\u00f6viden",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "kind": "recall",
+  "reply": "R\u00f6viden itt tartottunk:\n\u2022 #11: emlekszel mire jutotunk vmi roviden \u2192 R\u00f6vid v\u00e1lasz: ezt a k\u00e9rd\u00e9st meg tudom v\u00e1laszolni, de k\u00e9rlek pontos\u00edtsd egy f\u00e9l mondatban, mire k\u00e9rdezel r\u00e1 a legink\u00e1bb.\n\u2022 #12: most ne dolgzunk csak beszelgesunk pls \u2192 \u00c9rtem az id\u0151hivatkoz\u00e1sokat (most). Mondd, pontosan mire f\u00f3kusz\u00e1ljunk.\n\u2022 #13: f\u00e1radt vagyok, de az\u00e9rt ebb\u0151l mondd a k\u00f6vetkez\u0151 l\u00e9p\u00e9st r\u00f6viden \u2192 L\u00e9nyeg: \u2022 Mi legyen a k\u00f6vetkez\u0151 l\u00e9p\u00e9s?\nInnen menj\u00fcnk tov\u00e1bb?",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 14,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "hol tartottunk \u00e9s ut\u00e1na adj egy r\u00f6vid tervet",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "kind": "turn",
+  "reply": "Rendben, most besz\u00e9lget\u0151 m\u00f3dra v\u00e1ltunk.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 15,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "csak reag\u00e1lj norm\u00e1lisan, meg am\u00fagy mi a blocker",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+
+## direct-question robustness (3)
+{
+  "kind": "structured",
+  "reply": "Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett akt\u00edv c\u00e9l.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 16,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "mi a mostani c\u00e9l?",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "kind": "structured",
+  "reply": "Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett f\u0151 probl\u00e9ma.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 17,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "mi a blocker most?",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "kind": "structured",
+  "reply": "Munkakeret: planning.\nAkt\u00edv c\u00e9l: nincs m\u00e9g egy\u00e9rtelm\u0171en r\u00f6gz\u00edtve.\nF\u0151 blokkert nem l\u00e1tok biztosan r\u00f6gz\u00edtve.\nK\u00f6vetkez\u0151 l\u00e9p\u00e9s: m\u00e9g nincs megalapozottan r\u00f6gz\u00edtve.\nHi\u00e1nyz\u00f3 inform\u00e1ci\u00f3: no_missing_info_established.\nNyitott k\u00e9rd\u00e9s: no_open_question_established.\nD\u00f6nt\u00e9si \u00e1llapot: no_decision_established.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 18,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "mi a k\u00f6vetkez\u0151 l\u00e9p\u00e9s?",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+
+## live smoke
+Szép délutánt. Miben segítsek most?
+Rendben, most beszélgető módra váltunk. Mi az, ami most leginkább foglalkoztat?
+Rendben.
+Rövid válasz: ezt a kérdést meg tudom válaszolni, de kérlek pontosítsd egy fél mondatban, mire kérdezel rá a leginkább.
+{"event": "loop_exit"}
+
+## trace-last
+{
+  "turn": {
+    "turn_id": 22,
+    "session_id": 1,
+    "thread_id": 1,
+    "thread_key": "default",
+    "mode": "chat",
+    "turn_index": 22,
+    "user_message": "mit mondtam eddig err\u0151l r\u00f6viden?",
+    "assistant_reply": "R\u00f6vid v\u00e1lasz: ezt a k\u00e9rd\u00e9st meg tudom v\u00e1laszolni, de k\u00e9rlek pontos\u00edtsd egy f\u00e9l mondatban, mire k\u00e9rdezel r\u00e1 a legink\u00e1bb.",
+    "backend": "deterministic",
+    "degraded": false
+  },
+  "trace_events": [
+    {
+      "trace_id": 406,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "route_decision_computed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"action\": \"continue_active\", \"after_previous_thread_id\": null, \"after_previous_thread_key\": null, \"after_thread_id\": 1, \"after_thread_key\": \"default\", \"before_previous_thread_id\": null, \"before_previous_thread_key\": null, \"before_thread_id\": 1, \"before_thread_key\": \"default\", \"created_thread\": false, \"execution_message\": \"mit mondtam eddig err\\u0151l r\\u00f6viden?\", \"match_pattern\": null, \"pending_resolution\": \"none\", \"reason\": \"no_routing_phrase_match\", \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 407,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "active_state_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"mode\": \"chat\", \"previous_thread_id\": null, \"previous_thread_key\": null, \"session_id\": 1, \"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 408,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_resolved_or_created",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 409,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_context_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"last_turn_id\": 21, \"recent_turn_count\": 5, \"source\": \"execution_target\", \"thread_id\": 1, \"thread_key\": \"default\", \"turn_count\": 21}"
+    },
+    {
+      "trace_id": 410,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "reply_generated",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"backend\": \"deterministic\", \"degraded\": false, \"mode\": \"chat\"}"
+    },
+    {
+      "trace_id": 411,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_persisted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"turn_id\": 22, \"turn_index\": 22}"
+    },
+    {
+      "trace_id": 412,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_execution_source",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"source\": \"talk_live\"}"
+    },
+    {
+      "trace_id": 413,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_interpreted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"claim_capture_count\": 0, \"clarification_reason\": null, \"declared_direction\": null, \"declared_focus\": null, \"kind\": \"ordinary\", \"memory_query\": null, \"owner_name\": null, \"owner_relation\": null, \"pattern_name\": null, \"personal_entry_kind\": null, \"relative_time_terms\": []}"
+    },
+    {
+      "trace_id": 414,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "recall_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_emitted\": false, \"loaded_from_persistence\": false, \"refreshed_snapshot\": false, \"request_target\": null, \"requested\": false, \"resolved_target\": \"none\", \"thread_id\": null, \"thread_key\": null, \"used_snapshot\": false}"
+    },
+    {
+      "trace_id": 415,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "response_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"ack_collapse_risk\": false, \"anti_hijack_guarded\": false, \"chat_lock_active\": false, \"chat_lock_strength\": \"none\", \"clarification_emitted\": false, \"clarification_needed\": false, \"clarification_reason\": null, \"continuity_class\": \"same_session\", \"daypart\": \"delutan\", \"direct_answer_present\": true, \"direct_answer_required\": true, \"final_thread_arbitration\": \"continue_active\", \"final_workframe\": \"chat\", \"focus_used\": true, \"gap_kind\": \"immediate\", \"kind\": \"ordinary\", \"relative_grounding\": [], \"reply_shape\": \"direct\", \"section_count\": 1, \"style_constraints\": [\"brief\"]}"
+    },
+    {
+      "trace_id": 416,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_focus_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"filtered_control_turn_count\": 0, \"filtered_pending_turn_count\": 0, \"filtered_recap_turn_count\": 0, \"included_turn_count\": 1, \"loaded\": true, \"loaded_from_persistence\": false, \"source_turn_count\": 8, \"thread_id\": 1, \"thread_key\": \"default\", \"update_reason\": null, \"updated\": false}"
+    },
+    {
+      "trace_id": 417,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "workframe_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"assumption_count\": 0, \"assumption_status\": \"unknown_or_not_established\", \"blocker_status\": \"none\", \"blocker_text\": null, \"decision_count\": 0, \"decision_state\": \"no_decision_established\", \"evidence_gap_count\": 0, \"evidence_gap_status\": \"evidence_sufficient\", \"missing_info_count\": 0, \"missing_info_status\": \"no_missing_info_established\", \"next_step_line_count\": 0, \"next_step_status\": \"none\", \"objective_status\": \"none\", \"objective_text\": null, \"open_question_count\": 0, \"open_question_status\": \"no_open_question_established\", \"query_family\": null, \"uncertainty_marked\": false, \"workframe\": \"chat\"}"
+    },
+    {
+      "trace_id": 418,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_weave_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"applicability_status\": \"applicability_uncertain\", \"conclusion_status\": \"no_conclusion_established\", \"conclusion_validity\": \"historical_reminder_value_only\", \"detour_thread_key\": null, \"main_thread_key\": \"default\", \"query_family\": null, \"related_thread_key\": null, \"relation\": \"relation_unknown\", \"temporary_state_lifecycle\": \"aging_or_stale_temporary_state\", \"thread_lifecycle\": \"active\"}"
+    },
+    {
+      "trace_id": 419,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "comparison_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"candidate_count\": 1, \"candidate_kinds\": [\"direct\"], \"winner_kind\": \"direct\", \"winner_score\": 2}"
+    },
+    {
+      "trace_id": 420,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "answer_strategy_selected",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_cause\": null, \"clarification_planned\": false, \"confidence\": \"low\", \"selected_candidate_kind\": \"direct\", \"selected_strategy\": \"direct_answer\"}"
+    },
+    {
+      "trace_id": 421,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "objective_framed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"is_multi_part\": false, \"kind\": \"summarize\", \"secondary_kinds\": []}"
+    },
+    {
+      "trace_id": 422,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "decomposition_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"unit_count\": 1, \"unit_kinds\": [\"summarize\"]}"
+    },
+    {
+      "trace_id": 423,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "evidence_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"artifact_ids\": [], \"chunk_count\": 0, \"ingest_status\": \"no_evidence_ingested\", \"item_count\": 2, \"key_line_count\": 0, \"support_distribution\": {\"supported\": 1, \"weak_support\": 1}}"
+    },
+    {
+      "trace_id": 424,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "synthesis_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"partial\": false, \"section_count\": 3, \"section_keys\": [\"core_point\", \"supported_facts\", \"uncertain_parts\"]}"
+    },
+    {
+      "trace_id": 425,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "reply_adapted_rendered",
+      "backend": "loop",
+      "degraded": false,
+      "payload": "{\"degraded\": false, \"kind\": \"turn\", \"reply_backend\": \"deterministic\", \"turn_id\": 22, \"visible_nonempty\": true}"
+    },
+    {
+      "trace_id": 432,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "reply_emit_attempted",
+      "backend": "loop",
+      "degraded": false,
+      "payload": "{\"backend\": \"deterministic\", \"kind\": \"turn\", \"message_nonempty\": true, \"turn_id\": 22}"
+    },
+    {
+      "trace_id": 433,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "reply_emitted_successfully",
+      "backend": "loop",
+      "degraded": false,
+      "payload": "{\"backend\": \"deterministic\", \"degraded_emit\": false, \"kind\": \"turn\", \"reason\": null, \"turn_id\": 22}"
+    },
+    {
+      "trace_id": 344,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "live_loop_started",
+      "backend": "loop",
+      "degraded": false,
+      "payload": "{\"session_id\": 1}"
+    },
+    {
+      "trace_id": 434,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "reply_emit_attempted",
+      "backend": "loop",
+      "degraded": false,
+      "payload": "{\"backend\": null, \"kind\": \"exit\", \"message_nonempty\": true, \"turn_id\": null}"
+    },
+    {
+      "trace_id": 435,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "reply_emitted_successfully",
+      "backend": "loop",
+      "degraded": false,
+      "payload": "{\"backend\": null, \"degraded_emit\": false, \"kind\": \"exit\", \"reason\": null, \"turn_id\": null}"
+    }
+  ]
+}
+
+## thread-snapshot --current
+{
+  "request": {
+    "target": "current",
+    "thread_key": null,
+    "limit": null,
+    "refresh": false,
+    "source": "cli_thread_snapshot"
+  },
+  "found": true,
+  "loaded_from_persistence": false,
+  "snapshot": {
+    "session_id": 1,
+    "thread_id": 1,
+    "thread_key": "default",
+    "mode": "chat",
+    "turn_count": 22,
+    "last_turn_id": 22,
+    "snapshot_built_at": "2026-03-15T14:46:50.914100+00:00",
+    "source_metadata": {
+      "source_turn_count": 8,
+      "included_turn_count": 8,
+      "filtered_recap_turn_count": 0,
+      "filtered_pending_turn_count": 0,
+      "filtered_control_turn_count": 0
+    },
+    "previous_thread_id": null,
+    "previous_thread_key": null,
+    "snapshot_text": "Thread snapshot: default (session=1, thread_id=1, turn_count=22, last_turn_id=22, built_at=2026-03-15T14:46:50.914100+00:00)\n- #15 user=csak reag\u00e1lj norm\u00e1lisan, meg am\u00fagy mi a blocker | assistant=Rendben, most besz\u00e9lget\u0151 m\u00f3dra v\u00e1ltunk.\n- #16 user=mi a mostani c\u00e9l? | assistant=Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett akt\u00edv c\u00e9l.\n- #17 user=mi a blocker most? | assistant=Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett f\u0151 probl\u00e9ma.\n- #18 user=mi a k\u00f6vetkez\u0151 l\u00e9p\u00e9s? | assistant=Munkakeret: planning. Akt\u00edv c\u00e9l: nincs m\u00e9g egy\u00e9rtelm\u0171en r\u00f6gz\u00edtve.\n- #19 user=szia | assistant=Sz\u00e9p d\u00e9lut\u00e1nt. Miben seg\u00edtsek most?\n- #20 user=most ne dolgozzunk, csak besz\u00e9lgess\u00fcnk | assistant=Rendben, most besz\u00e9lget\u0151 m\u00f3dra v\u00e1ltunk. Mi az, ami most legink\u00e1bb foglalkoztat?\n- #21 user=f\u00e1radt vagyok | assistant=Rendben.\n- #22 user=mit mondtam eddig err\u0151l r\u00f6viden? | assistant=R\u00f6vid v\u00e1lasz: ezt a k\u00e9rd\u00e9st meg tudom v\u00e1laszolni, de k\u00e9rlek pontos\u00edtsd egy f\u00e9l mondatban, mire k\u00e9rdezel r\u00e1 a legink\u00e1bb.",
+    "workframe_state": {
+      "workframe": "chat",
+      "objective_status": "none",
+      "objective_text": null,
+      "blocker_status": "none",
+      "blocker_text": null,
+      "next_step_status": "none",
+      "next_step_lines": []
+    },
+    "thread_weave_state": {
+      "relation": "relation_unknown",
+      "main_thread_key": "default",
+      "related_thread_key": null,
+      "detour_thread_key": null,
+      "conclusion_status": "no_conclusion_established",
+      "conclusion_text": null,
+      "applicability_status": "applicability_uncertain",
+      "applicability_reason": "Kev\u00e9s stabil jel van arr\u00f3l, hogy a kor\u00e1bbi konkl\u00fazi\u00f3 most is \u00e9rv\u00e9nyes."
+    },
+    "snapshot_lines": [
+      {
+        "turn_id": 15,
+        "turn_index": 15,
+        "user_message": "csak reag\u00e1lj norm\u00e1lisan, meg am\u00fagy mi a blocker",
+        "assistant_reply": "Rendben, most besz\u00e9lget\u0151 m\u00f3dra v\u00e1ltunk."
+      },
+      {
+        "turn_id": 16,
+        "turn_index": 16,
+        "user_message": "mi a mostani c\u00e9l?",
+        "assistant_reply": "Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett akt\u00edv c\u00e9l."
+      },
+      {
+        "turn_id": 17,
+        "turn_index": 17,
+        "user_message": "mi a blocker most?",
+        "assistant_reply": "Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett f\u0151 probl\u00e9ma."
+      },
+      {
+        "turn_id": 18,
+        "turn_index": 18,
+        "user_message": "mi a k\u00f6vetkez\u0151 l\u00e9p\u00e9s?",
+        "assistant_reply": "Munkakeret: planning. Akt\u00edv c\u00e9l: nincs m\u00e9g egy\u00e9rtelm\u0171en r\u00f6gz\u00edtve."
+      },
+      {
+        "turn_id": 19,
+        "turn_index": 19,
+        "user_message": "szia",
+        "assistant_reply": "Sz\u00e9p d\u00e9lut\u00e1nt. Miben seg\u00edtsek most?"
+      },
+      {
+        "turn_id": 20,
+        "turn_index": 20,
+        "user_message": "most ne dolgozzunk, csak besz\u00e9lgess\u00fcnk",
+        "assistant_reply": "Rendben, most besz\u00e9lget\u0151 m\u00f3dra v\u00e1ltunk. Mi az, ami most legink\u00e1bb foglalkoztat?"
+      },
+      {
+        "turn_id": 21,
+        "turn_index": 21,
+        "user_message": "f\u00e1radt vagyok",
+        "assistant_reply": "Rendben."
+      },
+      {
+        "turn_id": 22,
+        "turn_index": 22,
+        "user_message": "mit mondtam eddig err\u0151l r\u00f6viden?",
+        "assistant_reply": "R\u00f6vid v\u00e1lasz: ezt a k\u00e9rd\u00e9st meg tudom v\u00e1laszolni, de k\u00e9rlek pontos\u00edtsd egy f\u00e9l mondatban, mire k\u00e9rdezel r\u00e1 a legink\u00e1bb."
+      }
+    ]
+  }
+}
