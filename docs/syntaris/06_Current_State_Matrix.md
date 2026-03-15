@@ -160,3 +160,5 @@ Ha a válasz nem fér bele ide, akkor a dokumentum hiányos és bővítendő.
 - 2026-03-15 | REBUILD-036 | Gate 2 starter státusz rögzítve: chat-lock/style-obedience/direct-answer-first/anti-hijack fókusz aktív | Miért: red-line interpretációs hibák determinisztikus kezelése.
 
 - 2026-03-15 | REBUILD-036 finisher | Red-line scenariók lezárva: style hard-override, brief recap, noisy HU chat-lock, mixed-mode direct answer, reflective fallback, natural next-step surface | Miért: Gate 2 belépő hibák tényleges zárása.
+
+- 2026-03-15 | REBUILD-037 | Gate 2 polish: brief recap quality javítva (meaningful window + meta-turn szűrés + természetes recap render) | Miért: recap hasznosság növelése red-line regresszió nélkül.

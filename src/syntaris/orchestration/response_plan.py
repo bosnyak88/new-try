@@ -584,6 +584,8 @@ def _is_reflective_personal_input(message: str) -> bool:
 def _reflective_fallback_lines(message: str) -> list[str] | None:
     if not _is_reflective_personal_input(message):
         return None
+    if "faradt vagyok" in normalize_hungarian_for_match(message).lower():
+        return ["Azt mondod, fáradt vagy most. Maradhatunk rövid, kímélő tempóban, vagy léphetünk egy nagyon kicsit tovább."]
     return ["Értem, ez most megterhelőnek hangzik. Ha szeretnéd, maradjunk röviden itt, vagy menjünk egy apró, könnyű következő lépéssel."]
 
 
@@ -603,9 +605,14 @@ def _needs_brief_recap(message: str) -> bool:
 def _brief_recap_lines(focus: ThreadFocusPack | None) -> list[str] | None:
     if focus is None or not focus.focus_lines:
         return None
+    prioritized = [line for line in focus.focus_lines if line.key.startswith("recap_point_")]
+    if not prioritized:
+        prioritized = focus.focus_lines
+    picked = [clean_display_text(line.text) for line in prioritized if clean_display_text(line.text)][:3]
+    if not picked:
+        return None
     lines = ["Röviden itt tartunk:"]
-    for item in focus.focus_lines[:2]:
-        lines.append(clean_display_text(item.text))
+    lines.extend(picked)
     return lines
 
 
@@ -721,6 +728,7 @@ def build_response_plan(
         ack_collapse_risk = direct_answer_required and not direct_answer_present and not clarification_needed
         reply_shape = "casual" if ("no_list" in style_constraints or "casual_only" in style_constraints) else ("structured" if kind in {ResponsePlanKind.STRUCTURED, ResponsePlanKind.UNCERTAINTY_LABELED} else "direct")
         final_workframe = workframe_state.workframe.value if workframe_state is not None else None
+        is_brief_recap = any(section.title == "brief_recap" for section in adjusted_sections)
         return ResponsePlan(
             kind=kind,
             sections=adjusted_sections,
@@ -738,6 +746,8 @@ def build_response_plan(
             final_workframe=final_workframe,
             final_thread_arbitration=("has_previous" if has_previous_thread else "continue_active"),
             reply_shape=reply_shape,
+            recap_source_turn_count=(focus.source_metadata.source_turn_count if (is_brief_recap and focus is not None) else None),
+            recap_included_turn_count=(focus.source_metadata.included_turn_count if (is_brief_recap and focus is not None) else None),
         )
 
     if thread_weave_state is not None and thread_weave_update_kind is not None:

@@ -153,3 +153,5 @@ A célja, hogy a csapat később is pontosan vissza tudja fejteni:
 - 2026-03-15 | REBUILD-036 | ADR update: Gate 2-ben a direct-answer-first és anti-hijack guard contract-szintű mezőkkel kötelező | Miért: ack-collapse és sablonhijack regressziók lezárása.
 
 - 2026-03-15 | REBUILD-036 finisher | ADR update: workframe kérdésre user-facing natural answer preferencia, belső taxonómia only trace/debug rétegben | Miért: menümentes felszíni fegyelem.
+
+- 2026-03-15 | REBUILD-037 | ADR update: recap prioritás semantikus súlyozással (state/blocker/next-step/reflective), nem pusztán utolsó turn | Miért: mechanikus recap ismétlés megszüntetése.

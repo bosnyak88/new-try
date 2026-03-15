@@ -1088,6 +1088,8 @@ class ResponsePlan:
     final_workframe: str | None = None
     final_thread_arbitration: str | None = None
     reply_shape: str | None = None
+    recap_source_turn_count: int | None = None
+    recap_included_turn_count: int | None = None
 
 
 @dataclass(frozen=True)
@@ -1196,6 +1198,8 @@ class ResponsePlanTrace:
     final_workframe: str | None = None
     final_thread_arbitration: str | None = None
     reply_shape: str | None = None
+    recap_source_turn_count: int | None = None
+    recap_included_turn_count: int | None = None
 
 
 @dataclass(frozen=True)

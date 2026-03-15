@@ -162,6 +162,8 @@ def build_turn_trace_events(
                     "final_workframe": response_plan_trace.final_workframe,
                     "final_thread_arbitration": response_plan_trace.final_thread_arbitration,
                     "reply_shape": response_plan_trace.reply_shape,
+                    "recap_source_turn_count": response_plan_trace.recap_source_turn_count,
+                    "recap_included_turn_count": response_plan_trace.recap_included_turn_count,
                 },
             }
         )

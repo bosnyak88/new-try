@@ -754,6 +754,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         final_workframe=response_plan.final_workframe,
         final_thread_arbitration=response_plan.final_thread_arbitration,
         reply_shape=response_plan.reply_shape,
+        recap_source_turn_count=response_plan.recap_source_turn_count,
+        recap_included_turn_count=response_plan.recap_included_turn_count,
     )
     focus_trace = ThreadFocusTrace(
         loaded=focus_view.found and focus_view.focus is not None,
