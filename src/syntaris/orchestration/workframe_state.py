@@ -126,25 +126,39 @@ def detect_update_signals(message: str) -> WorkframeUpdateSignals:
 
 def _detect_workframe(message: str, current: WorkframeKind) -> WorkframeKind:
     n = normalize_hungarian_for_match(message)
-    chat_lock_signals = (
-        "most ne dolgozzunk", "most ne dolgzunk", "csak beszelgessunk", "nem kerek listat", "csak reagalj normalisan", "most csak beszelgetunk", "csak beszelgetunk", "beszelgessunk", "beszelgesunk", "pls",
-    )
-    casual_weight = sum(1 for token in ("beszelg", "dumal", "normalisan", "pls", "chat") if token in n)
-    if any(phrase in n for phrase in chat_lock_signals) or casual_weight >= 2 or n in {"szia syntaris", "szia"}:
-        return WorkframeKind.CHAT
-    if current == WorkframeKind.CHAT and any(phrase in n for phrase in ("most", "fontos", "biztos", "emlekszel", "hol tartottunk", "folytassuk innen")):
-        strong_work = any(phrase in n for phrase in ("dolgozzunk", "feladat", "ticket", "konkret lepes", "terv kell", "kovetkezo lepes kell"))
-        if not strong_work:
-            return WorkframeKind.CHAT
-    if any(phrase in n for phrase in ("hol tartottunk", "elozo szalon mi volt", "emlekezz")):
-        return WorkframeKind.RECALL
+
+    candidates: dict[WorkframeKind, int] = {
+        WorkframeKind.CHAT: 0,
+        WorkframeKind.RECALL: 0,
+        WorkframeKind.PLANNING: 0,
+        WorkframeKind.CAPTURE: 0,
+        WorkframeKind.WORK: 0,
+    }
+
+    if any(phrase in n for phrase in ("most ne dolgozzunk", "csak beszelgessunk", "csak beszelgetunk", "csak dumaljunk", "csak reagalj normalisan", "beszelgesunk")):
+        candidates[WorkframeKind.CHAT] += 6
+    if any(token in n for token in ("beszelg", "dumal")):
+        candidates[WorkframeKind.CHAT] += 2
+
+    if any(phrase in n for phrase in ("hol tartottunk", "mire jutottunk", "folytassuk innen", "elozo szalon")):
+        candidates[WorkframeKind.RECALL] += 4
     if any(phrase in n for phrase in ("rovid terv", "kovetkezo lepes", "tervezzunk", "mit kell most tenni")):
-        return WorkframeKind.PLANNING
+        candidates[WorkframeKind.PLANNING] += 3
     if any(phrase in n for phrase in ("jegyezd meg", "rogzitsd", "irasban hagyjuk", "mentsd el")):
-        return WorkframeKind.CAPTURE
-    if any(phrase in n for phrase in ("most ezen dolgozunk", "dolgozunk", "ticket", "feladat", "cel most", "a cel most", "blocker most", "maintenance")):
-        return WorkframeKind.WORK
-    return current
+        candidates[WorkframeKind.CAPTURE] += 3
+    if any(phrase in n for phrase in ("most ezen dolgozunk", "dolgozzunk", "ticket", "feladat", "blocker", "maintenance")):
+        candidates[WorkframeKind.WORK] += 3
+
+    if current == WorkframeKind.CHAT and candidates[WorkframeKind.CHAT] > 0 and candidates[WorkframeKind.WORK] <= 1:
+        candidates[WorkframeKind.CHAT] += 2
+
+    # Single weak tokens must not force routing.
+    weak_tokens = sum(1 for token in ("most", "biztos", "fontos", "emlekszel") if token in n)
+    if weak_tokens == 1 and candidates[WorkframeKind.WORK] <= 1 and candidates[WorkframeKind.RECALL] <= 1:
+        candidates[current] += 1
+
+    winner = max(candidates.items(), key=lambda item: item[1])
+    return winner[0] if winner[1] > 0 else current
 
 
 def _trim(value: str) -> str:

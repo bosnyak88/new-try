@@ -115,6 +115,14 @@ def build_turn_trace_events(
                     "memory_query": interpret_trace.memory_query,
                     "claim_capture_count": interpret_trace.claim_capture_count,
                     "relative_time_terms": interpret_trace.relative_time_terms,
+                    "unit_count": interpret_trace.unit_count,
+                    "selected_intent": interpret_trace.selected_intent,
+                    "workframe_candidate_summary": interpret_trace.workframe_candidate_summary,
+                    "thread_candidate_summary": interpret_trace.thread_candidate_summary,
+                    "style_constraints_effective": interpret_trace.style_constraints_effective,
+                    "uncertainty_flags": interpret_trace.uncertainty_flags,
+                    "selected_reason": interpret_trace.selected_reason,
+                    "rejected_reason": interpret_trace.rejected_reason,
                 },
             }
         )

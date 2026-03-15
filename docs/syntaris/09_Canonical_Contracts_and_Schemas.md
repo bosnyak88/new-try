@@ -256,3 +256,5 @@ Ha a kód ezt más nevekkel valósítja meg, a semantikai megfelelést akkor is 
 - 2026-03-15 | REBUILD-036 finisher | checked, no change | Miért: finisher a már bevezetett contract mezők viselkedését javítja, új mező nem kellett.
 
 - 2026-03-15 | REBUILD-037 | Canonical trace kiegészítés: recap_source_turn_count + recap_included_turn_count response-plan trace mezők | Miért: recap ablak döntés visszakövethetősége.
+
+- REBUILD-037 review: interpret-pack hardening scope checked; document reviewed for Gate 2 alignment.

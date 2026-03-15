@@ -711,13 +711,15 @@ def build_response_plan(
     thread_weave_update_kind: str | None = None,
     thread_weave_query_message: str | None = None,
     evidence_ingest_from_current_turn: bool = False,
+    interpret_pack: object | None = None,
 ) -> ResponsePlan:
     interpretation_text = thread_weave_query_message or ""
-    style_constraints = _extract_style_constraints(interpretation_text)
+    pack_style = list(getattr(interpret_pack, "style_constraints_effective", []) or [])
+    style_constraints = pack_style or _extract_style_constraints(interpretation_text)
     chat_lock_active = "casual_only" in style_constraints
     chat_lock_strength = "strong" if chat_lock_active else "none"
     direct_answer_required = _is_direct_question(interpretation_text)
-    anti_hijack_guarded = _is_hijack_prone(interpretation_text)
+    anti_hijack_guarded = _is_hijack_prone(interpretation_text) or ("hijack_trigger_cluster" in (getattr(interpret_pack, "risk_flags", []) or []))
 
     def _mkplan(*, kind: ResponsePlanKind, sections: list[ResponsePlanSection], followup_prompt: str | None = None, focus_used: bool = False) -> ResponsePlan:
         adjusted_sections = [ResponsePlanSection(title=s.title, lines=_enforce_style_constraints(s.lines, style_constraints)) for s in sections]
@@ -727,7 +729,7 @@ def build_response_plan(
         clarification_needed = kind == ResponsePlanKind.CLARIFICATION
         ack_collapse_risk = direct_answer_required and not direct_answer_present and not clarification_needed
         reply_shape = "casual" if ("no_list" in style_constraints or "casual_only" in style_constraints) else ("structured" if kind in {ResponsePlanKind.STRUCTURED, ResponsePlanKind.UNCERTAINTY_LABELED} else "direct")
-        final_workframe = workframe_state.workframe.value if workframe_state is not None else None
+        final_workframe = getattr(interpret_pack, "selected_workframe", None) or (workframe_state.workframe.value if workframe_state is not None else None)
         is_brief_recap = any(section.title == "brief_recap" for section in adjusted_sections)
         return ResponsePlan(
             kind=kind,
@@ -744,7 +746,7 @@ def build_response_plan(
             anti_hijack_guarded=anti_hijack_guarded,
             ack_collapse_risk=ack_collapse_risk,
             final_workframe=final_workframe,
-            final_thread_arbitration=("has_previous" if has_previous_thread else "continue_active"),
+            final_thread_arbitration=(getattr(interpret_pack, "selected_thread", None) or ("has_previous" if has_previous_thread else "continue_active")),
             reply_shape=reply_shape,
             recap_source_turn_count=(focus.source_metadata.source_turn_count if (is_brief_recap and focus is not None) else None),
             recap_included_turn_count=(focus.source_metadata.included_turn_count if (is_brief_recap and focus is not None) else None),
@@ -920,6 +922,19 @@ def build_response_plan(
             getattr(workframe_queries, "asks_progress_block_reason", False),
         )):
             return _mkplan(kind=ResponsePlanKind.UNCERTAINTY_LABELED, sections=[ResponsePlanSection(title="decision_readiness", lines=_decision_readiness_lines(workframe_state))], focus_used=focus is not None)
+
+
+    unknown_points = getattr(interpret_pack, "unknown_points", []) or []
+    if (
+        "thread_target_ambiguous" in unknown_points
+        and "nem tudom" in normalize_hungarian_for_match(interpretation_text)
+        and "folytass" in normalize_hungarian_for_match(interpretation_text)
+    ):
+        return _mkplan(
+            kind=ResponsePlanKind.CLARIFICATION,
+            sections=[ResponsePlanSection(title="clarification", lines=["Röviden pontosíts: most a jelen szálról beszéljünk, vagy mit vigyünk tovább innen?"])],
+            focus_used=focus is not None,
+        )
 
     if interpretation.kind.value == "personal_entry" and interpretation.personal_entry is not None:
         signal = interpretation.personal_entry
