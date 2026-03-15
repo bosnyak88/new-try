@@ -252,3 +252,96 @@ Schema migration: not required in this phase (v7 unchanged).
 
 ### Scope control
 - Narrow truth-first correction on failed raw evidence handoff and stale-evidence substitution guard only; no broad presence/evidence redesign and no execution/UI expansion.
+
+## REBUILD-035 artifact/source registry baseline snapshot
+### Changed
+- `src/syntaris/contracts/runtime.py`: additive artifact/source contracts (`ArtifactSourceKind`, `ArtifactRecord`, `SourceAuditRecord`) and evidence ingest traceability via `artifact_ids`; `ConversationConfig` now carries artifact read-only roots and max-read limit.
+- `src/syntaris/persistence/schema.py`: schema v8 with additive `artifacts`, `turn_artifact_links`, and `source_audit_journal` tables.
+- `src/syntaris/persistence/store.py`: additive persistence + query APIs for artifact upsert/list/show, turn↔artifact linkage, and source-audit journaling.
+- `src/syntaris/orchestration/artifacts.py`: deterministic read-only local file bridge helpers (allowed-root guard, supported text extension gate, digest/id generation, lexical search).
+- `src/syntaris/cli.py`: new read-only source commands (`artifact-find`, `artifact-read`, `artifact-list`, `artifact-show`, `audit-last`), plus once-file source-kind/origin propagation.
+- `src/syntaris/orchestration/turns.py`: source artifact registration + linkage within existing turn orchestration; follow-up source-awareness can use retained artifact context without stale substitution.
+- `src/syntaris/orchestration/evidence_ingest.py`, `src/syntaris/trace/events.py`: additive artifact provenance plumbing in ingest/trace payload.
+- `src/syntaris/orchestration/response_plan.py`: explicit source-awareness response surface for "miből dolgozol most?" family with historical reuse disclosure.
+- `src/syntaris/config/loader.py`, `config/syntaris.example.toml`: artifact bridge configuration load + example knobs.
+- Added regressions: `tests/test_artifact_registry.py`, `tests/test_local_file_bridge.py`, `tests/test_source_context_visibility.py`, `tests/test_artifact_scope_guard.py`, `tests/test_artifact_audit.py`.
+- Added capability truth doc: `docs/rebuild-035-capability-catalog.md`.
+
+### Reviewed unchanged
+- `src/syntaris/reply/*`: no adapter boundary expansion; deterministic reply backend split preserved.
+- `src/syntaris/orchestration/live_loop.py`: no live loop behavior broadening.
+- REBUILD-034/034a presence/evidence/maintenance families preserved through full-suite regression runs.
+
+### Removed
+- None.
+
+### Deferred with reason
+- PDF/Office/binary adapters and broad source parser framework: intentionally deferred to later adapter phase to keep REBUILD-035 read-only + deterministic baseline minimal.
+- Any write-capable file operation, external app automation, permissioned execution/session orchestration, and shell/panel UI work: explicitly out of scope for this foundational source/artifact step.
+
+## REBUILD-035a targeted acceptance follow-up snapshot
+### Changed
+- `src/syntaris/config/loader.py`: accepted runtime env aliases used by ops smoke (`SYNTARIS_DB` and `SYNTARIS_SANDBOX_ROOTS`) while preserving existing `SYNTARIS_DB_PATH` / `SYNTARIS_ARTIFACT_ALLOWED_ROOTS` precedence.
+- `src/syntaris/orchestration/turns.py`: tightened current-source honesty so ordinary short conversational prompts no longer become dominant source artifacts; implicit evidence follow-ups respect continuity guard, source-awareness prompts still surface active source, once-file/local-file imports force evidence ingest linkage, and explicit historical wording can deterministically target earlier meaningful source artifacts.
+- `src/syntaris/persistence/store.py`: added focused helpers for meaningful-source selection and artifact-backed turn text retrieval (`list_meaningful_source_artifacts`, `read_artifact_message_text`, `turn_has_meaningful_artifact`).
+- `src/syntaris/orchestration/evidence_ingest.py`: added `force` ingest mode for trusted imported sources so once-file/local-file source follow-ups remain evidence-grounded even for short text inputs.
+- Added deterministic follow-up regressions in `tests/test_rebuild035a_followup.py` (env alias runtime wiring, once-file evidence follow-up + explicit historical reuse, binary refusal inside allowed roots).
+- Updated `tests/test_artifact_scope_guard.py` refusal assertions to verify outside-root vs unsupported/binary reason correctness.
+
+### Reviewed unchanged
+- `src/syntaris/cli.py` command surface kept stable (`artifact-find/read/list/show`, `audit-last`, `talk --once-file` failure handling).
+- `src/syntaris/reply/*` adapter boundaries unchanged; no shell/UI/execution broadening.
+- REBUILD-034/034a presence/identity/maintenance/evidence honesty suites preserved and rerun.
+
+### Removed
+- None.
+
+### Deferred with reason
+- No broad artifact parser expansion (PDF/Office/binary adapters) in this follow-up; limited to acceptance-blocking runtime wiring and source-selection honesty.
+- No write-capable operations or shell/panel execution work; scope remains read-only source baseline.
+
+## REBUILD-035b isolation regression fix snapshot
+### Root cause
+- 035a introduced broad compatibility env alias acceptance (`SYNTARIS_DB`, `SYNTARIS_SANDBOX_ROOTS`) even when tests passed explicit temp config paths.
+- In ambient shells where these aliases were set, per-test temp config isolation was silently overridden, causing cross-family state contamination (db/root mismatch, thread carryover, snapshot/db inspection mismatch, evidence/live-trace drift).
+
+### Changed
+- `src/syntaris/config/loader.py`: narrowed alias precedence so primary env vars (`SYNTARIS_DB_PATH`, `SYNTARIS_ARTIFACT_ALLOWED_ROOTS`) remain globally honored, while compat aliases (`SYNTARIS_DB`, `SYNTARIS_SANDBOX_ROOTS`) apply only for default/example config path (`config/syntaris.example.toml`).
+- `tests/test_config_loader.py`: added deterministic regression to ensure ambient compat aliases do **not** override explicit temp config paths.
+- `docs/rebuild-035-capability-catalog.md`: clarified alias scope to prevent operator ambiguity.
+
+### Reviewed unchanged
+- `src/syntaris/cli.py`, `src/syntaris/orchestration/*`, `src/syntaris/persistence/*` behavior for source selection/evidence linkage remained unchanged in 035b; no feature broadening.
+- Existing 034/034a/035a behavioral families were revalidated through full suite.
+
+### Removed
+- None.
+
+### Deferred with reason
+- No additional runtime feature changes in 035b; this follow-up is isolation/precedence hardening only.
+
+## REBUILD-035c once-file follow-up + historical-log selection stabilization snapshot
+### Why 035b was not sufficient
+- 035b fixed ambient env leakage and restored suite isolation, but Gate-1 runtime still showed two semantic gaps:
+  - `mi csak következtetés?` could still fall back to generic no-ingest after valid once-file evidence context.
+  - explicit historical `korábbi logból` selection could drift to arbitrary prior text artifacts after later source events / failed once-file handoff.
+
+### Changed
+- `src/syntaris/orchestration/turns.py`:
+  - strengthened follow-up continuity so consecutive evidence follow-up turns can stay on meaningful artifact-backed source context (without reopening stale-substitution behavior).
+  - added explicit historical log ranking preference for `korábbi log/konzol` prompts, selecting earlier log-like artifacts ahead of arbitrary prior text artifacts.
+  - carried `artifact_kind` reference metadata into ingest context for downstream truthful source-kind verbalization.
+- `src/syntaris/orchestration/response_plan.py`:
+  - source-awareness phrasing now preserves explicit once-file semantics (`once-file import (helyi fájl)`) when available.
+- `tests/test_rebuild035a_followup.py`:
+  - extended deterministic coverage for once-file -> `mi csak következtetés?`, failed once-file honesty preservation, and stable explicit historical log selection.
+
+### Reviewed unchanged
+- 035b precedence/isolation hardening in `src/syntaris/config/loader.py` retained.
+- no new CLI command surface added; no shell/UI/execution scope broadening.
+
+### Removed
+- None.
+
+### Deferred with reason
+- No broader artifact ranking framework added; only explicit historical log intent stabilization needed for this follow-up.

@@ -42,6 +42,9 @@ from syntaris.contracts.runtime import (
     ConclusionValidityStatus,
     TemporaryStateLifecycle,
     ThreadLifecycleStatus,
+    ArtifactRecord,
+    ArtifactSourceKind,
+    SourceAuditRecord,
 )
 from syntaris.persistence.schema import SCHEMA_SQL, SCHEMA_VERSION
 from syntaris.orchestration.text_normalize import clean_display_text, normalize_text
@@ -276,6 +279,56 @@ class PersistenceStore:
             focus_cols = {row[1] for row in conn.execute("PRAGMA table_info(thread_focus)").fetchall()}
             if focus_cols and "thread_weave_json" not in focus_cols:
                 conn.execute("ALTER TABLE thread_focus ADD COLUMN thread_weave_json TEXT")
+
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS artifacts (
+                artifact_id TEXT PRIMARY KEY,
+                source_kind TEXT NOT NULL,
+                source_origin TEXT,
+                media_type TEXT,
+                created_at TEXT NOT NULL,
+                imported_at TEXT,
+                read_at TEXT,
+                size_bytes INTEGER,
+                content_digest TEXT,
+                session_id INTEGER,
+                thread_id INTEGER,
+                turn_id INTEGER,
+                summary_excerpt TEXT,
+                status TEXT NOT NULL
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS source_audit_journal (
+                audit_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                action TEXT NOT NULL,
+                target TEXT NOT NULL,
+                outcome TEXT NOT NULL,
+                reason TEXT,
+                context TEXT,
+                session_id INTEGER,
+                thread_id INTEGER,
+                turn_id INTEGER,
+                artifact_id TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS turn_artifact_links (
+                link_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                turn_id INTEGER NOT NULL,
+                artifact_id TEXT NOT NULL,
+                relation TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                UNIQUE(turn_id, artifact_id, relation)
+            )
+            """
+        )
 
     def _serialize_thread_weave(self, weave: ThreadWeaveState | None) -> str | None:
         if weave is None:
@@ -1222,3 +1275,247 @@ class PersistenceStore:
                 for row in loop_rows
             )
             return LastTurnTraceView(turn=turn, trace_events=trace_events)
+
+
+    def upsert_artifact(
+        self,
+        *,
+        artifact_id: str,
+        source_kind: ArtifactSourceKind,
+        source_origin: str | None,
+        media_type: str | None,
+        size_bytes: int | None,
+        content_digest: str | None,
+        session_id: int | None,
+        thread_id: int | None,
+        turn_id: int | None,
+        summary_excerpt: str | None,
+        status: str,
+        imported_at: datetime | None = None,
+        read_at: datetime | None = None,
+    ) -> ArtifactRecord:
+        created_at = utc_now()
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                """
+                INSERT INTO artifacts(artifact_id, source_kind, source_origin, media_type, created_at, imported_at, read_at, size_bytes, content_digest, session_id, thread_id, turn_id, summary_excerpt, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(artifact_id) DO UPDATE SET
+                    source_kind=excluded.source_kind,
+                    source_origin=excluded.source_origin,
+                    media_type=excluded.media_type,
+                    imported_at=excluded.imported_at,
+                    read_at=excluded.read_at,
+                    size_bytes=excluded.size_bytes,
+                    content_digest=excluded.content_digest,
+                    session_id=excluded.session_id,
+                    thread_id=excluded.thread_id,
+                    turn_id=excluded.turn_id,
+                    summary_excerpt=excluded.summary_excerpt,
+                    status=excluded.status
+                """,
+                (
+                    artifact_id,
+                    source_kind.value,
+                    source_origin,
+                    media_type,
+                    created_at.isoformat(),
+                    imported_at.isoformat() if imported_at else None,
+                    read_at.isoformat() if read_at else None,
+                    size_bytes,
+                    content_digest,
+                    session_id,
+                    thread_id,
+                    turn_id,
+                    summary_excerpt,
+                    status,
+                ),
+            )
+            conn.commit()
+        return ArtifactRecord(
+            artifact_id=artifact_id,
+            source_kind=source_kind,
+            source_origin=source_origin,
+            media_type=media_type,
+            created_at=created_at,
+            imported_at=imported_at,
+            read_at=read_at,
+            size_bytes=size_bytes,
+            content_digest=content_digest,
+            session_id=session_id,
+            thread_id=thread_id,
+            turn_id=turn_id,
+            summary_excerpt=summary_excerpt,
+            status=status,
+        )
+
+    def link_turn_artifact(self, *, turn_id: int, artifact_id: str, relation: str = "evidence_source") -> None:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                "INSERT OR IGNORE INTO turn_artifact_links(turn_id, artifact_id, relation, created_at) VALUES (?, ?, ?, ?)",
+                (turn_id, artifact_id, relation, utc_now().isoformat()),
+            )
+            conn.commit()
+
+    def list_artifacts(self, *, current_thread_id: int | None = None, limit: int = 20) -> list[ArtifactRecord]:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            if current_thread_id is None:
+                rows = conn.execute("SELECT * FROM artifacts ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
+            else:
+                rows = conn.execute("SELECT * FROM artifacts WHERE thread_id = ? ORDER BY created_at DESC LIMIT ?", (current_thread_id, limit)).fetchall()
+        return [
+            ArtifactRecord(
+                artifact_id=str(r["artifact_id"]),
+                source_kind=ArtifactSourceKind(str(r["source_kind"])),
+                source_origin=str(r["source_origin"]) if r["source_origin"] is not None else None,
+                media_type=str(r["media_type"]) if r["media_type"] is not None else None,
+                created_at=datetime.fromisoformat(str(r["created_at"])),
+                imported_at=datetime.fromisoformat(str(r["imported_at"])) if r["imported_at"] else None,
+                read_at=datetime.fromisoformat(str(r["read_at"])) if r["read_at"] else None,
+                size_bytes=int(r["size_bytes"]) if r["size_bytes"] is not None else None,
+                content_digest=str(r["content_digest"]) if r["content_digest"] is not None else None,
+                session_id=int(r["session_id"]) if r["session_id"] is not None else None,
+                thread_id=int(r["thread_id"]) if r["thread_id"] is not None else None,
+                turn_id=int(r["turn_id"]) if r["turn_id"] is not None else None,
+                summary_excerpt=str(r["summary_excerpt"]) if r["summary_excerpt"] is not None else None,
+                status=str(r["status"]),
+            )
+            for r in rows
+        ]
+
+    def get_artifact(self, artifact_id: str) -> ArtifactRecord | None:
+        items = self.list_artifacts(limit=200)
+        for item in items:
+            if item.artifact_id == artifact_id:
+                return item
+        return None
+
+
+
+    def turn_has_meaningful_artifact(self, *, turn_id: int) -> bool:
+        with sqlite3.connect(self.db_path) as conn:
+            row = conn.execute(
+                """
+                SELECT 1
+                FROM turn_artifact_links l
+                INNER JOIN artifacts a ON a.artifact_id = l.artifact_id
+                WHERE l.turn_id = ?
+                  AND a.status IN ('active_source', 'evidence_ready')
+                LIMIT 1
+                """,
+                (turn_id,),
+            ).fetchone()
+        return row is not None
+    def list_meaningful_source_artifacts(self, *, thread_id: int, limit: int = 20) -> list[ArtifactRecord]:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                """
+                SELECT *
+                FROM artifacts
+                WHERE thread_id = ?
+                  AND status IN ('active_source', 'evidence_ready')
+                ORDER BY created_at DESC
+                LIMIT ?
+                """,
+                (thread_id, limit),
+            ).fetchall()
+        return [
+            ArtifactRecord(
+                artifact_id=str(r["artifact_id"]),
+                source_kind=ArtifactSourceKind(str(r["source_kind"])),
+                source_origin=str(r["source_origin"]) if r["source_origin"] is not None else None,
+                media_type=str(r["media_type"]) if r["media_type"] is not None else None,
+                created_at=datetime.fromisoformat(str(r["created_at"])),
+                imported_at=datetime.fromisoformat(str(r["imported_at"])) if r["imported_at"] else None,
+                read_at=datetime.fromisoformat(str(r["read_at"])) if r["read_at"] else None,
+                size_bytes=int(r["size_bytes"]) if r["size_bytes"] is not None else None,
+                content_digest=str(r["content_digest"]) if r["content_digest"] is not None else None,
+                session_id=int(r["session_id"]) if r["session_id"] is not None else None,
+                thread_id=int(r["thread_id"]) if r["thread_id"] is not None else None,
+                turn_id=int(r["turn_id"]) if r["turn_id"] is not None else None,
+                summary_excerpt=str(r["summary_excerpt"]) if r["summary_excerpt"] is not None else None,
+                status=str(r["status"]),
+            )
+            for r in rows
+        ]
+
+    def read_artifact_message_text(self, *, artifact_id: str) -> str | None:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            row = conn.execute(
+                """
+                SELECT t.user_message, t.user_message_raw
+                FROM turn_artifact_links l
+                INNER JOIN turns t ON t.turn_id = l.turn_id
+                WHERE l.artifact_id = ?
+                ORDER BY l.link_id DESC
+                LIMIT 1
+                """,
+                (artifact_id,),
+            ).fetchone()
+            if row is None:
+                return None
+            stored_text = str(row["user_message"])
+            raw_text = str(row["user_message_raw"]) if row["user_message_raw"] is not None else None
+            return clean_display_text(_best_canonical_text(stored_text=stored_text, raw_text=raw_text))
+    def create_source_audit(
+        self,
+        *,
+        action: str,
+        target: str,
+        outcome: str,
+        reason: str | None,
+        context: str | None,
+        session_id: int | None,
+        thread_id: int | None,
+        turn_id: int | None,
+        artifact_id: str | None,
+    ) -> SourceAuditRecord:
+        created_at = utc_now()
+        with sqlite3.connect(self.db_path) as conn:
+            cur = conn.execute(
+                """
+                INSERT INTO source_audit_journal(action, target, outcome, reason, context, session_id, thread_id, turn_id, artifact_id, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (action, target, outcome, reason, context, session_id, thread_id, turn_id, artifact_id, created_at.isoformat()),
+            )
+            conn.commit()
+            audit_id = int(cur.lastrowid)
+        return SourceAuditRecord(
+            audit_id=audit_id,
+            action=action,
+            target=target,
+            outcome=outcome,
+            reason=reason,
+            context=context,
+            session_id=session_id,
+            thread_id=thread_id,
+            turn_id=turn_id,
+            artifact_id=artifact_id,
+            created_at=created_at,
+        )
+
+    def read_last_source_audit(self, limit: int = 20) -> list[SourceAuditRecord]:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute("SELECT * FROM source_audit_journal ORDER BY audit_id DESC LIMIT ?", (limit,)).fetchall()
+        rows = list(reversed(rows))
+        return [
+            SourceAuditRecord(
+                audit_id=int(r["audit_id"]),
+                action=str(r["action"]),
+                target=str(r["target"]),
+                outcome=str(r["outcome"]),
+                reason=str(r["reason"]) if r["reason"] is not None else None,
+                context=str(r["context"]) if r["context"] is not None else None,
+                session_id=int(r["session_id"]) if r["session_id"] is not None else None,
+                thread_id=int(r["thread_id"]) if r["thread_id"] is not None else None,
+                turn_id=int(r["turn_id"]) if r["turn_id"] is not None else None,
+                artifact_id=str(r["artifact_id"]) if r["artifact_id"] is not None else None,
+                created_at=datetime.fromisoformat(str(r["created_at"])),
+            )
+            for r in rows
+        ]

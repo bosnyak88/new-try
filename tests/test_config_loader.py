@@ -49,3 +49,43 @@ def test_timezone_config_loaded_and_overridable(monkeypatch):
     monkeypatch.setenv("SYNTARIS_TIMEZONE", "Europe/Berlin")
     overridden = load_app_config("config/syntaris.example.toml")
     assert overridden.time.timezone == "Europe/Berlin"
+
+
+def test_compat_aliases_do_not_override_explicit_temp_config(tmp_path, monkeypatch):
+    cfg = tmp_path / "syntaris.temp.toml"
+    cfg.write_text(
+        f'''
+[app]
+name = "syntaris"
+environment = "test"
+
+[llm]
+server_bin_path = ""
+model_path = ""
+
+[paths]
+data_dir = "{(tmp_path / 'data').as_posix()}"
+db_path = "{(tmp_path / 'expected.db').as_posix()}"
+
+[conversation]
+default_thread_key = "default"
+default_mode = "chat"
+artifact_allowed_roots = "{(tmp_path / 'sandbox').as_posix()}"
+
+[reply]
+backend = "deterministic"
+
+[trace]
+enabled = true
+level = "info"
+'''.strip(),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setenv("SYNTARIS_DB", str(tmp_path / "ambient.db"))
+    monkeypatch.setenv("SYNTARIS_SANDBOX_ROOTS", str(tmp_path / "ambient_root"))
+
+    config = load_app_config(str(cfg))
+
+    assert config.paths.db_path == (tmp_path / "expected.db").as_posix()
+    assert config.conversation.artifact_allowed_roots == ((tmp_path / "sandbox").as_posix(),)

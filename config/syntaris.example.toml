@@ -44,6 +44,8 @@ scoped_state_same_day_stale_minutes = 480
 evidence_chunk_line_limit = 24
 evidence_max_chunks = 6
 evidence_summary_line_limit = 5
+artifact_allowed_roots = ""
+artifact_max_read_bytes = 262144
 
 [reply]
 # deterministic | llama-http

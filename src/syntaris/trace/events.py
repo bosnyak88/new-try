@@ -330,6 +330,7 @@ def build_turn_trace_events(
                     "ingest_status": evidence_trace.ingest_status,
                     "chunk_count": evidence_trace.chunk_count,
                     "key_line_count": evidence_trace.key_line_count,
+                    "artifact_ids": evidence_trace.artifact_ids,
                 },
             }
         )

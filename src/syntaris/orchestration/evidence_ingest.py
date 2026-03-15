@@ -42,12 +42,12 @@ def _extract_key_lines(lines: list[str]) -> tuple[list[str], list[str]]:
     return key[:12], unresolved
 
 
-def ingest_text_evidence(message: str, config: ConversationConfig) -> EvidenceIngestResult:
+def ingest_text_evidence(message: str, config: ConversationConfig, artifact_ids: list[str] | None = None, force: bool = False) -> EvidenceIngestResult:
     raw = message.strip()
     lines = [line.rstrip() for line in raw.splitlines()]
     long_text = len(lines) >= 6 or len(raw) >= 350
-    if not long_text:
-        return EvidenceIngestResult(ingest_status=EvidenceIngestStatus.NO_EVIDENCE_INGESTED)
+    if not long_text and not force:
+        return EvidenceIngestResult(ingest_status=EvidenceIngestStatus.NO_EVIDENCE_INGESTED, artifact_ids=list(artifact_ids or []))
 
     chunk_size = max(4, config.evidence_chunk_line_limit)
     max_chunks = max(1, config.evidence_max_chunks)
@@ -102,4 +102,5 @@ def ingest_text_evidence(message: str, config: ConversationConfig) -> EvidenceIn
         evidence_summary=summary[: max(1, config.evidence_summary_line_limit)],
         evidence_source_references=refs[:8],
         unresolved_evidence=unresolved[:4],
+        artifact_ids=list(artifact_ids or []),
     )

@@ -4,11 +4,12 @@ import sys
 
 from syntaris.bootstrap.env import load_repo_env
 from syntaris.bootstrap.init_app import build_runtime
-from syntaris.contracts.runtime import TalkRequest
+from syntaris.contracts.runtime import TalkRequest, ArtifactSourceKind
 from syntaris.orchestration.doctor import run_doctor
 from syntaris.orchestration.live_loop import run_live_loop, run_live_loop_interactive
 from syntaris.orchestration.text_normalize import clean_display_text, decode_live_input_line, render_console_text
 from syntaris.orchestration.talk import init_db, list_threads, session_status, talk_once, thread_focus_current, thread_focus_named, thread_focus_previous, thread_recap_current, thread_recap_named, thread_recap_previous, thread_snapshot_current, thread_snapshot_named, thread_snapshot_previous, thread_view_current, thread_view_named, thread_view_previous, trace_last
+from syntaris.orchestration.artifacts import find_files, read_local_text_file, make_artifact_id
 from syntaris.persistence import PersistenceStore
 from syntaris.trace.events import build_boot_trace
 
@@ -33,6 +34,17 @@ def build_parser() -> argparse.ArgumentParser:
     talk_parser.add_argument("--mode", default=None, help="Explicit mode metadata persisted on turn")
 
     sub.add_parser("trace-last", help="Inspect the latest persisted turn and trace events")
+    sub.add_parser("audit-last", help="Inspect latest source-operation audit records")
+    artifact_find_parser = sub.add_parser("artifact-find", help="Search files inside allowed roots")
+    artifact_find_parser.add_argument("pattern", help="Lexical filename/path pattern")
+    artifact_read_parser = sub.add_parser("artifact-read", help="Read supported local text file as artifact")
+    artifact_read_parser.add_argument("path", help="Absolute or relative path")
+    artifact_list_parser = sub.add_parser("artifact-list", help="List known artifacts")
+    artifact_list_parser.add_argument("--current", action="store_true", help="Only artifacts linked to active thread")
+    artifact_show_parser = sub.add_parser("artifact-show", help="Show one artifact")
+    artifact_show_scope = artifact_show_parser.add_mutually_exclusive_group(required=True)
+    artifact_show_scope.add_argument("--last", action="store_true", help="Show most recent artifact")
+    artifact_show_scope.add_argument("--id", dest="artifact_id", help="Artifact id")
     sub.add_parser("session-status", help="Inspect active session/thread/mode")
     sub.add_parser("thread-list", help="List known threads and active thread")
     thread_view_parser = sub.add_parser("thread-view", help="Inspect deterministic thread context pack")
@@ -298,6 +310,17 @@ def _record_once_file_read_failed(runtime, *, path: str, reason: str, thread_key
             }
         ],
     )
+    store.create_source_audit(
+        action="artifact_import",
+        target=path,
+        outcome="failed",
+        reason=reason,
+        context="talk_once_file",
+        session_id=state.session_id,
+        thread_id=state.thread_id,
+        turn_id=None,
+        artifact_id=None,
+    )
 def _record_live_output_event(runtime, output, *, event_name: str, degraded: bool, payload: dict[str, object]) -> None:
     store = PersistenceStore(runtime.config.paths.db_path)
     store.initialize(data_dir=runtime.config.paths.data_dir)
@@ -475,7 +498,7 @@ def main() -> int:
                     )
                 )
                 return 2
-            request = TalkRequest(message=message, thread_key=args.thread_key, mode=args.mode)
+            request = TalkRequest(message=message, thread_key=args.thread_key, mode=args.mode, source_kind=ArtifactSourceKind.ONCE_FILE_IMPORT.value, source_origin=args.once_file)
             result = talk_once(runtime, request)
             _print_turn_result(result)
             return 0
@@ -528,6 +551,71 @@ def main() -> int:
                     )
                 )
             return 0
+
+    if args.command == "artifact-find":
+        store = PersistenceStore(runtime.config.paths.db_path)
+        store.initialize(data_dir=runtime.config.paths.data_dir)
+        state = store.resolve_or_create_active(default_thread_key=runtime.config.conversation.default_thread_key, default_mode=runtime.config.conversation.default_mode)
+        matches = find_files(args.pattern, allowed_roots=runtime.config.conversation.artifact_allowed_roots)
+        store.create_source_audit(action="artifact_find", target=args.pattern, outcome="success", reason=None, context="cli", session_id=state.session_id, thread_id=state.thread_id, turn_id=None, artifact_id=None)
+        print(json.dumps({"pattern": args.pattern, "matches": matches}, ensure_ascii=False))
+        return 0
+
+    if args.command == "artifact-read":
+        store = PersistenceStore(runtime.config.paths.db_path)
+        store.initialize(data_dir=runtime.config.paths.data_dir)
+        state = store.resolve_or_create_active(default_thread_key=runtime.config.conversation.default_thread_key, default_mode=runtime.config.conversation.default_mode)
+        result = read_local_text_file(args.path, allowed_roots=runtime.config.conversation.artifact_allowed_roots, max_read_bytes=runtime.config.conversation.artifact_max_read_bytes)
+        if not result.ok:
+            store.create_source_audit(action="artifact_read", target=args.path, outcome="refused", reason=result.reason, context="cli", session_id=state.session_id, thread_id=state.thread_id, turn_id=None, artifact_id=None)
+            print(json.dumps({"error": "artifact_read_refused", "path": args.path, "reason": result.reason}, ensure_ascii=False))
+            return 2
+        artifact_id = make_artifact_id(ArtifactSourceKind.LOCAL_TEXT_FILE, result.path, result.digest)
+        store.upsert_artifact(
+            artifact_id=artifact_id,
+            source_kind=ArtifactSourceKind.LOCAL_TEXT_FILE,
+            source_origin=result.path,
+            media_type=result.media_type,
+            size_bytes=result.size_bytes,
+            content_digest=result.digest,
+            session_id=state.session_id,
+            thread_id=state.thread_id,
+            turn_id=None,
+            summary_excerpt=result.content.strip().splitlines()[0][:180] if result.content and result.content.strip() else None,
+            status="ok",
+            read_at=runtime.clock.now(),
+        )
+        store.create_source_audit(action="artifact_read", target=result.path, outcome="success", reason=None, context="cli", session_id=state.session_id, thread_id=state.thread_id, turn_id=None, artifact_id=artifact_id)
+        request = TalkRequest(message=result.content or "", source_kind=ArtifactSourceKind.LOCAL_TEXT_FILE.value, source_origin=result.path)
+        talk_result = talk_once(runtime, request)
+        _print_turn_result(talk_result)
+        return 0
+
+    if args.command == "artifact-list":
+        store = PersistenceStore(runtime.config.paths.db_path)
+        store.initialize(data_dir=runtime.config.paths.data_dir)
+        state = store.resolve_or_create_active(default_thread_key=runtime.config.conversation.default_thread_key, default_mode=runtime.config.conversation.default_mode)
+        items = store.list_artifacts(current_thread_id=state.thread_id if args.current else None)
+        print(json.dumps({"artifacts": [a.__dict__ | {"source_kind": a.source_kind.value, "created_at": a.created_at.isoformat(), "imported_at": a.imported_at.isoformat() if a.imported_at else None, "read_at": a.read_at.isoformat() if a.read_at else None} for a in items]}, ensure_ascii=False))
+        return 0
+
+    if args.command == "artifact-show":
+        store = PersistenceStore(runtime.config.paths.db_path)
+        store.initialize(data_dir=runtime.config.paths.data_dir)
+        items = store.list_artifacts(limit=1) if args.last else []
+        artifact = items[0] if args.last and items else (store.get_artifact(args.artifact_id) if args.artifact_id else None)
+        if artifact is None:
+            print(json.dumps({"error": "artifact_not_found"}, ensure_ascii=False))
+            return 2
+        print(json.dumps(artifact.__dict__ | {"source_kind": artifact.source_kind.value, "created_at": artifact.created_at.isoformat(), "imported_at": artifact.imported_at.isoformat() if artifact.imported_at else None, "read_at": artifact.read_at.isoformat() if artifact.read_at else None}, ensure_ascii=False))
+        return 0
+
+    if args.command == "audit-last":
+        store = PersistenceStore(runtime.config.paths.db_path)
+        store.initialize(data_dir=runtime.config.paths.data_dir)
+        events = store.read_last_source_audit()
+        print(json.dumps({"audit": [e.__dict__ | {"created_at": e.created_at.isoformat()} for e in events]}, ensure_ascii=False))
+        return 0
 
     if args.command == "session-status":
         state = session_status(runtime)

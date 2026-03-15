@@ -22,6 +22,8 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
     resolved_path = Path(
         config_path or os.getenv("SYNTARIS_CONFIG_PATH", "config/syntaris.example.toml")
     )
+    default_cfg = Path("config/syntaris.example.toml")
+    compat_aliases_allowed = resolved_path.as_posix().endswith(default_cfg.as_posix())
 
     with resolved_path.open("rb") as handle:
         raw = tomli.load(handle)
@@ -41,9 +43,12 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
         port=_pick_int(os.getenv("SYNTARIS_LLM_PORT"), llm.get("port", 8080)),
     )
 
+    db_override = os.getenv("SYNTARIS_DB_PATH")
+    if db_override is None and compat_aliases_allowed:
+        db_override = os.getenv("SYNTARIS_DB")
     paths_config = AppPaths(
         data_dir=_pick(os.getenv("SYNTARIS_DATA_DIR"), paths.get("data_dir", "./.syntaris")),
-        db_path=_pick(os.getenv("SYNTARIS_DB_PATH"), paths.get("db_path", "./.syntaris/runtime.db")),
+        db_path=_pick(db_override, paths.get("db_path", "./.syntaris/runtime.db")),
     )
 
     reply_config = ReplyConfig(
@@ -54,6 +59,10 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
             os.getenv("SYNTARIS_REPLY_TIMEOUT_SECONDS"), reply.get("timeout_seconds", 10.0)
         ),
     )
+
+    artifact_roots_override = os.getenv("SYNTARIS_ARTIFACT_ALLOWED_ROOTS")
+    if artifact_roots_override is None and compat_aliases_allowed:
+        artifact_roots_override = os.getenv("SYNTARIS_SANDBOX_ROOTS")
 
     conversation_config = ConversationConfig(
         default_thread_key=_pick(
@@ -147,6 +156,18 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
         evidence_summary_line_limit=_pick_int(
             os.getenv("SYNTARIS_EVIDENCE_SUMMARY_LINE_LIMIT"),
             conversation.get("evidence_summary_line_limit", 5),
+        ),
+        artifact_allowed_roots=tuple(
+            part.strip()
+            for part in _pick(
+                artifact_roots_override,
+                conversation.get("artifact_allowed_roots", ""),
+            ).split(os.pathsep)
+            if part.strip()
+        ),
+        artifact_max_read_bytes=_pick_int(
+            os.getenv("SYNTARIS_ARTIFACT_MAX_READ_BYTES"),
+            conversation.get("artifact_max_read_bytes", 262144),
         ),
     )
 
