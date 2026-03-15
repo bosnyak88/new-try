@@ -1076,6 +1076,18 @@ class ResponsePlan:
     sections: list[ResponsePlanSection]
     followup_prompt: str | None = None
     focus_used: bool = False
+    style_constraints: list[str] = field(default_factory=list)
+    chat_lock_active: bool = False
+    chat_lock_strength: str = "none"
+    direct_answer_required: bool = False
+    direct_answer_present: bool = False
+    clarification_needed: bool = False
+    clarification_reason: str | None = None
+    anti_hijack_guarded: bool = False
+    ack_collapse_risk: bool = False
+    final_workframe: str | None = None
+    final_thread_arbitration: str | None = None
+    reply_shape: str | None = None
 
 
 @dataclass(frozen=True)
@@ -1172,6 +1184,18 @@ class ResponsePlanTrace:
     gap_kind: str | None = None
     continuity_class: str | None = None
     relative_grounding: list[str] = field(default_factory=list)
+    style_constraints: list[str] = field(default_factory=list)
+    chat_lock_active: bool = False
+    chat_lock_strength: str = "none"
+    direct_answer_required: bool = False
+    direct_answer_present: bool = False
+    clarification_needed: bool = False
+    clarification_reason: str | None = None
+    anti_hijack_guarded: bool = False
+    ack_collapse_risk: bool = False
+    final_workframe: str | None = None
+    final_thread_arbitration: str | None = None
+    reply_shape: str | None = None
 
 
 @dataclass(frozen=True)

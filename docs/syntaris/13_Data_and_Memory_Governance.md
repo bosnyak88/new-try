@@ -110,3 +110,10 @@ Ha egy állítás forráshoz kötött és gyenge, akkor a memória is így kell 
 
 A Syntaris memóriája réteges, bizonyítékhoz kötött és kontrollált.
 Nem cél a mindent elraktározó, ellenőrizetlen emlékezet.
+
+
+## Delta Journal
+
+- 2026-03-15 | REBUILD-036 | checked, no change | Miért: ticket nem módosította state retention/governance szabályokat.
+
+- 2026-03-15 | REBUILD-036 finisher | checked, no change | Miért: ticket nem érintett retention/governance szabályt.

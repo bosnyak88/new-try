@@ -249,6 +249,22 @@ def interpret_turn(message: str) -> TurnInterpretation:
 
     if any(
         phrase in normalized
+        for phrase in (
+            "mit mondtam eddig errol roviden",
+            "emlekszel mire jutottunk de roviden mondd",
+            "emlekszel mire jutottunk",
+            "mire jutottunk roviden",
+        )
+    ):
+        return TurnInterpretation(
+            kind=TurnInterpretationKind.RECALL_CURRENT,
+            pattern_name="recall_current_brief_summary",
+            recall_request=RecallRequest(target=RecallTargetKind.CURRENT),
+            relative_time_terms=relative_terms,
+        )
+
+    if any(
+        phrase in normalized
         for phrase in ("hol tartottunk", "na hol tartottunk", "hol is tartottunk", "hol tartunk")
     ):
         return TurnInterpretation(
