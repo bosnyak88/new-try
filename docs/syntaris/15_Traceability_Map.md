@@ -1,0 +1,120 @@
+# Traceability Map
+
+- Dokumentum státusz: **kanonikus követelmény-visszavezetési térkép**
+- Dátum: **2026-03-15**
+- Cél: **megmutatni, hogy a csomag fő követelményei, döntései és kapui mely dokumentumokból vezethetők vissza**
+
+## Dokumentum célja
+
+Ez a dokumentum a teljes csomag navigációs és visszakeresési térképe.
+A célja, hogy egy fejlesztő, reviewer vagy jövőbeli csapattag gyorsan meg tudja találni:
+- melyik kérdésre melyik dokumentum ad választ,
+- hol van a normatív előírás,
+- hol van az aktuális állapot,
+- és hol van a mérés vagy operátori eljárás.
+
+## 1. Fő témák és elsődleges dokumentumok
+
+| Téma | Elsődleges dokumentum | Másodlagos dokumentumok |
+|---|---|---|
+| Mi a Syntaris és mi a végcél | 01 | 08, 14 |
+| Mi a jelenlegi valós állapot | 06 | 07, 03 |
+| Milyen sorrendben szabad fejleszteni | 03 | 01, 08 |
+| Mi a következő kötelező főkapu | 03 | 06, 11 |
+| Mit tud most a rendszer | 07 | 06 |
+| Miért született egy architekturális döntés | 08 | 01, 03 |
+| Milyen state-ek és contractok kötelezőek | 09 | 14, 10 |
+| Melyik modul miért felel | 10 | 09 |
+| Milyen minőségi küszöb kell | 11 | 05, 03 |
+| Hogyan kell validálni és reprodukálni | 12 | 05 |
+| Hogyan kell kezelni a memóriát és adatot | 13 | 09, 14 |
+| Mit jelentenek a kulcsfogalmak | 14 | 09 |
+
+## 2. Kritikus stratégiai állítások visszavezetése
+
+### A rendszer nem chatbot, hanem személyes kognitív társ-rendszer
+- Elsődleges: 01
+- Kiegészítő: 08 (ADR-001)
+
+### A központi mag determinisztikus, a modellek moduláris segítők
+- Elsődleges: 01
+- Kiegészítő: 08 (ADR-002), 02, 09
+
+### A projekt truth-first és uncertainty-aware
+- Elsődleges: 01
+- Kiegészítő: 08 (ADR-003), 05, 11
+
+### A user természetes magyar nyelven beszélhet, nem parancsnyelven
+- Elsődleges: 01
+- Kiegészítő: 02, 08 (ADR-004)
+
+### A belső komplexitás elrejthető, a menüzés nem elfogadható
+- Elsődleges: 01
+- Kiegészítő: 02, 08 (ADR-005), 07
+
+### A REBUILD-035 után Gate 2 a kötelező főirány
+- Elsődleges: 03
+- Kiegészítő: 01, 08 (ADR-006), 06
+
+### Az A-oldali pilot nem fedheti el a determinisztikus maghibákat
+- Elsődleges: 03
+- Kiegészítő: 01, 02, 08 (ADR-007), 11
+
+### A source/artifact gerincnek a shell előtt kell jönnie
+- Elsődleges: 03
+- Kiegészítő: 01, 08 (ADR-008), 07, 10
+
+### A hot/warm/cold munkatér-modell kötelező szemlélet
+- Elsődleges: 04
+- Kiegészítő: 01, 02, 08 (ADR-009), 13
+
+### A living docs minden rendszerszintű merge után frissítendők
+- Elsődleges: 00
+- Kiegészítő: 08 (ADR-010), 06, 07, 11, 12
+
+## 3. Kritikus operátori kérdések visszavezetése
+
+### „Milyen parancsokkal validáljak?”
+- Elsődleges: 12
+- Kiegészítő: 05
+
+### „Mi számít kontaminált körnek?”
+- Elsődleges: 12
+- Kiegészítő: 05
+
+### „Mi számít merge-stop hibának?”
+- Elsődleges: 05
+- Kiegészítő: 11
+
+### „Mi kell ahhoz, hogy Gate 2 átmentnek számítson?”
+- Elsődleges: 03
+- Kiegészítő: 11, 05
+
+### „Mit kell frissíteni egy rendszerszintű PR után?”
+- Elsődleges: 00
+- Kiegészítő: 06, 07, 08, 11, 12
+
+## 4. Kritikus fejlesztői kérdések visszavezetése
+
+### „Hol van leírva, hogy milyen mezőknek kell létezniük?”
+- 09
+
+### „Hol van leírva, hogy melyik modul mit hívhat?”
+- 10
+
+### „Hol van leírva a jelenlegi valós támogatottság?”
+- 07
+
+### „Hol van leírva a jelenlegi valós rendszerállapot?”
+- 06
+
+### „Hol van leírva, mikor írhat a rendszer stabil memóriát?”
+- 13
+
+### „Hol van leírva, mit jelent pontosan egy fogalom?”
+- 14
+
+## 5. Rövid végső összefoglalás
+
+A csomag akkor használható jól, ha a fejlesztő nem találgat, hanem visszakeres.
+Ez a térkép ezt gyorsítja fel.
