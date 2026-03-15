@@ -161,3 +161,5 @@ Ha a kör nem bizonyíthatóan tiszta, nem szabad végső ítéletet alapozni r�
 - 2026-03-15 | REBUILD-036 finisher | Finisher-run log és problémás-turn trace/snapshot proof kör hozzáadva | Miért: reply/trace/snapshot koherencia bizonyítása.
 
 - 2026-03-15 | REBUILD-037 | Runbook kiegészítés: recap A/B/C szekvencia smoke + trace-last/snapshot proof log | Miért: reprodukálható recap quality bizonyítás.
+
+- REBUILD-037 review: interpret-pack hardening scope checked; document reviewed for Gate 2 alignment.

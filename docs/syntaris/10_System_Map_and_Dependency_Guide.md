@@ -205,3 +205,5 @@ A dependency guide célja, hogy ezt a rétegességet a kódban is megőrizze.
 - 2026-03-15 | REBUILD-036 finisher | Frissítve: interpret/response-plan/workframe query precedence finomítás (mixed-mode és recap útvonal) | Miért: helyes arbitration sorrend dokumentálása.
 
 - 2026-03-15 | REBUILD-037 | System-map frissítés: thread_focus -> response_plan brief_recap útvonal és prioritásos kiválasztás | Miért: recap minőség pipeline dokumentálása.
+
+- REBUILD-037 review: interpret-pack hardening scope checked; document reviewed for Gate 2 alignment.

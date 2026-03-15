@@ -502,6 +502,39 @@ class RecallRequest:
     thread_key: str | None = None
 
 
+
+
+@dataclass(frozen=True)
+class InterpretUnit:
+    text: str
+    role: str
+
+
+@dataclass(frozen=True)
+class InterpretCandidate:
+    name: str
+    score: int
+    reason: str
+
+
+@dataclass(frozen=True)
+class InterpretPack:
+    utterance_units: list[InterpretUnit] = field(default_factory=list)
+    candidate_intents: list[InterpretCandidate] = field(default_factory=list)
+    workframe_candidates: list[InterpretCandidate] = field(default_factory=list)
+    thread_candidates: list[InterpretCandidate] = field(default_factory=list)
+    style_constraints_effective: list[str] = field(default_factory=list)
+    evidence_need: str = "not_needed"
+    memory_need: str = "none"
+    risk_flags: list[str] = field(default_factory=list)
+    unknown_points: list[str] = field(default_factory=list)
+    selected_intent: str | None = None
+    selected_workframe: str | None = None
+    selected_thread: str | None = None
+    selected_reason: str | None = None
+    rejected_reasons: list[str] = field(default_factory=list)
+
+
 @dataclass(frozen=True)
 class TurnInterpretation:
     kind: TurnInterpretationKind
@@ -512,6 +545,7 @@ class TurnInterpretation:
     memory_query: MemoryQueryKind | None = None
     claim_capture: list[ClaimCapture] = field(default_factory=list)
     relative_time_terms: list[str] = field(default_factory=list)
+    interpret_pack: InterpretPack | None = None
 
 
 @dataclass(frozen=True)
@@ -1135,6 +1169,14 @@ class TurnInterpretTrace:
     memory_query: str | None = None
     claim_capture_count: int = 0
     relative_time_terms: list[str] = field(default_factory=list)
+    unit_count: int = 0
+    selected_intent: str | None = None
+    workframe_candidate_summary: list[str] = field(default_factory=list)
+    thread_candidate_summary: list[str] = field(default_factory=list)
+    style_constraints_effective: list[str] = field(default_factory=list)
+    uncertainty_flags: list[str] = field(default_factory=list)
+    selected_reason: str | None = None
+    rejected_reason: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

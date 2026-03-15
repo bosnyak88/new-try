@@ -143,3 +143,5 @@ Ha a fejlesztőcsapat ennél többet állít, bizonyítania kell, vagy frissíte
 - 2026-03-15 | REBUILD-036 finisher | Képesség pontosítva: mixed-mode style+direct question együtt kezelve; recap kérdések direct-answer-first útvonalra kerülnek | Miért: természetes HU-first turnek stabilizálása.
 
 - 2026-03-15 | REBUILD-037 | Képesség bővítés: brief recap legalább 2 releváns pontot tud visszahozni, nem domináns meta-turn alapon | Miért: user-facing recap minőség.
+
+- REBUILD-037 review: interpret-pack hardening scope checked; document reviewed for Gate 2 alignment.

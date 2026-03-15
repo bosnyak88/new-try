@@ -127,3 +127,5 @@ Ahol piros vonal van, ott nincs „majd később megoldjuk” kategória.
 - 2026-03-15 | REBUILD-036 finisher | Eval bizonyíték hozzáadva a 7 kötelező finisher scenarióra (violation=0 célok) | Miért: red-line zárás mérhető igazolása.
 
 - 2026-03-15 | REBUILD-037 | Eval kiegészítés: recap-quality kritériumok (nem utolsó sor ismétlés, min. 2 releváns pont ahol van) | Miért: Gate 2 polish mérhetősége.
+
+- REBUILD-037 review: interpret-pack hardening scope checked; document reviewed for Gate 2 alignment.

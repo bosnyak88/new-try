@@ -127,3 +127,5 @@ Ez a térkép ezt gyorsítja fel.
 - 2026-03-15 | REBUILD-036 finisher | Traceability kiterjesztés: finisher acceptance 1-9 -> konkrét kód- és tesztpontok + finisher validation log | Miért: visszakereshető lezárás.
 
 - 2026-03-15 | REBUILD-037 | Traceability update: brief recap quality acceptance -> thread_focus.py/response_plan.py/tests/test_rebuild037_recap_quality.py + validation log | Miért: követelmény-visszavezetés aktualizálása.
+
+- REBUILD-037 review: interpret-pack hardening scope checked; document reviewed for Gate 2 alignment.

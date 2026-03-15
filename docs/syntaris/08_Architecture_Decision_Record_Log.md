@@ -155,3 +155,5 @@ A célja, hogy a csapat később is pontosan vissza tudja fejteni:
 - 2026-03-15 | REBUILD-036 finisher | ADR update: workframe kérdésre user-facing natural answer preferencia, belső taxonómia only trace/debug rétegben | Miért: menümentes felszíni fegyelem.
 
 - 2026-03-15 | REBUILD-037 | ADR update: recap prioritás semantikus súlyozással (state/blocker/next-step/reflective), nem pusztán utolsó turn | Miért: mechanikus recap ismétlés megszüntetése.
+
+- REBUILD-037 review: interpret-pack hardening scope checked; document reviewed for Gate 2 alignment.

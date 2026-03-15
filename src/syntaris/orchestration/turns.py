@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 
 from syntaris.contracts.runtime import (
@@ -43,6 +43,7 @@ from syntaris.orchestration.followup_resolution import resolve_followup_referenc
 from syntaris.orchestration.thread_focus import build_thread_focus_view, refresh_thread_focus
 from syntaris.orchestration.deliberation import assemble_deliberation_input
 from syntaris.orchestration.answer_strategy import build_comparison_pack, select_answer_strategy
+from syntaris.orchestration.interpret_pack import build_interpret_pack, to_runtime_interpret_pack
 from syntaris.orchestration.thread_snapshot import build_thread_snapshot_view, refresh_snapshot_for_transition
 from syntaris.orchestration.turn_interpret import interpret_turn
 from syntaris.orchestration.thread_recall import resolve_recall_request
@@ -482,6 +483,12 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     execution_message = resolved.execution_message
     normalized_message = preprocess_turn_message(execution_message)
     interpretation = interpret_turn(normalized_message)
+    interpret_pack = build_interpret_pack(
+        normalized_message,
+        previous_workframe=(context_load.pack.workframe_state.workframe.value if context_load.pack.workframe_state is not None else "chat"),
+        has_previous_thread=resolved.state_after.previous_thread_id is not None,
+    )
+    interpretation = replace(interpretation, interpret_pack=to_runtime_interpret_pack(interpret_pack))
     last_turn_at = store.read_last_turn_at(resolved.state_after.thread_id)
     time_context = build_time_context(context, last_turn_at=last_turn_at, relative_terms=interpretation.relative_time_terms)
     personal_memory = store.get_personal_memory(
@@ -682,6 +689,7 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         thread_weave_update_kind=detect_thread_weave_update_kind(normalized_message),
         thread_weave_query_message=normalized_message,
         evidence_ingest_from_current_turn=evidence_ingest_from_current_turn,
+        interpret_pack=interpret_pack,
     )
 
     recap_trace = RecapTrace(recognized=False)
@@ -697,6 +705,14 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         memory_query=interpretation.memory_query.value if interpretation.memory_query is not None else None,
         claim_capture_count=len(interpretation.claim_capture),
         relative_time_terms=interpretation.relative_time_terms,
+        unit_count=len(interpret_pack.utterance_units),
+        selected_intent=interpret_pack.selected_intent,
+        workframe_candidate_summary=[f"{c.workframe}:{c.score}" for c in interpret_pack.workframe_candidates[:3]],
+        thread_candidate_summary=[f"{c.relation}:{c.score}" for c in interpret_pack.thread_candidates[:3]],
+        style_constraints_effective=interpret_pack.style_constraints_effective,
+        uncertainty_flags=[*interpret_pack.risk_flags, *interpret_pack.unknown_points],
+        selected_reason=interpret_pack.selected_reason,
+        rejected_reason=interpret_pack.rejected_reasons,
     )
     recall_trace = RecallTrace(
         requested=interpretation.recall_request is not None,
