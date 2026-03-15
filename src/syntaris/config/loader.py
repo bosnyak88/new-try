@@ -41,9 +41,10 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
         port=_pick_int(os.getenv("SYNTARIS_LLM_PORT"), llm.get("port", 8080)),
     )
 
+    db_override = os.getenv("SYNTARIS_DB_PATH") or os.getenv("SYNTARIS_DB")
     paths_config = AppPaths(
         data_dir=_pick(os.getenv("SYNTARIS_DATA_DIR"), paths.get("data_dir", "./.syntaris")),
-        db_path=_pick(os.getenv("SYNTARIS_DB_PATH"), paths.get("db_path", "./.syntaris/runtime.db")),
+        db_path=_pick(db_override, paths.get("db_path", "./.syntaris/runtime.db")),
     )
 
     reply_config = ReplyConfig(
@@ -54,6 +55,8 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
             os.getenv("SYNTARIS_REPLY_TIMEOUT_SECONDS"), reply.get("timeout_seconds", 10.0)
         ),
     )
+
+    artifact_roots_override = os.getenv("SYNTARIS_ARTIFACT_ALLOWED_ROOTS") or os.getenv("SYNTARIS_SANDBOX_ROOTS")
 
     conversation_config = ConversationConfig(
         default_thread_key=_pick(
@@ -151,7 +154,7 @@ def load_app_config(config_path: str | None = None) -> AppConfig:
         artifact_allowed_roots=tuple(
             part.strip()
             for part in _pick(
-                os.getenv("SYNTARIS_ARTIFACT_ALLOWED_ROOTS"),
+                artifact_roots_override,
                 conversation.get("artifact_allowed_roots", ""),
             ).split(os.pathsep)
             if part.strip()

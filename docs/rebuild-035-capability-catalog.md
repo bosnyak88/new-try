@@ -26,3 +26,8 @@
 - Reads are restricted to configured `artifact_allowed_roots`.
 - Outside-root and unsupported/binary reads are explicitly refused.
 - Refused reads are journaled in `source_audit_journal` and do not become active source context.
+
+
+## Environment overrides accepted by runtime
+- DB path: `SYNTARIS_DB_PATH` (primary) or `SYNTARIS_DB` (compat alias).
+- Allowed roots: `SYNTARIS_ARTIFACT_ALLOWED_ROOTS` (primary) or `SYNTARIS_SANDBOX_ROOTS` (compat alias).

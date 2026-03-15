@@ -1391,6 +1391,75 @@ class PersistenceStore:
                 return item
         return None
 
+
+
+    def turn_has_meaningful_artifact(self, *, turn_id: int) -> bool:
+        with sqlite3.connect(self.db_path) as conn:
+            row = conn.execute(
+                """
+                SELECT 1
+                FROM turn_artifact_links l
+                INNER JOIN artifacts a ON a.artifact_id = l.artifact_id
+                WHERE l.turn_id = ?
+                  AND a.status IN ('active_source', 'evidence_ready')
+                LIMIT 1
+                """,
+                (turn_id,),
+            ).fetchone()
+        return row is not None
+    def list_meaningful_source_artifacts(self, *, thread_id: int, limit: int = 20) -> list[ArtifactRecord]:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                """
+                SELECT *
+                FROM artifacts
+                WHERE thread_id = ?
+                  AND status IN ('active_source', 'evidence_ready')
+                ORDER BY created_at DESC
+                LIMIT ?
+                """,
+                (thread_id, limit),
+            ).fetchall()
+        return [
+            ArtifactRecord(
+                artifact_id=str(r["artifact_id"]),
+                source_kind=ArtifactSourceKind(str(r["source_kind"])),
+                source_origin=str(r["source_origin"]) if r["source_origin"] is not None else None,
+                media_type=str(r["media_type"]) if r["media_type"] is not None else None,
+                created_at=datetime.fromisoformat(str(r["created_at"])),
+                imported_at=datetime.fromisoformat(str(r["imported_at"])) if r["imported_at"] else None,
+                read_at=datetime.fromisoformat(str(r["read_at"])) if r["read_at"] else None,
+                size_bytes=int(r["size_bytes"]) if r["size_bytes"] is not None else None,
+                content_digest=str(r["content_digest"]) if r["content_digest"] is not None else None,
+                session_id=int(r["session_id"]) if r["session_id"] is not None else None,
+                thread_id=int(r["thread_id"]) if r["thread_id"] is not None else None,
+                turn_id=int(r["turn_id"]) if r["turn_id"] is not None else None,
+                summary_excerpt=str(r["summary_excerpt"]) if r["summary_excerpt"] is not None else None,
+                status=str(r["status"]),
+            )
+            for r in rows
+        ]
+
+    def read_artifact_message_text(self, *, artifact_id: str) -> str | None:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            row = conn.execute(
+                """
+                SELECT t.user_message, t.user_message_raw
+                FROM turn_artifact_links l
+                INNER JOIN turns t ON t.turn_id = l.turn_id
+                WHERE l.artifact_id = ?
+                ORDER BY l.link_id DESC
+                LIMIT 1
+                """,
+                (artifact_id,),
+            ).fetchone()
+            if row is None:
+                return None
+            stored_text = str(row["user_message"])
+            raw_text = str(row["user_message_raw"]) if row["user_message_raw"] is not None else None
+            return clean_display_text(_best_canonical_text(stored_text=stored_text, raw_text=raw_text))
     def create_source_audit(
         self,
         *,

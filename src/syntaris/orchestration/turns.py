@@ -110,20 +110,86 @@ def _is_evidence_followup_prompt(message: str) -> bool:
             "mibol dolgozol most",
             "melyik fajlt hasznaltad",
             "mostani forras",
+            "ez most raw blokk vagy helyi fajl",
+            "melyik fajlt hasznaltad az elobb",
+        )
+    )
+
+
+def _is_meaningful_raw_paste(message: str) -> bool:
+    raw = message.strip()
+    if not raw:
+        return False
+    lines = [line for line in raw.splitlines() if line.strip()]
+    return len(lines) >= 6 or len(raw) >= 350
+
+
+def _resolve_requested_source_kind(request: TalkRequest) -> ArtifactSourceKind | None:
+    if request.source_kind == ArtifactSourceKind.ONCE_FILE_IMPORT.value:
+        return ArtifactSourceKind.ONCE_FILE_IMPORT
+    if request.source_kind == ArtifactSourceKind.LOCAL_TEXT_FILE.value:
+        return ArtifactSourceKind.LOCAL_TEXT_FILE
+    if request.source_kind == ArtifactSourceKind.RAW_PASTE.value:
+        return ArtifactSourceKind.RAW_PASTE
+    return None
+
+
+def _select_artifact_for_followup(store: PersistenceStore, *, thread_id: int, explicit_history: bool) -> object | None:
+    meaningful = store.list_meaningful_source_artifacts(thread_id=thread_id, limit=6)
+    if not meaningful:
+        return None
+    if explicit_history:
+        if len(meaningful) > 1:
+            return meaningful[1]
+        return meaningful[0]
+    return meaningful[0]
+
+
+def _ingest_from_artifact_message(store: PersistenceStore, artifact, config) -> object | None:
+    text = store.read_artifact_message_text(artifact_id=artifact.artifact_id)
+    if text is None:
+        return None
+    ingest = ingest_text_evidence(text, config, artifact_ids=[artifact.artifact_id], force=True)
+    refs = list(ingest.evidence_source_references)
+    if artifact.source_origin:
+        refs = [EvidenceSourceReference(source_label="artifact_origin", excerpt=artifact.source_origin), *refs]
+    return type(ingest)(
+        ingest_status=ingest.ingest_status,
+        raw_text_evidence=ingest.raw_text_evidence,
+        chunked_evidence=ingest.chunked_evidence,
+        extracted_key_lines=ingest.extracted_key_lines,
+        evidence_summary=ingest.evidence_summary,
+        evidence_source_references=refs,
+        unresolved_evidence=ingest.unresolved_evidence,
+        artifact_ids=ingest.artifact_ids,
+    )
+
+
+def _is_source_awareness_prompt(message: str) -> bool:
+    lower = normalize_hungarian_for_match(message).lower()
+    return any(
+        phrase in lower
+        for phrase in (
+            "mibol dolgozol most",
+            "melyik fajlt hasznaltad",
+            "mostani forras",
+            "ez most raw blokk vagy helyi fajl",
+            "melyik fajlt hasznaltad az elobb",
         )
     )
 
 
 def _register_artifact_for_request(store: PersistenceStore, state: ActiveConversationState, request: TalkRequest, message: str) -> str | None:
-    if request.source_kind == ArtifactSourceKind.ONCE_FILE_IMPORT.value:
-        kind = ArtifactSourceKind.ONCE_FILE_IMPORT
-    elif request.source_kind == ArtifactSourceKind.LOCAL_TEXT_FILE.value:
-        kind = ArtifactSourceKind.LOCAL_TEXT_FILE
-    else:
+    kind = _resolve_requested_source_kind(request)
+    if kind is None:
+        if not _is_meaningful_raw_paste(message):
+            return None
         kind = ArtifactSourceKind.RAW_PASTE
+
     source_origin = request.source_origin
     digest = digest_text(message)
     artifact_id = make_artifact_id(kind, source_origin, digest)
+    status = "active_source" if kind in {ArtifactSourceKind.ONCE_FILE_IMPORT, ArtifactSourceKind.LOCAL_TEXT_FILE} else "evidence_ready"
     store.upsert_artifact(
         artifact_id=artifact_id,
         source_kind=kind,
@@ -135,9 +201,9 @@ def _register_artifact_for_request(store: PersistenceStore, state: ActiveConvers
         thread_id=state.thread_id,
         turn_id=None,
         summary_excerpt=message.strip().splitlines()[0][:180] if message.strip() else None,
-        status="ok",
+        status=status,
         imported_at=store.read_last_turn_at(state.thread_id) if kind == ArtifactSourceKind.ONCE_FILE_IMPORT else None,
-        read_at=store.read_last_turn_at(state.thread_id) if kind == ArtifactSourceKind.RAW_PASTE else None,
+        read_at=store.read_last_turn_at(state.thread_id) if kind in {ArtifactSourceKind.RAW_PASTE, ArtifactSourceKind.LOCAL_TEXT_FILE} else None,
     )
     store.create_source_audit(
         action="artifact_import",
@@ -450,7 +516,8 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
     semantic_turns = semantic_context.recent_turns if semantic_context is not None else context_load.pack.recent_turns
     workframe_state = derive_workframe_state(semantic_turns, normalized_message)
     historical_workframe_state = derive_workframe_state(semantic_turns, "")
-    ingest_result = ingest_text_evidence(normalized_message, context.config.conversation, artifact_ids=[current_artifact_id] if current_artifact_id else None)
+    ingest_force = _resolve_requested_source_kind(request) in {ArtifactSourceKind.ONCE_FILE_IMPORT, ArtifactSourceKind.LOCAL_TEXT_FILE}
+    ingest_result = ingest_text_evidence(normalized_message, context.config.conversation, artifact_ids=[current_artifact_id] if current_artifact_id else None, force=ingest_force)
     if request.source_origin and ingest_result.ingest_status.value == "raw_text_evidence":
         ingest_result = type(ingest_result)(
             ingest_status=ingest_result.ingest_status,
@@ -467,33 +534,29 @@ def execute_turn(context: RuntimeContext, request: TalkRequest, source: str = "t
         )
     evidence_ingest_from_current_turn = ingest_result.ingest_status.value == "raw_text_evidence"
     if ingest_result.ingest_status.value == "no_evidence_ingested" and _is_evidence_followup_prompt(normalized_message):
-        latest_artifacts = store.list_artifacts(current_thread_id=resolved.state_after.thread_id, limit=1)
-        if latest_artifacts:
-            latest = latest_artifacts[0]
-            refs = []
-            if latest.source_origin:
-                refs.append(EvidenceSourceReference(source_label="artifact_origin", excerpt=latest.source_origin))
-            ingest_result = type(ingest_result)(
-                ingest_status=ingest_result.ingest_status,
-                raw_text_evidence=ingest_result.raw_text_evidence,
-                chunked_evidence=ingest_result.chunked_evidence,
-                extracted_key_lines=ingest_result.extracted_key_lines,
-                evidence_summary=ingest_result.evidence_summary,
-                evidence_source_references=refs,
-                unresolved_evidence=ingest_result.unresolved_evidence,
-                artifact_ids=[latest.artifact_id],
+        explicit_history = _allows_explicit_prior_evidence_reuse(normalized_message)
+        source_awareness_prompt = _is_source_awareness_prompt(normalized_message)
+        allow_implicit_artifact = source_awareness_prompt
+        if semantic_turns and not allow_implicit_artifact:
+            last_turn = semantic_turns[-1]
+            allow_implicit_artifact = (
+                store.turn_has_meaningful_artifact(turn_id=last_turn.turn_id)
+                or _is_source_awareness_prompt(last_turn.user_message)
             )
+        if explicit_history or allow_implicit_artifact:
+            selected = _select_artifact_for_followup(
+                store,
+                thread_id=resolved.state_after.thread_id,
+                explicit_history=explicit_history,
+            )
+            if selected is not None:
+                loaded = _ingest_from_artifact_message(store, selected, context.config.conversation)
+                if loaded is not None:
+                    ingest_result = loaded
     if ingest_result.ingest_status.value == "no_evidence_ingested" and semantic_turns:
-        if _allows_explicit_prior_evidence_reuse(normalized_message):
-            for prior_turn in reversed(semantic_turns):
-                prior_ingest = ingest_text_evidence(prior_turn.user_message, context.config.conversation)
-                if prior_ingest.ingest_status.value == "raw_text_evidence":
-                    ingest_result = prior_ingest
-                    break
-        else:
-            continuous_ingest = _latest_continuous_evidence_ingest(semantic_turns, context)
-            if continuous_ingest is not None:
-                ingest_result = continuous_ingest
+        continuous_ingest = _latest_continuous_evidence_ingest(semantic_turns, context)
+        if continuous_ingest is not None:
+            ingest_result = continuous_ingest
 
     if (
         ingest_result.ingest_status.value == "raw_text_evidence"

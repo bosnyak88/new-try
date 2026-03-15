@@ -57,8 +57,10 @@ def test_artifact_read_refuses_outside_root_and_binary(tmp_path, monkeypatch, ca
     assert cli.main() == 2
     out = json.loads(capsys.readouterr().out)
     assert out["error"] == "artifact_read_refused"
+    assert out["reason"] == "outside_allowed_roots"
 
     monkeypatch.setattr("sys.argv", ["syntaris", "--config", str(cfg), "artifact-read", str(binary)])
     assert cli.main() == 2
     out = json.loads(capsys.readouterr().out)
     assert out["error"] == "artifact_read_refused"
+    assert out["reason"] in {"unsupported_file_type", "binary_or_non_utf8"}

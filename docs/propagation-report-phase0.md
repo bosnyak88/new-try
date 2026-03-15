@@ -278,3 +278,24 @@ Schema migration: not required in this phase (v7 unchanged).
 ### Deferred with reason
 - PDF/Office/binary adapters and broad source parser framework: intentionally deferred to later adapter phase to keep REBUILD-035 read-only + deterministic baseline minimal.
 - Any write-capable file operation, external app automation, permissioned execution/session orchestration, and shell/panel UI work: explicitly out of scope for this foundational source/artifact step.
+
+## REBUILD-035a targeted acceptance follow-up snapshot
+### Changed
+- `src/syntaris/config/loader.py`: accepted runtime env aliases used by ops smoke (`SYNTARIS_DB` and `SYNTARIS_SANDBOX_ROOTS`) while preserving existing `SYNTARIS_DB_PATH` / `SYNTARIS_ARTIFACT_ALLOWED_ROOTS` precedence.
+- `src/syntaris/orchestration/turns.py`: tightened current-source honesty so ordinary short conversational prompts no longer become dominant source artifacts; implicit evidence follow-ups respect continuity guard, source-awareness prompts still surface active source, once-file/local-file imports force evidence ingest linkage, and explicit historical wording can deterministically target earlier meaningful source artifacts.
+- `src/syntaris/persistence/store.py`: added focused helpers for meaningful-source selection and artifact-backed turn text retrieval (`list_meaningful_source_artifacts`, `read_artifact_message_text`, `turn_has_meaningful_artifact`).
+- `src/syntaris/orchestration/evidence_ingest.py`: added `force` ingest mode for trusted imported sources so once-file/local-file source follow-ups remain evidence-grounded even for short text inputs.
+- Added deterministic follow-up regressions in `tests/test_rebuild035a_followup.py` (env alias runtime wiring, once-file evidence follow-up + explicit historical reuse, binary refusal inside allowed roots).
+- Updated `tests/test_artifact_scope_guard.py` refusal assertions to verify outside-root vs unsupported/binary reason correctness.
+
+### Reviewed unchanged
+- `src/syntaris/cli.py` command surface kept stable (`artifact-find/read/list/show`, `audit-last`, `talk --once-file` failure handling).
+- `src/syntaris/reply/*` adapter boundaries unchanged; no shell/UI/execution broadening.
+- REBUILD-034/034a presence/identity/maintenance/evidence honesty suites preserved and rerun.
+
+### Removed
+- None.
+
+### Deferred with reason
+- No broad artifact parser expansion (PDF/Office/binary adapters) in this follow-up; limited to acceptance-blocking runtime wiring and source-selection honesty.
+- No write-capable operations or shell/panel execution work; scope remains read-only source baseline.
