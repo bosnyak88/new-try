@@ -170,3 +170,5 @@ Ha a válasz nem fér bele ide, akkor a dokumentum hiányos és bővítendő.
 - 2026-03-16 | REBUILD-042 | REBUILD-041 docs-sync és residual Gate 2 surface hardening státusz rögzítve (composition_* + surface_hijack_guarded trace-koherencia). Gate 2 továbbra is ACTIVE. | Miért: kód és kanonikus állapotkép újraszinkronizálása átment státusz-hamisítás nélkül.
 
 - 2026-03-16 | REBUILD-044 | Gate 2 exit-prep live HU 24-turn validáció lefuttatva; residual adjudikáció szerint Gate 2 továbbra is ACTIVE (style/direct-answer/honest-unknown maradványok). | Miért: kapuzárás-előkészítés bizonyíték-alapon, nem érzésre.
+
+- 2026-03-16 | REBUILD-045 | Gate 2 corrective pass: direct-answer-first és time-hijack guard javítva, internal-state leak firewall és live-loop empty_input/exit tisztítás. 24-turn matrix: 23 PASS / 1 FAIL (maradék noisy HU residual). Gate 2 továbbra is ACTIVE. | Miért: REBUILD-044 utáni valós bukások célzott korrekciója.
