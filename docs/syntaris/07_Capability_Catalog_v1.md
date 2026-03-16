@@ -2,7 +2,7 @@
 
 - Dokumentum státusz: **living doc / képességkatalógus**
 - Verzió: **v1 (Gate 1 syncelt, normalizált státuszrendszerű kiadás)**
-- Dátum: **2026-03-15**
+- Dátum: **2026-03-16**
 - Fő kapcsolatok: **01, 03, 06, 09, 11, 14**
 
 ## Dokumentum célja
@@ -45,6 +45,7 @@ A pontos jelenlegi helyzetet mindig a `06_Current_State_Matrix.md` és az utols�
 | Explicit workframe-váltás kezelése | PARTIAL | létezik, de néha nem tartja meg kellően |
 | Chat-lock / „csak beszélgessünk” tartása | PARTIAL | ismert stratégiai hiány |
 | Multi-intent bontás valós inputon | PARTIAL | koncepcionálisan cél, de Gate 2 előtt nem elég erős |
+| Mixed continuity felszíni kompozíció (recap + next-step + reflective) | PARTIAL | REBUILD-041-ben bevezetve, REBUILD-042 residual hardeninggel erősítve; Gate 2 továbbra is aktív |
 | Zajos magyar input tűrése | PARTIAL | még stratégiai fejlesztési cél |
 | Direct question robustness | PARTIAL | ismert ack-collapse hiba miatt nem tekinthető teljesnek |
 | Őszinte unknown handling | PARTIAL | alapelv megvan, de nem mindig elég jól érvényesül |
@@ -145,3 +146,5 @@ Ha a fejlesztőcsapat ennél többet állít, bizonyítania kell, vagy frissíte
 - 2026-03-15 | REBUILD-037 | Képesség bővítés: brief recap legalább 2 releváns pontot tud visszahozni, nem domináns meta-turn alapon | Miért: user-facing recap minőség.
 
 - REBUILD-037 review: interpret-pack hardening scope checked; document reviewed for Gate 2 alignment.
+
+- 2026-03-16 | REBUILD-042 | Capability pontosítás: mixed continuity surface kompozíció és surface-hijack guard explicit jelölve, de Gate 2 státusz változatlan (ACTIVE). | Miért: REBUILD-041 viselkedés kanonizálása.

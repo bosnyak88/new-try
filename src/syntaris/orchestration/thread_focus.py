@@ -48,7 +48,7 @@ def _focus_lines_from_workframe(workframe_state) -> list[FocusLine]:
         lines.append(FocusLine(key="active_objective_line", text=f"Aktív cél: {clean_display_text(workframe_state.objective_text)}"))
     if workframe_state.blocker_status.value in {"explicit", "implied"} and workframe_state.blocker_text:
         lines.append(FocusLine(key="active_blocker_line", text=f"Blokker: {clean_display_text(workframe_state.blocker_text)}"))
-    if workframe_state.next_step_status.value in {"explicit", "implied"} and workframe_state.next_step_lines:
+    if workframe_state.next_step_status.value in {"grounded", "suggested", "multiple_plausible"} and workframe_state.next_step_lines:
         lines.append(FocusLine(key="next_step_line", text=f"Következő lépés: {clean_display_text(workframe_state.next_step_lines[0])}"))
     return lines
 

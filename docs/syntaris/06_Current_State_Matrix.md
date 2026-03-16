@@ -1,7 +1,7 @@
 # Syntaris Current State Matrix
 
 - Dokumentum státusz: **living doc / kötelezően frissítendő**
-- Dátum: **2026-03-15**
+- Dátum: **2026-03-16**
 - Cél: **kanonikus pillanatkép a rendszer jelenlegi állapotáról**
 - Fő kapcsolatok: **01, 03, 07, 08, 11, 12**
 
@@ -17,7 +17,7 @@ Ha ez a fájl eltér a valós kódbázistól, az dokumentációs hiba.
 
 ## Állapotbélyeg
 
-- Snapshot dátum: **2026-03-15**
+- Snapshot dátum: **2026-03-16**
 - Értelmezés: ez az állapot a már merge-elt és validált **REBUILD-035 / 035b / 035c** eredményét is tartalmazza.
 - Fontos: ha a repó ennél frissebb, ezt a fájlt elsőként kell szinkronba hozni.
 
@@ -102,6 +102,7 @@ Ha ez a fájl eltér a valós kódbázistól, az dokumentációs hiba.
 
 Fő problémák, amelyek ezt indokolják:
 - noisy HU input gyengeség,
+- mixed-turn felszíni regressziók maradéka (recap-only hijack, reflective+direct szétcsúszás) még célzott hardeninget igényel,
 - workframe-tartási hibák,
 - casual chat stabilitási problémák,
 - explicit style-constraint megsértés,
@@ -164,3 +165,5 @@ Ha a válasz nem fér bele ide, akkor a dokumentum hiányos és bővítendő.
 - 2026-03-15 | REBUILD-037 | Gate 2 polish: brief recap quality javítva (meaningful window + meta-turn szűrés + természetes recap render) | Miért: recap hasznosság növelése red-line regresszió nélkül.
 
 - REBUILD-037 review: interpret-pack hardening scope checked; document reviewed for Gate 2 alignment.
+
+- 2026-03-16 | REBUILD-042 | REBUILD-041 docs-sync és residual Gate 2 surface hardening státusz rögzítve (composition_* + surface_hijack_guarded trace-koherencia). Gate 2 továbbra is ACTIVE. | Miért: kód és kanonikus állapotkép újraszinkronizálása átment státusz-hamisítás nélkül.

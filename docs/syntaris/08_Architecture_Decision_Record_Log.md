@@ -1,7 +1,7 @@
 # Architecture Decision Record Log
 
 - Dokumentum státusz: **living doc / kanonikus döntésnapló**
-- Dátum: **2026-03-15**
+- Dátum: **2026-03-16**
 - Fő kapcsolatok: **01, 03, 06, 09, 10, 13, 14**
 
 ## Dokumentum célja
@@ -157,3 +157,5 @@ A célja, hogy a csapat később is pontosan vissza tudja fejteni:
 - 2026-03-15 | REBUILD-037 | ADR update: recap prioritás semantikus súlyozással (state/blocker/next-step/reflective), nem pusztán utolsó turn | Miért: mechanikus recap ismétlés megszüntetése.
 
 - REBUILD-037 review: interpret-pack hardening scope checked; document reviewed for Gate 2 alignment.
+
+- 2026-03-16 | REBUILD-042 | ADR update: mixed-turn felszíni kompozíció kanonikus trace mezőkkel (composition_recap_used, composition_next_step_used, composition_reflective_lead_used, surface_hijack_guarded) követendő. | Miért: response/trace/docs koherencia és Gate 2 residual regressziók célzott lezárása.

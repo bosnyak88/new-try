@@ -1,7 +1,7 @@
 # System Map and Dependency Guide
 
 - Dokumentum státusz: **kanonikus rendszertérkép és dependency guide**
-- Dátum: **2026-03-15**
+- Dátum: **2026-03-16**
 - Fő kapcsolatok: **01, 02, 09, 12, 14**
 
 ## Dokumentum célja
@@ -181,6 +181,8 @@ Több zónát érint, de nincs gate-váltási hatása.
 
 A Gate 2 ticketjei alapértelmezésben rendszerszintűek.
 
+REBUILD-042 koherencia-lánc (kötelező): `thread_focus.py -> response_plan.py -> turns.py (ResponsePlanTrace) -> trace/events.py -> Gate 2 regressziós tesztek -> validation log`.
+
 ## 9. Living docs és rendszerkép kapcsolata
 
 Minden fő rétegnek vissza kell köszönnie legalább itt:
@@ -207,3 +209,5 @@ A dependency guide célja, hogy ezt a rétegességet a kódban is megőrizze.
 - 2026-03-15 | REBUILD-037 | System-map frissítés: thread_focus -> response_plan brief_recap útvonal és prioritásos kiválasztás | Miért: recap minőség pipeline dokumentálása.
 
 - REBUILD-037 review: interpret-pack hardening scope checked; document reviewed for Gate 2 alignment.
+
+- 2026-03-16 | REBUILD-042 | System-map frissítés: mixed-continuity surface koherencia-lánc explicitálva (thread_focus -> response_plan -> turns -> trace/events -> tests/log). | Miért: kötelező end-to-end visszavezethetőség.

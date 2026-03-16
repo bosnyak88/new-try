@@ -618,7 +618,17 @@ def _brief_recap_lines(focus: ThreadFocusPack | None) -> list[str] | None:
 
 def _is_next_step_request(message: str) -> bool:
     n = normalize_hungarian_for_match(message).lower()
-    return any(phrase in n for phrase in ("mi a kovetkezo lepes", "mit kell most tenni", "most mi legyen a kovetkezo"))
+    return any(
+        phrase in n
+        for phrase in (
+            "mi a kovetkezo lepes",
+            "mit kell most tenni",
+            "most mi legyen a kovetkezo",
+            "mi a kov lepes",
+            "mi a kov",
+            "kov lepes",
+        )
+    )
 
 
 def _is_surface_hijack_blocked(message: str, style_constraints: list[str]) -> bool:

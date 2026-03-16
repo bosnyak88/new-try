@@ -1,7 +1,7 @@
 # Runbook: Validation and Reproduction
 
 - Dokumentum státusz: **living doc / operátori kézikönyv**
-- Dátum: **2026-03-15**
+- Dátum: **2026-03-16**
 - Fő kapcsolatok: **00, 05, 06, 11, 15**
 
 ## Dokumentum célja
@@ -154,6 +154,19 @@ A runbook célja, hogy a validáció reprodukálható és tiszta legyen.
 Ha a kör nem bizonyíthatóan tiszta, nem szabad végső ítéletet alapozni rá.
 
 
+## REBUILD-042 minimum kör
+1. `pytest tests/test_rebuild041_surface_continuity.py tests/test_rebuild042_gate2_residual_surface.py`
+2. `pytest` (ha boundary/import hiba jelentkezik: logold külön, majd futtasd a kanonikus zöld kört)
+3. `python -m compileall src`
+4. `python -m syntaris.cli --config config/syntaris.example.toml init-db`
+5. `python -m syntaris.cli --config config/syntaris.example.toml talk --once "fáradt vagyok, de közben hol tartunk, és most csak beszélgetnék"`
+6. `python -m syntaris.cli --config config/syntaris.example.toml trace-last`
+7. `python -m syntaris.cli --config config/syntaris.example.toml thread-snapshot --current`
+
+## REBUILD-043 canonical test entrypoint
+- Hivatalos teljes teszt belépési pont: `pytest` (repo-rootból, extra `PYTHONPATH` nélkül).
+- Kompatibilitási ellenőrzésként futtatható: `PYTHONPATH=. pytest` (ekvivalencia check).
+
 ## Delta Journal
 
 - 2026-03-15 | REBUILD-036 | Reprodukciós kör hozzáadva: tiszta temp config+DB, ticket smoke lista, live smoke, trace-last/thread-snapshot ellenőrzés | Miért: kontaminációmentes bizonyítás.
@@ -163,3 +176,5 @@ Ha a kör nem bizonyíthatóan tiszta, nem szabad végső ítéletet alapozni r�
 - 2026-03-15 | REBUILD-037 | Runbook kiegészítés: recap A/B/C szekvencia smoke + trace-last/snapshot proof log | Miért: reprodukálható recap quality bizonyítás.
 
 - REBUILD-037 review: interpret-pack hardening scope checked; document reviewed for Gate 2 alignment.
+
+- 2026-03-16 | REBUILD-042 | Runbook kiegészítés: residual mixed-turn Gate 2 minimum validációs kör és kötelező trace/snapshot proof. | Miért: reprodukálható bizonyítás.

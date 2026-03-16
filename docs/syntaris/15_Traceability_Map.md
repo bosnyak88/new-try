@@ -1,7 +1,7 @@
 # Traceability Map
 
 - Dokumentum státusz: **kanonikus követelmény-visszavezetési térkép**
-- Dátum: **2026-03-15**
+- Dátum: **2026-03-16**
 - Cél: **megmutatni, hogy a csomag fő követelményei, döntései és kapui mely dokumentumokból vezethetők vissza**
 
 ## Dokumentum célja
@@ -94,6 +94,10 @@ A célja, hogy egy fejlesztő, reviewer vagy jövőbeli csapattag gyorsan meg tu
 - Elsődleges: 00
 - Kiegészítő: 06, 07, 08, 11, 12
 
+### REBUILD-042 mixed-continuity kanonizálás és residual hardening
+- Elsődleges: 06, 09, 11, 12
+- Kiegészítő: 07, 08, 10, 15
+
 ## 4. Kritikus fejlesztői kérdések visszavezetése
 
 ### „Hol van leírva, hogy milyen mezőknek kell létezniük?”
@@ -129,3 +133,5 @@ Ez a térkép ezt gyorsítja fel.
 - 2026-03-15 | REBUILD-037 | Traceability update: brief recap quality acceptance -> thread_focus.py/response_plan.py/tests/test_rebuild037_recap_quality.py + validation log | Miért: követelmény-visszavezetés aktualizálása.
 
 - REBUILD-037 review: interpret-pack hardening scope checked; document reviewed for Gate 2 alignment.
+
+- 2026-03-16 | REBUILD-042 | Traceability update: mixed-turn residual acceptance -> response_plan.py, thread_focus.py, turns.py, trace/events.py, tests/test_rebuild042_gate2_residual_surface.py, artifacts/rebuild042_validation.log. | Miért: követelmény-visszavezetés és proof-lánc.
