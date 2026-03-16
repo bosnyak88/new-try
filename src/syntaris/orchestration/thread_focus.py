@@ -42,6 +42,17 @@ def _is_generic_ack(reply: str) -> bool:
     return normalized in {"rendben.", "ok.", "oke.", "értem.", "ertem."}
 
 
+def _focus_lines_from_workframe(workframe_state) -> list[FocusLine]:
+    lines: list[FocusLine] = []
+    if workframe_state.objective_status.value == "active" and workframe_state.objective_text:
+        lines.append(FocusLine(key="active_objective_line", text=f"Aktív cél: {clean_display_text(workframe_state.objective_text)}"))
+    if workframe_state.blocker_status.value in {"explicit", "implied"} and workframe_state.blocker_text:
+        lines.append(FocusLine(key="active_blocker_line", text=f"Blokker: {clean_display_text(workframe_state.blocker_text)}"))
+    if workframe_state.next_step_status.value in {"explicit", "implied"} and workframe_state.next_step_lines:
+        lines.append(FocusLine(key="next_step_line", text=f"Következő lépés: {clean_display_text(workframe_state.next_step_lines[0])}"))
+    return lines
+
+
 def _turn_priority(turn) -> int:
     user = normalize_hungarian_for_match(turn.user_message).lower()
     assistant = normalize_hungarian_for_match(turn.assistant_reply).lower()
@@ -68,7 +79,9 @@ def _to_focus_lines(turns: list, max_lines: int) -> list[FocusLine]:
     for idx, turn in enumerate(turns[:max_lines], start=1):
         user = clean_display_text(turn.user_message).strip()
         assistant = clean_display_text(turn.assistant_reply).strip()
-        text = assistant if assistant and not _is_generic_ack(assistant) else user
+        user_norm = normalize_hungarian_for_match(user).lower()
+        reflective_user = any(tok in user_norm for tok in ("faradt", "kimerult", "stresszes", "szetesett"))
+        text = user if reflective_user else (assistant if assistant and not _is_generic_ack(assistant) else user)
         if text:
             lines.append(FocusLine(key=f"recap_point_{idx}", text=text))
     if turns:
@@ -118,6 +131,13 @@ def build_thread_focus_pack(context: RuntimeContext, thread_id: int, mode: str, 
 
     semantic_pack = store.build_thread_context_pack(thread_id=thread_id, mode=mode, turn_window=max(context_pack.turn_count, 1))
     semantic_turns = semantic_pack.recent_turns if semantic_pack is not None else context_pack.recent_turns
+    semantic_workframe = derive_workframe_state(semantic_turns, "")
+    enriched = _focus_lines_from_workframe(semantic_workframe)
+    merged = {line.key: line for line in focus_lines}
+    for line in enriched:
+        if line.key not in merged:
+            focus_lines.append(line)
+    focus_lines = focus_lines[:max(1, context.config.conversation.focus_line_limit)]
 
     metadata = FocusSourceMetadata(
         source_turn_count=len(context_pack.recent_turns),
@@ -135,13 +155,13 @@ def build_thread_focus_pack(context: RuntimeContext, thread_id: int, mode: str, 
         focus_source_turn_count=len(context_pack.recent_turns),
         focus_lines=focus_lines,
         source_metadata=metadata,
-        workframe_state=derive_workframe_state(semantic_turns, ""),
+        workframe_state=semantic_workframe,
         thread_weave_state=derive_thread_weave_state(
             semantic_turns,
             "",
             active_thread_key=context_pack.thread_key,
             previous_thread_key=context_pack.previous_thread_key,
-            workframe_state=derive_workframe_state(semantic_turns, ""),
+            workframe_state=semantic_workframe,
         ),
     )
 

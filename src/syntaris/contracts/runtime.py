@@ -1124,6 +1124,10 @@ class ResponsePlan:
     reply_shape: str | None = None
     recap_source_turn_count: int | None = None
     recap_included_turn_count: int | None = None
+    composition_recap_used: bool = False
+    composition_next_step_used: bool = False
+    composition_reflective_lead_used: bool = False
+    surface_hijack_guarded: bool = False
 
 
 @dataclass(frozen=True)
@@ -1242,6 +1246,10 @@ class ResponsePlanTrace:
     reply_shape: str | None = None
     recap_source_turn_count: int | None = None
     recap_included_turn_count: int | None = None
+    composition_recap_used: bool = False
+    composition_next_step_used: bool = False
+    composition_reflective_lead_used: bool = False
+    surface_hijack_guarded: bool = False
 
 
 @dataclass(frozen=True)
