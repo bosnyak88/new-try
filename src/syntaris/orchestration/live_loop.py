@@ -125,6 +125,8 @@ def run_live_loop(
         command = parse_loop_command(raw)
 
         if command.action == LoopAction.INVALID:
+            if command.error == "empty_input":
+                continue
             _publish(_output("error", json.dumps({"error": command.error}), state))
             continue
 
@@ -280,6 +282,9 @@ def run_live_loop_interactive(
             try:
                 yield input_func("")
             except EOFError:
+                yield "/kilep"
+                return
+            except KeyboardInterrupt:
                 yield "/kilep"
                 return
 

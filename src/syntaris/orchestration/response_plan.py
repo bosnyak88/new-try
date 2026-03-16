@@ -536,6 +536,89 @@ def _is_direct_question(message: str) -> bool:
     )
 
 
+
+
+def _is_readiness_or_status_question(message: str) -> bool:
+    n = normalize_hungarian_for_match(message).lower()
+    return any(
+        phrase in n
+        for phrase in (
+            "kesz vagy nincs",
+            "mar lezart",
+            "lezarva",
+            "atment",
+            "kesz van ez a kor",
+            "mi hianyzik",
+            "mi a fo gond",
+            "mi a legnagyobb gond",
+            "mi a gond jelenleg",
+        )
+    )
+
+
+def _is_status_plus_next_step_request(message: str) -> bool:
+    n = normalize_hungarian_for_match(message).lower()
+    asks_status = "hol tartunk" in n or "mire jutottunk" in n
+    return asks_status and _is_next_step_request(message)
+
+
+def _human_status_label(value: str) -> str:
+    mapping = {
+        "no_missing_info_established": "nincs kimondott hiányzó információ",
+        "missing_info_implied": "van valószínű hiányzó információ",
+        "missing_info_explicit": "van explicit hiányzó információ",
+        "no_open_question_established": "nincs nyitott kérdés rögzítve",
+        "implied_open_question": "van nyitott kérdésre utaló jel",
+        "explicit_open_question": "van explicit nyitott kérdés",
+        "answered_question": "a korábbi nyitott kérdés lezártnak tűnik",
+        "unknown_or_not_established": "nem áll rendelkezésre biztos következtetés",
+        "assumption": "van feltételezés jellegű elem",
+        "inferred_possibility": "részben következtetésből dolgozunk",
+        "supported_claim": "van explicit, alátámasztott feltétel",
+        "no_decision_established": "nincs kimondott döntési pont",
+        "decision_needed": "van döntési pont",
+        "decision_proposed": "döntési javaslat látszik",
+        "decision_made": "kimondott döntés született",
+        "decision_blocked_by_missing_info": "a döntést hiányzó információ blokkolja",
+        "evidence_sufficient": "a jelenlegi beszélgetésben nincs külön bizonyíték-rés jel",
+        "evidence_gap_implied": "van valószínű bizonyíték-rés",
+        "evidence_gap_explicit": "van explicit bizonyíték-rés",
+    }
+    return mapping.get(value, value.replace("_", " "))
+
+
+def _grounded_status_next_step_lines(message: str, state: WorkframeState | None) -> list[str] | None:
+    if state is None or not _is_status_plus_next_step_request(message):
+        return None
+    lines = ["Röviden itt tartunk:"]
+    if state.objective_text:
+        lines.append(f"Mostani fókusz: {clean_display_text(state.objective_text)}")
+    elif state.blocker_text:
+        lines.append(f"Fő gond: {clean_display_text(state.blocker_text)}")
+    else:
+        lines.append("Most nincs stabilan rögzített fókuszpont.")
+
+    if state.next_step_lines:
+        lines.append(f"Következő lépés: {clean_display_text(state.next_step_lines[0])}")
+    elif state.blocker_text:
+        lines.append(f"Következő lépés: előbb ezt pontosítsuk: {clean_display_text(state.blocker_text)}")
+    else:
+        lines.append("Következő lépés: adj egy rövid célmondatot, és azonnal konkretizálom.")
+    return lines
+
+
+def _readiness_direct_lines(message: str, state: WorkframeState | None) -> list[str] | None:
+    if state is None:
+        return None
+    n = normalize_hungarian_for_match(message).lower()
+    if any(phrase in n for phrase in ("kesz vagy nincs", "mar lezart", "lezarva", "atment", "kesz van ez a kor")):
+        if state.next_step_status.value == "none" or state.blocker_text:
+            reason = f" Fő ok: {clean_display_text(state.blocker_text)}." if state.blocker_text else " Még nincs stabil következő lépés rögzítve."
+            return [f"Még nincs kész ez a kör.{reason}"]
+        return ["Jelen állapot alapján közel van a lezáráshoz, de maradt legalább egy konkrét végrehajtandó lépés."]
+    return None
+
+
 def _enforce_style_constraints(lines: list[str], constraints: list[str]) -> list[str]:
     out = list(lines)
     if "no_certainty_split" in constraints:
@@ -631,6 +714,22 @@ def _is_next_step_request(message: str) -> bool:
     )
 
 
+
+
+def _is_continuity_resume_request(message: str) -> bool:
+    n = normalize_hungarian_for_match(message).lower().strip()
+    if n in {"folytassuk onnan", "folytassuk onnan.", "folytassuk onnan!", "folytassuk onnan?"}:
+        return False
+    return any(
+        phrase in n
+        for phrase in (
+            "folytassuk onnan",
+            "vedd fel a fonalat",
+            "onnan ahol abbahagytuk",
+            "vegyuk fel a fonalat",
+        )
+    )
+
 def _is_surface_hijack_blocked(message: str, style_constraints: list[str]) -> bool:
     n = normalize_hungarian_for_match(message).lower()
     return (
@@ -650,9 +749,9 @@ def _compose_mixed_continuity_lines(
         return None
     reflective = _reflective_fallback_lines(message)
     asks_next = _is_next_step_request(message)
-    asks_recap = _needs_brief_recap(message) or "hol tartunk" in normalize_hungarian_for_match(message).lower() or "mire jutottunk" in normalize_hungarian_for_match(message).lower()
-    has_mixed_trigger = asks_next or reflective is not None or "casual_only" in _extract_style_constraints(message)
-    if not ((asks_recap and has_mixed_trigger) or (asks_next and asks_recap) or (reflective is not None and asks_recap)):
+    asks_recap = _needs_brief_recap(message) or "hol tartunk" in normalize_hungarian_for_match(message).lower() or "mire jutottunk" in normalize_hungarian_for_match(message).lower() or _is_continuity_resume_request(message)
+    has_mixed_trigger = asks_next or reflective is not None or "casual_only" in _extract_style_constraints(message) or _is_continuity_resume_request(message)
+    if not ((asks_recap and has_mixed_trigger) or (asks_next and asks_recap) or (reflective is not None and asks_recap) or _is_continuity_resume_request(message)):
         return None
 
     lines: list[str] = []
@@ -661,19 +760,45 @@ def _compose_mixed_continuity_lines(
 
     recap = _brief_recap_lines(focus)
     if recap is not None:
-        lines.extend(recap[:2])
+        recap_points = [line for line in recap[1:] if not normalize_hungarian_for_match(clean_display_text(line)).strip().lower().startswith("roviden itt tartunk")]
+        if recap_points:
+            lines.append("Röviden itt tartunk:")
+            lines.extend(recap_points[:2])
+        elif _is_continuity_resume_request(message):
+            lines.append("Röviden: fel tudjuk venni a fonalat, de most nincs elég biztos kapaszkodó a részletekhez.")
+        else:
+            lines.append("Röviden: van előzményünk, de most kevés biztos recap-pont látszik.")
     elif asks_recap:
-        lines.append("Röviden: van előzményünk, de most kevés biztos recap-pont látszik.")
+        if _is_continuity_resume_request(message):
+            lines.append("Röviden: fel tudjuk venni a fonalat, de most nincs elég biztos kapaszkodó a részletekhez.")
+        else:
+            lines.append("Röviden: van előzményünk, de most kevés biztos recap-pont látszik.")
 
     if asks_next:
         if workframe_state is not None and workframe_state.next_step_lines:
-            lines.append(f"Következő lépésnek ezt látom: {clean_display_text(workframe_state.next_step_lines[0])}")
+            next_line = f"Következő lépésnek ezt látom: {clean_display_text(workframe_state.next_step_lines[0])}"
         elif workframe_state is not None and workframe_state.blocker_text:
-            lines.append(f"Még nincs stabil következő lépés, előbb ezt kell tisztázni: {clean_display_text(workframe_state.blocker_text)}")
+            next_line = f"Még nincs stabil következő lépés, előbb ezt kell tisztázni: {clean_display_text(workframe_state.blocker_text)}"
         else:
-            lines.append("Most még nincs stabil next-stepem; egy rövid célmondattal pontosíts, és abból adok konkrét lépést.")
+            next_line = "Most még nincs stabil next-stepem; egy rövid célmondattal pontosíts, és abból adok konkrét lépést."
 
-    return lines or None
+        normalized_next = normalize_hungarian_for_match(clean_display_text(next_line)).strip().lower()
+        has_next_already = any(
+            normalized_next in normalize_hungarian_for_match(clean_display_text(line)).strip().lower()
+            for line in lines
+        )
+        if not has_next_already:
+            lines.append(next_line)
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for line in lines:
+        normalized = normalize_hungarian_for_match(clean_display_text(line)).strip().lower()
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        deduped.append(line)
+    return deduped or None
 
 
 def _natural_workframe_answer(message: str, state: WorkframeState) -> list[str] | None:
@@ -684,7 +809,7 @@ def _natural_workframe_answer(message: str, state: WorkframeState) -> list[str] 
         if state.blocker_text:
             return [f"Először ezt érdemes tisztázni: {clean_display_text(state.blocker_text)}"]
         return ["Most még nincs stabilan rögzített következő lépés; ha adsz egy célmondatot, azonnal szűkítem."]
-    if "mi a blocker" in n or "mi blokkol" in n or "mi a fo problema" in n:
+    if any(token in n for token in ("mi a blocker", "mi blokkol", "mi a fo problema", "mi a fo gond", "mi a legnagyobb gond", "mi a gond jelenleg", "mi a gond")):
         if state.blocker_text:
             return [f"A fő blokker most röviden: {clean_display_text(state.blocker_text)}"]
         return ["Most nincs egyértelműen rögzített fő blokker."]
@@ -692,15 +817,15 @@ def _natural_workframe_answer(message: str, state: WorkframeState) -> list[str] 
 
 def _decision_readiness_lines(state: WorkframeState) -> list[str]:
     return [
-        f"Hiányzó információ állapot: {state.missing_info_status.value}.",
+        f"Hiányzó információ állapot: {_human_status_label(state.missing_info_status.value)}.",
         *(f"- {clean_display_text(line)}" for line in state.missing_info_lines),
-        f"Nyitott kérdés állapot: {state.open_question_status.value}.",
+        f"Nyitott kérdés állapot: {_human_status_label(state.open_question_status.value)}.",
         *(f"- {clean_display_text(line)}" for line in state.open_question_lines),
-        f"Feltételezés/evidencia állapot: {state.assumption_status.value}.",
+        f"Feltételezés/evidencia állapot: {_human_status_label(state.assumption_status.value)}.",
         *(f"- {clean_display_text(line)}" for line in state.assumption_lines),
-        f"Döntési állapot: {state.decision_state.value}.",
+        f"Döntési állapot: {_human_status_label(state.decision_state.value)}.",
         *(f"- {clean_display_text(line)}" for line in state.decision_lines),
-        f"Bizonyíték-rés állapot: {state.evidence_gap_status.value}.",
+        f"Bizonyíték-rés állapot: {_human_status_label(state.evidence_gap_status.value)}.",
         *(f"- {clean_display_text(line)}" for line in state.evidence_gap_lines),
     ]
 
@@ -938,6 +1063,17 @@ def build_response_plan(
             focus_used=focus is not None,
         )
 
+    grounded_status_next = _grounded_status_next_step_lines(interpretation_text, workframe_state)
+    if grounded_status_next is not None:
+        return _mkplan(
+            kind=ResponsePlanKind.ORDINARY,
+            sections=[ResponsePlanSection(title="status_next_step_grounded", lines=grounded_status_next)],
+            focus_used=focus is not None,
+            composition_recap_used=True,
+            composition_next_step_used=True,
+            surface_hijack_guarded=surface_hijack_guarded,
+        )
+
     mixed_lines = _compose_mixed_continuity_lines(interpretation_text, focus, workframe_state)
     if mixed_lines is not None:
         return _mkplan(
@@ -1140,6 +1276,13 @@ def build_response_plan(
         return _mkplan(kind=kind, sections=sections, focus_used=focus is not None)
 
     if strategy.strategy == AnswerStrategy.DIRECT_ANSWER:
+        readiness = _readiness_direct_lines(interpretation_text, workframe_state)
+        if readiness is not None:
+            return _mkplan(
+                kind=ResponsePlanKind.ORDINARY,
+                sections=[ResponsePlanSection(title="readiness_direct", lines=readiness)],
+                focus_used=focus is not None,
+            )
         reflective = _reflective_fallback_lines(interpretation_text)
         if reflective is not None:
             return _mkplan(
@@ -1167,7 +1310,7 @@ def build_response_plan(
             lines = ["Rendben, menjünk röviden tovább ezen."]
         elif followup_target:
             lines = [f"Rendben, innen folytatjuk: {clean_display_text(followup_target)}"]
-        elif interpretation.relative_time_terms and not chat_lock_active:
+        elif interpretation.relative_time_terms and not chat_lock_active and not direct_answer_required and not _is_readiness_or_status_question(interpretation_text):
             joined = ", ".join(interpretation.relative_time_terms)
             lines = [f"Értem az időhivatkozásokat ({clean_display_text(joined)}). Mondd, pontosan mire fókuszáljunk."]
         else:

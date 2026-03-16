@@ -98,6 +98,14 @@ A célja, hogy egy fejlesztő, reviewer vagy jövőbeli csapattag gyorsan meg tu
 - Elsődleges: 06, 09, 11, 12
 - Kiegészítő: 07, 08, 10, 15
 
+### REBUILD-044 Gate 2 exit-prep live validation
+- Elsődleges: 06, 11, 12, artifacts/rebuild044_live_matrix.md, artifacts/rebuild044_validation.log
+- Kiegészítő: src/syntaris/orchestration/response_plan.py, src/syntaris/orchestration/thread_focus.py, src/syntaris/orchestration/turns.py, src/syntaris/trace/events.py, tests/test_rebuild041_surface_continuity.py, tests/test_rebuild042_gate2_residual_surface.py
+
+### REBUILD-045 Gate 2 corrective pass
+- Elsődleges: src/syntaris/orchestration/response_plan.py, src/syntaris/orchestration/live_loop.py, tests/test_rebuild045_gate2_corrective.py, artifacts/rebuild045_live_matrix.md, artifacts/rebuild045_validation.log
+- Kiegészítő: src/syntaris/orchestration/turns.py, src/syntaris/orchestration/thread_focus.py, src/syntaris/trace/events.py, docs/syntaris/06_Current_State_Matrix.md, docs/syntaris/11_Eval_Scorecard_and_Thresholds.md, docs/syntaris/12_Runbook_Validation_and_Reproduction.md
+
 ## 4. Kritikus fejlesztői kérdések visszavezetése
 
 ### „Hol van leírva, hogy milyen mezőknek kell létezniük?”
@@ -135,3 +143,7 @@ Ez a térkép ezt gyorsítja fel.
 - REBUILD-037 review: interpret-pack hardening scope checked; document reviewed for Gate 2 alignment.
 
 - 2026-03-16 | REBUILD-042 | Traceability update: mixed-turn residual acceptance -> response_plan.py, thread_focus.py, turns.py, trace/events.py, tests/test_rebuild042_gate2_residual_surface.py, artifacts/rebuild042_validation.log. | Miért: követelmény-visszavezetés és proof-lánc.
+
+- 2026-03-16 | REBUILD-044 | Traceability update: Gate 2 exit-prep live HU matrix + residual adjudikáció -> response_plan.py, gate2 surface tesztek, rebuild044 artifact pack. | Miért: kapuállítás visszavezethetősége objektív evidence-re.
+
+- 2026-03-16 | REBUILD-045 | Traceability update: Gate 2 corrective pass (time-hijack guard, direct-answer-first, internal-leak firewall, live-loop cleanup) + rebuild045 evidence pack. | Miért: javítások és residualok visszavezethetősége.
