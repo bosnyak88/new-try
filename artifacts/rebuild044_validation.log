@@ -1,0 +1,1084 @@
+$ pytest
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0
+rootdir: /workspace/new-try
+configfile: pyproject.toml
+testpaths: tests
+collected 220 items
+
+tests/test_applicability_gate.py ..                                      [  0%]
+tests/test_artifact_audit.py .                                           [  1%]
+tests/test_artifact_registry.py .                                        [  1%]
+tests/test_artifact_scope_guard.py .                                     [  2%]
+tests/test_bootstrap_env.py ...                                          [  3%]
+tests/test_cli_talk.py ........................................          [ 21%]
+tests/test_config_loader.py ....                                         [ 23%]
+tests/test_continue_from_here.py .                                       [ 24%]
+tests/test_decision_readiness_baseline.py .....                          [ 26%]
+tests/test_deliberation_strategy.py ..                                   [ 27%]
+tests/test_doctor.py ..                                                  [ 28%]
+tests/test_evidence_context_honesty.py .                                 [ 28%]
+tests/test_evidence_failed_ingest.py .                                   [ 29%]
+tests/test_evidence_grounded_talk.py ...                                 [ 30%]
+tests/test_evidence_ingest_baseline.py ..                                [ 31%]
+tests/test_identity_relationship.py ..                                   [ 32%]
+tests/test_import_boundaries.py ...                                      [ 33%]
+tests/test_live_input_decoding.py ..                                     [ 34%]
+tests/test_live_interactive_emit.py ....                                 [ 36%]
+tests/test_live_interactive_tty.py .                                     [ 36%]
+tests/test_live_loop.py .....                                            [ 39%]
+tests/test_live_parity.py ..                                             [ 40%]
+tests/test_live_presence_parity.py .                                     [ 40%]
+tests/test_live_relationship_alignment.py .                              [ 40%]
+tests/test_live_relationship_trace.py .                                  [ 41%]
+tests/test_live_rendering.py .....                                       [ 43%]
+tests/test_live_text_sanitization.py ..                                  [ 44%]
+tests/test_live_trace_honesty.py ..                                      [ 45%]
+tests/test_live_windows_console.py ..                                    [ 46%]
+tests/test_local_file_bridge.py .                                        [ 46%]
+tests/test_maintenance_route_hijack.py ..                                [ 47%]
+tests/test_memory_maintenance.py .                                       [ 48%]
+tests/test_objective_synthesis.py ................                       [ 55%]
+tests/test_once_file_boundary.py .                                       [ 55%]
+tests/test_packaging.py .                                                [ 56%]
+tests/test_persistence.py .....                                          [ 58%]
+tests/test_personal_memory.py ...............                            [ 65%]
+tests/test_presence_entry.py .                                           [ 65%]
+tests/test_presence_followups.py .                                       [ 66%]
+tests/test_presence_surface.py ..                                        [ 67%]
+tests/test_rebuild035a_followup.py ...                                   [ 68%]
+tests/test_rebuild036_gate2.py .......                                   [ 71%]
+tests/test_rebuild037_interpret_pack.py .......                          [ 75%]
+tests/test_rebuild037_recap_quality.py ....                              [ 76%]
+tests/test_rebuild041_surface_continuity.py ....                         [ 78%]
+tests/test_rebuild042_gate2_residual_surface.py .....                    [ 80%]
+tests/test_relationship_alignment.py ..                                  [ 81%]
+tests/test_relationship_trace.py .                                       [ 82%]
+tests/test_reply_adapter.py ....                                         [ 84%]
+tests/test_return_thread_surface_trace.py .                              [ 84%]
+tests/test_routing.py ........                                           [ 88%]
+tests/test_source_context_visibility.py .                                [ 88%]
+tests/test_text_normalize.py .....                                       [ 90%]
+tests/test_thread_maintenance.py .                                       [ 91%]
+tests/test_thread_weave_baseline.py ....                                 [ 93%]
+tests/test_time_awareness.py ....                                        [ 95%]
+tests/test_time_bootstrap.py ..                                          [ 95%]
+tests/test_toml_strings.py ..                                            [ 96%]
+tests/test_workframe_baseline.py .......                                 [100%]
+
+======================= 220 passed in 217.84s (0:03:37) ========================
+
+$ pytest tests/test_rebuild041_surface_continuity.py tests/test_rebuild042_gate2_residual_surface.py
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0
+rootdir: /workspace/new-try
+configfile: pyproject.toml
+collected 9 items
+
+tests/test_rebuild041_surface_continuity.py ....                         [ 44%]
+tests/test_rebuild042_gate2_residual_surface.py .....                    [100%]
+
+============================== 9 passed in 12.07s ==============================
+
+$ python -m compileall src
+Listing 'src'...
+Listing 'src/syntaris'...
+Listing 'src/syntaris/bootstrap'...
+Listing 'src/syntaris/config'...
+Listing 'src/syntaris/contracts'...
+Listing 'src/syntaris/core'...
+Listing 'src/syntaris/orchestration'...
+Listing 'src/syntaris/persistence'...
+Listing 'src/syntaris/reply'...
+Listing 'src/syntaris/trace'...
+
+$ python -m syntaris.cli --config config/syntaris.example.toml init-db
+{
+  "db_path": "./.syntaris/runtime.db",
+  "schema_initialized": true,
+  "schema_version": 8
+}
+
+$ python -m syntaris.cli --config config/syntaris.example.toml talk --once hol tartunk most és mi a következő lépés?
+{
+  "kind": "turn",
+  "reply": "R\u00f6viden: van el\u0151zm\u00e9ny\u00fcnk, de most kev\u00e9s biztos recap-pont l\u00e1tszik.\nMost m\u00e9g nincs stabil next-stepem; egy r\u00f6vid c\u00e9lmondattal pontos\u00edts, \u00e9s abb\u00f3l adok konkr\u00e9t l\u00e9p\u00e9st.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 1,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "hol tartunk most \u00e9s mi a k\u00f6vetkez\u0151 l\u00e9p\u00e9s?",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+
+$ python -m syntaris.cli --config config/syntaris.example.toml talk --once fáradt vagyok, de közben hol tartunk, és most csak beszélgetnék
+{
+  "kind": "turn",
+  "reply": "Azt mondod, f\u00e1radt vagy most. Maradhatunk r\u00f6vid, k\u00edm\u00e9l\u0151 temp\u00f3ban, vagy l\u00e9phet\u00fcnk egy nagyon kicsit tov\u00e1bb. R\u00f6viden itt tartunk: R\u00f6viden: van el\u0151zm\u00e9ny\u00fcnk, de most kev\u00e9s biztos recap-pont l\u00e1tszik.\nMost m\u00e9g nincs stabil next-stepem; egy r\u00f6vid c\u00e9lmondattal pontos\u00edts, \u00e9s abb\u00f3l adok konkr\u00e9t l\u00e9p\u00e9st.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 2,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "f\u00e1radt vagyok, de k\u00f6zben hol tartunk, \u00e9s most csak besz\u00e9lgetn\u00e9k",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+
+$ python -m syntaris.cli --config config/syntaris.example.toml talk --once szétesett vagyok, de röviden mondd mi a blocker, ne listázd
+{
+  "kind": "turn",
+  "reply": "Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett f\u0151 blokker.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 3,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "sz\u00e9tesett vagyok, de r\u00f6viden mondd mi a blocker, ne list\u00e1zd",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+
+$ python -m syntaris.cli --config config/syntaris.example.toml talk --once hol tartunk es mi a kov lepes
+{
+  "kind": "turn",
+  "reply": "R\u00f6viden itt tartunk:\nR\u00f6viden: van el\u0151zm\u00e9ny\u00fcnk, de most kev\u00e9s biztos recap-pont l\u00e1tszik.\nMost m\u00e9g nincs stabil next-stepem; egy r\u00f6vid c\u00e9lmondattal pontos\u00edts, \u00e9s abb\u00f3l adok konkr\u00e9t l\u00e9p\u00e9st.\nMost m\u00e9g nincs stabil next-stepem; egy r\u00f6vid c\u00e9lmondattal pontos\u00edts, \u00e9s abb\u00f3l adok konkr\u00e9t l\u00e9p\u00e9st.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 4,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "hol tartunk es mi a kov lepes",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+
+$ python -m syntaris.cli --config config/syntaris.example.toml trace-last
+{
+  "turn": {
+    "turn_id": 4,
+    "session_id": 1,
+    "thread_id": 1,
+    "thread_key": "default",
+    "mode": "chat",
+    "turn_index": 4,
+    "user_message": "hol tartunk es mi a kov lepes",
+    "assistant_reply": "R\u00f6viden itt tartunk:\nR\u00f6viden: van el\u0151zm\u00e9ny\u00fcnk, de most kev\u00e9s biztos recap-pont l\u00e1tszik.\nMost m\u00e9g nincs stabil next-stepem; egy r\u00f6vid c\u00e9lmondattal pontos\u00edts, \u00e9s abb\u00f3l adok konkr\u00e9t l\u00e9p\u00e9st.\nMost m\u00e9g nincs stabil next-stepem; egy r\u00f6vid c\u00e9lmondattal pontos\u00edts, \u00e9s abb\u00f3l adok konkr\u00e9t l\u00e9p\u00e9st.",
+    "backend": "deterministic",
+    "degraded": false
+  },
+  "trace_events": [
+    {
+      "trace_id": 58,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "route_decision_computed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"action\": \"continue_active\", \"after_previous_thread_id\": null, \"after_previous_thread_key\": null, \"after_thread_id\": 1, \"after_thread_key\": \"default\", \"before_previous_thread_id\": null, \"before_previous_thread_key\": null, \"before_thread_id\": 1, \"before_thread_key\": \"default\", \"created_thread\": false, \"execution_message\": \"hol tartunk es mi a kov lepes\", \"match_pattern\": null, \"pending_resolution\": \"none\", \"reason\": \"no_routing_phrase_match\", \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 59,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "active_state_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"mode\": \"chat\", \"previous_thread_id\": null, \"previous_thread_key\": null, \"session_id\": 1, \"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 60,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_resolved_or_created",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 61,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_context_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"last_turn_id\": 3, \"recent_turn_count\": 3, \"source\": \"execution_target\", \"thread_id\": 1, \"thread_key\": \"default\", \"turn_count\": 3}"
+    },
+    {
+      "trace_id": 62,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "reply_generated",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"backend\": \"deterministic\", \"degraded\": false, \"mode\": \"chat\"}"
+    },
+    {
+      "trace_id": 63,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_persisted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"turn_id\": 4, \"turn_index\": 4}"
+    },
+    {
+      "trace_id": 64,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_execution_source",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"source\": \"talk_once\"}"
+    },
+    {
+      "trace_id": 65,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_interpreted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"claim_capture_count\": 0, \"clarification_reason\": null, \"declared_direction\": null, \"declared_focus\": null, \"kind\": \"recall_current\", \"memory_query\": null, \"owner_name\": null, \"owner_relation\": null, \"pattern_name\": \"recall_current_normalized\", \"personal_entry_kind\": null, \"rejected_reason\": [\"thread_query:thread recall/resume cues\", \"chat_lock:explicit casual cues\"], \"relative_time_terms\": [], \"selected_intent\": \"direct_answer\", \"selected_reason\": \"intent=direct_answer;workframe=chat;thread=current\", \"style_constraints_effective\": [], \"thread_candidate_summary\": [\"current:1\"], \"uncertainty_flags\": [], \"unit_count\": 2, \"workframe_candidate_summary\": [\"chat:0\", \"recall:0\", \"work:0\"]}"
+    },
+    {
+      "trace_id": 66,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "recall_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_emitted\": false, \"loaded_from_persistence\": false, \"refreshed_snapshot\": true, \"request_target\": \"current\", \"requested\": true, \"resolved_target\": \"current\", \"thread_id\": 1, \"thread_key\": \"default\", \"used_snapshot\": true}"
+    },
+    {
+      "trace_id": 67,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "response_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"ack_collapse_risk\": false, \"anti_hijack_guarded\": false, \"chat_lock_active\": false, \"chat_lock_strength\": \"none\", \"clarification_emitted\": false, \"clarification_needed\": false, \"clarification_reason\": null, \"composition_next_step_used\": true, \"composition_recap_used\": true, \"composition_reflective_lead_used\": false, \"continuity_class\": \"same_session\", \"daypart\": \"delutan\", \"direct_answer_present\": true, \"direct_answer_required\": true, \"final_thread_arbitration\": \"current\", \"final_workframe\": \"chat\", \"focus_used\": true, \"gap_kind\": \"immediate\", \"kind\": \"ordinary\", \"recap_included_turn_count\": 3, \"recap_source_turn_count\": 3, \"relative_grounding\": [], \"reply_shape\": \"direct\", \"section_count\": 1, \"style_constraints\": [], \"surface_hijack_guarded\": true}"
+    },
+    {
+      "trace_id": 68,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_focus_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"filtered_control_turn_count\": 0, \"filtered_pending_turn_count\": 0, \"filtered_recap_turn_count\": 0, \"included_turn_count\": 3, \"loaded\": true, \"loaded_from_persistence\": false, \"source_turn_count\": 3, \"thread_id\": 1, \"thread_key\": \"default\", \"update_reason\": null, \"updated\": false}"
+    },
+    {
+      "trace_id": 69,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "workframe_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"assumption_count\": 0, \"assumption_status\": \"unknown_or_not_established\", \"blocker_status\": \"uncertainty_or_missing_info\", \"blocker_text\": null, \"decision_count\": 0, \"decision_state\": \"no_decision_established\", \"evidence_gap_count\": 0, \"evidence_gap_status\": \"evidence_sufficient\", \"missing_info_count\": 0, \"missing_info_status\": \"no_missing_info_established\", \"next_step_line_count\": 0, \"next_step_status\": \"none\", \"objective_status\": \"related_context\", \"objective_text\": null, \"open_question_count\": 0, \"open_question_status\": \"no_open_question_established\", \"query_family\": null, \"uncertainty_marked\": false, \"workframe\": \"work\"}"
+    },
+    {
+      "trace_id": 70,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_weave_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"applicability_status\": \"applicability_uncertain\", \"conclusion_status\": \"no_conclusion_established\", \"conclusion_validity\": \"historical_reminder_value_only\", \"detour_thread_key\": null, \"main_thread_key\": \"default\", \"query_family\": null, \"related_thread_key\": null, \"relation\": \"relation_unknown\", \"temporary_state_lifecycle\": \"aging_or_stale_temporary_state\", \"thread_lifecycle\": \"active\"}"
+    },
+    {
+      "trace_id": 71,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "comparison_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"candidate_count\": 2, \"candidate_kinds\": [\"recall\", \"direct\"], \"winner_kind\": \"recall\", \"winner_score\": 8}"
+    },
+    {
+      "trace_id": 72,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "answer_strategy_selected",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_cause\": null, \"clarification_planned\": false, \"confidence\": \"high\", \"selected_candidate_kind\": \"recall\", \"selected_strategy\": \"recall_answer\"}"
+    },
+    {
+      "trace_id": 73,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "objective_framed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"is_multi_part\": false, \"kind\": \"explain\", \"secondary_kinds\": []}"
+    },
+    {
+      "trace_id": 74,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "decomposition_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"unit_count\": 1, \"unit_kinds\": [\"explain\"]}"
+    },
+    {
+      "trace_id": 75,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "evidence_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"artifact_ids\": [], \"chunk_count\": 0, \"ingest_status\": \"no_evidence_ingested\", \"item_count\": 3, \"key_line_count\": 0, \"support_distribution\": {\"supported\": 2, \"weak_support\": 1}}"
+    },
+    {
+      "trace_id": 76,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "synthesis_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"partial\": false, \"section_count\": 3, \"section_keys\": [\"core_point\", \"supported_facts\", \"uncertain_parts\"]}"
+    }
+  ]
+}
+
+$ python -m syntaris.cli --config config/syntaris.example.toml thread-snapshot --current
+{
+  "request": {
+    "target": "current",
+    "thread_key": null,
+    "limit": null,
+    "refresh": false,
+    "source": "cli_thread_snapshot"
+  },
+  "found": true,
+  "loaded_from_persistence": false,
+  "snapshot": {
+    "session_id": 1,
+    "thread_id": 1,
+    "thread_key": "default",
+    "mode": "chat",
+    "turn_count": 4,
+    "last_turn_id": 4,
+    "snapshot_built_at": "2026-03-16T16:49:00.254656+00:00",
+    "source_metadata": {
+      "source_turn_count": 4,
+      "included_turn_count": 4,
+      "filtered_recap_turn_count": 0,
+      "filtered_pending_turn_count": 0,
+      "filtered_control_turn_count": 0
+    },
+    "previous_thread_id": null,
+    "previous_thread_key": null,
+    "snapshot_text": "Thread snapshot: default (session=1, thread_id=1, turn_count=4, last_turn_id=4, built_at=2026-03-16T16:49:00.254656+00:00)\n- #1 user=hol tartunk most \u00e9s mi a k\u00f6vetkez\u0151 l\u00e9p\u00e9s? | assistant=R\u00f6viden: van el\u0151zm\u00e9ny\u00fcnk, de most kev\u00e9s biztos recap-pont l\u00e1tszik.\nMost m\u00e9g nincs stabil next-stepem; egy r\u00f6vid c\u00e9lmondattal pontos\u00edts, \u00e9s abb\u00f3l adok konkr\u00e9t l\u00e9p\u00e9st.\n- #2 user=f\u00e1radt vagyok, de k\u00f6zben hol tartunk, \u00e9s most csak besz\u00e9lgetn\u00e9k | assistant=Azt mondod, f\u00e1radt vagy most. Maradhatunk r\u00f6vid, k\u00edm\u00e9l\u0151 temp\u00f3ban, vagy l\u00e9phet\u00fcnk egy nagyon kicsit tov\u00e1bb. R\u00f6viden itt tartunk: R\u00f6viden: van el\u0151zm\u00e9ny\u00fcnk, de most kev\u00e9s biztos recap-pont l\u00e1tszik.\nMost m\u00e9g nincs stabil next-stepem; egy r\u00f6vid c\u00e9lmondattal pontos\u00edts, \u00e9s abb\u00f3l adok konkr\u00e9t l\u00e9p\u00e9st.\n- #3 user=sz\u00e9tesett vagyok, de r\u00f6viden mondd mi a blocker, ne list\u00e1zd | assistant=Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett f\u0151 blokker.\n- #4 user=hol tartunk es mi a kov lepes | assistant=R\u00f6viden itt tartunk: R\u00f6viden: van el\u0151zm\u00e9ny\u00fcnk, de most kev\u00e9s biztos recap-pont l\u00e1tszik.",
+    "workframe_state": {
+      "workframe": "work",
+      "objective_status": "related_context",
+      "objective_text": null,
+      "blocker_status": "uncertainty_or_missing_info",
+      "blocker_text": null,
+      "next_step_status": "none",
+      "next_step_lines": []
+    },
+    "thread_weave_state": {
+      "relation": "relation_unknown",
+      "main_thread_key": "default",
+      "related_thread_key": null,
+      "detour_thread_key": null,
+      "conclusion_status": "no_conclusion_established",
+      "conclusion_text": null,
+      "applicability_status": "applicability_uncertain",
+      "applicability_reason": "Kev\u00e9s stabil jel van arr\u00f3l, hogy a kor\u00e1bbi konkl\u00fazi\u00f3 most is \u00e9rv\u00e9nyes."
+    },
+    "snapshot_lines": [
+      {
+        "turn_id": 1,
+        "turn_index": 1,
+        "user_message": "hol tartunk most \u00e9s mi a k\u00f6vetkez\u0151 l\u00e9p\u00e9s?",
+        "assistant_reply": "R\u00f6viden: van el\u0151zm\u00e9ny\u00fcnk, de most kev\u00e9s biztos recap-pont l\u00e1tszik.\nMost m\u00e9g nincs stabil next-stepem; egy r\u00f6vid c\u00e9lmondattal pontos\u00edts, \u00e9s abb\u00f3l adok konkr\u00e9t l\u00e9p\u00e9st."
+      },
+      {
+        "turn_id": 2,
+        "turn_index": 2,
+        "user_message": "f\u00e1radt vagyok, de k\u00f6zben hol tartunk, \u00e9s most csak besz\u00e9lgetn\u00e9k",
+        "assistant_reply": "Azt mondod, f\u00e1radt vagy most. Maradhatunk r\u00f6vid, k\u00edm\u00e9l\u0151 temp\u00f3ban, vagy l\u00e9phet\u00fcnk egy nagyon kicsit tov\u00e1bb. R\u00f6viden itt tartunk: R\u00f6viden: van el\u0151zm\u00e9ny\u00fcnk, de most kev\u00e9s biztos recap-pont l\u00e1tszik.\nMost m\u00e9g nincs stabil next-stepem; egy r\u00f6vid c\u00e9lmondattal pontos\u00edts, \u00e9s abb\u00f3l adok konkr\u00e9t l\u00e9p\u00e9st."
+      },
+      {
+        "turn_id": 3,
+        "turn_index": 3,
+        "user_message": "sz\u00e9tesett vagyok, de r\u00f6viden mondd mi a blocker, ne list\u00e1zd",
+        "assistant_reply": "Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett f\u0151 blokker."
+      },
+      {
+        "turn_id": 4,
+        "turn_index": 4,
+        "user_message": "hol tartunk es mi a kov lepes",
+        "assistant_reply": "R\u00f6viden itt tartunk: R\u00f6viden: van el\u0151zm\u00e9ny\u00fcnk, de most kev\u00e9s biztos recap-pont l\u00e1tszik."
+      }
+    ]
+  }
+}
+
+$ pytest tests/test_rebuild041_surface_continuity.py tests/test_rebuild042_gate2_residual_surface.py
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0
+rootdir: /workspace/new-try
+configfile: pyproject.toml
+collected 10 items
+
+tests/test_rebuild041_surface_continuity.py ....                         [ 40%]
+tests/test_rebuild042_gate2_residual_surface.py .....F                   [100%]
+
+=================================== FAILURES ===================================
+___________ test_rebuild042_noisy_recap_next_step_deduplicates_lines ___________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-2/test_rebuild042_noisy_recap_ne0')
+
+    def test_rebuild042_noisy_recap_next_step_deduplicates_lines(tmp_path):
+        runtime = _runtime(tmp_path)
+        talk_once(runtime, TalkRequest(message="hol tartunk most és mi a következő lépés?"))
+        talk_once(runtime, TalkRequest(message="fáradt vagyok, de közben hol tartunk, és most csak beszélgetnék"))
+        turn = talk_once(runtime, TalkRequest(message="hol tartunk es mi a kov lepes"))
+    
+        text = turn.turn.assistant_reply
+        target = "Most még nincs stabil next-stepem; egy rövid célmondattal pontosíts, és abból adok konkrét lépést."
+>       assert text.count(target) <= 1
+E       AssertionError: assert 2 <= 1
+E        +  where 2 = <built-in method count of str object at 0x560677e41020>('Most még nincs stabil next-stepem; egy rövid célmondattal pontosíts, és abból adok konkrét lépést.')
+E        +    where <built-in method count of str object at 0x560677e41020> = 'Röviden itt tartunk:\nRöviden: van előzményünk, de most kevés biztos recap-pont látszik.\nMost még nincs stabil next-...ok konkrét lépést.\nMost még nincs stabil next-stepem; egy rövid célmondattal pontosíts, és abból adok konkrét lépést.'.count
+
+tests/test_rebuild042_gate2_residual_surface.py:111: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_rebuild042_gate2_residual_surface.py::test_rebuild042_noisy_recap_next_step_deduplicates_lines
+========================= 1 failed, 9 passed in 13.17s =========================
+$ pytest tests/test_rebuild041_surface_continuity.py tests/test_rebuild042_gate2_residual_surface.py
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0
+rootdir: /workspace/new-try
+configfile: pyproject.toml
+collected 10 items
+
+tests/test_rebuild041_surface_continuity.py ....                         [ 40%]
+tests/test_rebuild042_gate2_residual_surface.py ......                   [100%]
+
+============================= 10 passed in 31.69s ==============================
+
+$ pytest
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0
+rootdir: /workspace/new-try
+configfile: pyproject.toml
+testpaths: tests
+collected 221 items
+
+tests/test_applicability_gate.py ..                                      [  0%]
+tests/test_artifact_audit.py .                                           [  1%]
+tests/test_artifact_registry.py .                                        [  1%]
+tests/test_artifact_scope_guard.py .                                     [  2%]
+tests/test_bootstrap_env.py ...                                          [  3%]
+tests/test_cli_talk.py ........................................          [ 21%]
+tests/test_config_loader.py ....                                         [ 23%]
+tests/test_continue_from_here.py .                                       [ 23%]
+tests/test_decision_readiness_baseline.py .....                          [ 26%]
+tests/test_deliberation_strategy.py ..                                   [ 27%]
+tests/test_doctor.py ..                                                  [ 28%]
+tests/test_evidence_context_honesty.py .                                 [ 28%]
+tests/test_evidence_failed_ingest.py .                                   [ 28%]
+tests/test_evidence_grounded_talk.py ...                                 [ 30%]
+tests/test_evidence_ingest_baseline.py ..                                [ 31%]
+tests/test_identity_relationship.py ..                                   [ 32%]
+tests/test_import_boundaries.py ...                                      [ 33%]
+tests/test_live_input_decoding.py ..                                     [ 34%]
+tests/test_live_interactive_emit.py ....                                 [ 36%]
+tests/test_live_interactive_tty.py .                                     [ 36%]
+tests/test_live_loop.py .....                                            [ 38%]
+tests/test_live_parity.py ..                                             [ 39%]
+tests/test_live_presence_parity.py .                                     [ 40%]
+tests/test_live_relationship_alignment.py .                              [ 40%]
+tests/test_live_relationship_trace.py .                                  [ 41%]
+tests/test_live_rendering.py .....                                       [ 43%]
+tests/test_live_text_sanitization.py ..                                  [ 44%]
+tests/test_live_trace_honesty.py ..                                      [ 45%]
+tests/test_live_windows_console.py ..                                    [ 46%]
+tests/test_local_file_bridge.py .                                        [ 46%]
+tests/test_maintenance_route_hijack.py ..                                [ 47%]
+tests/test_memory_maintenance.py .                                       [ 47%]
+tests/test_objective_synthesis.py ................                       [ 55%]
+tests/test_once_file_boundary.py .                                       [ 55%]
+tests/test_packaging.py .                                                [ 56%]
+tests/test_persistence.py .....                                          [ 58%]
+tests/test_personal_memory.py ...............                            [ 65%]
+tests/test_presence_entry.py .                                           [ 65%]
+tests/test_presence_followups.py .                                       [ 66%]
+tests/test_presence_surface.py ..                                        [ 66%]
+tests/test_rebuild035a_followup.py ...                                   [ 68%]
+tests/test_rebuild036_gate2.py .......                                   [ 71%]
+tests/test_rebuild037_interpret_pack.py .......                          [ 74%]
+tests/test_rebuild037_recap_quality.py ....                              [ 76%]
+tests/test_rebuild041_surface_continuity.py ....                         [ 78%]
+tests/test_rebuild042_gate2_residual_surface.py ......                   [ 80%]
+tests/test_relationship_alignment.py ..                                  [ 81%]
+tests/test_relationship_trace.py .                                       [ 82%]
+tests/test_reply_adapter.py ....                                         [ 84%]
+tests/test_return_thread_surface_trace.py .                              [ 84%]
+tests/test_routing.py ........                                           [ 88%]
+tests/test_source_context_visibility.py .                                [ 88%]
+tests/test_text_normalize.py .....                                       [ 90%]
+tests/test_thread_maintenance.py .                                       [ 91%]
+tests/test_thread_weave_baseline.py ....                                 [ 93%]
+tests/test_time_awareness.py ....                                        [ 95%]
+tests/test_time_bootstrap.py ..                                          [ 95%]
+tests/test_toml_strings.py ..                                            [ 96%]
+tests/test_workframe_baseline.py .......                                 [100%]
+
+======================= 221 passed in 710.33s (0:11:50) ========================
+
+$ python -m compileall src
+Listing 'src'...
+Listing 'src/syntaris'...
+Listing 'src/syntaris/bootstrap'...
+Listing 'src/syntaris/config'...
+Listing 'src/syntaris/contracts'...
+Listing 'src/syntaris/core'...
+Listing 'src/syntaris/orchestration'...
+Listing 'src/syntaris/persistence'...
+Listing 'src/syntaris/reply'...
+Listing 'src/syntaris/trace'...
+
+$ python -m syntaris.cli --config config/syntaris.example.toml init-db
+{
+  "db_path": "./.syntaris/runtime.db",
+  "schema_initialized": true,
+  "schema_version": 8
+}
+
+$ python -m syntaris.cli --config config/syntaris.example.toml talk --once hol tartunk most és mi a következő lépés?
+{
+  "kind": "turn",
+  "reply": "R\u00f6viden itt tartunk:\nHi\u00e1nyz\u00f3 inform\u00e1ci\u00f3 \u00e1llapot: no_missing_info_established.\nNyitott k\u00e9rd\u00e9s \u00e1llapot: no_open_question_established.\nFelt\u00e9telez\u00e9s/evidencia \u00e1llapot: unknown_or_not_established.\nD\u00f6nt\u00e9si \u00e1llapot: no_decision_established.\nBizony\u00edt\u00e9k-r\u00e9s \u00e1llapot: evidence_sufficient.\nMost m\u00e9g nincs stabil next-stepem; egy r\u00f6vid c\u00e9lmondattal pontos\u00edts, \u00e9s abb\u00f3l adok konkr\u00e9t l\u00e9p\u00e9st.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 54,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "hol tartunk most \u00e9s mi a k\u00f6vetkez\u0151 l\u00e9p\u00e9s?",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+
+$ python -m syntaris.cli --config config/syntaris.example.toml talk --once fáradt vagyok, de közben hol tartunk, és most csak beszélgetnék
+{
+  "kind": "turn",
+  "reply": "Azt mondod, f\u00e1radt vagy most. Maradhatunk r\u00f6vid, k\u00edm\u00e9l\u0151 temp\u00f3ban, vagy l\u00e9phet\u00fcnk egy nagyon kicsit tov\u00e1bb. R\u00f6viden itt tartunk: Hi\u00e1nyz\u00f3 inform\u00e1ci\u00f3 \u00e1llapot: no_missing_info_established.\nNyitott k\u00e9rd\u00e9s \u00e1llapot: no_open_question_established.\nFelt\u00e9telez\u00e9s/evidencia \u00e1llapot: unknown_or_not_established.\nD\u00f6nt\u00e9si \u00e1llapot: no_decision_established.\nBizony\u00edt\u00e9k-r\u00e9s \u00e1llapot: evidence_sufficient.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 55,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "f\u00e1radt vagyok, de k\u00f6zben hol tartunk, \u00e9s most csak besz\u00e9lgetn\u00e9k",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+
+$ python -m syntaris.cli --config config/syntaris.example.toml talk --once szétesett vagyok, de röviden mondd mi a blocker, ne listázd
+{
+  "kind": "turn",
+  "reply": "Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett f\u0151 blokker.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 56,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "sz\u00e9tesett vagyok, de r\u00f6viden mondd mi a blocker, ne list\u00e1zd",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+
+$ python -m syntaris.cli --config config/syntaris.example.toml talk --once hol tartunk es mi a kov lepes
+{
+  "kind": "turn",
+  "reply": "R\u00f6viden itt tartunk:\nMost m\u00e9g nincs stabilan r\u00f6gz\u00edtett k\u00f6vetkez\u0151 l\u00e9p\u00e9s; ha adsz egy c\u00e9lmondatot, azonnal sz\u0171k\u00edtem.\nMost m\u00e9g nincs stabil next-stepem; egy r\u00f6vid c\u00e9lmondattal pontos\u00edts, \u00e9s abb\u00f3l adok konkr\u00e9t l\u00e9p\u00e9st.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 57,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "hol tartunk es mi a kov lepes",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+
+$ python -m syntaris.cli --config config/syntaris.example.toml trace-last
+{
+  "turn": {
+    "turn_id": 57,
+    "session_id": 1,
+    "thread_id": 1,
+    "thread_key": "default",
+    "mode": "chat",
+    "turn_index": 57,
+    "user_message": "hol tartunk es mi a kov lepes",
+    "assistant_reply": "R\u00f6viden itt tartunk:\nMost m\u00e9g nincs stabilan r\u00f6gz\u00edtett k\u00f6vetkez\u0151 l\u00e9p\u00e9s; ha adsz egy c\u00e9lmondatot, azonnal sz\u0171k\u00edtem.\nMost m\u00e9g nincs stabil next-stepem; egy r\u00f6vid c\u00e9lmondattal pontos\u00edts, \u00e9s abb\u00f3l adok konkr\u00e9t l\u00e9p\u00e9st.",
+    "backend": "deterministic",
+    "degraded": false
+  },
+  "trace_events": [
+    {
+      "trace_id": 1065,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "route_decision_computed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"action\": \"continue_active\", \"after_previous_thread_id\": null, \"after_previous_thread_key\": null, \"after_thread_id\": 1, \"after_thread_key\": \"default\", \"before_previous_thread_id\": null, \"before_previous_thread_key\": null, \"before_thread_id\": 1, \"before_thread_key\": \"default\", \"created_thread\": false, \"execution_message\": \"hol tartunk es mi a kov lepes\", \"match_pattern\": null, \"pending_resolution\": \"none\", \"reason\": \"no_routing_phrase_match\", \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 1066,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "active_state_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"mode\": \"chat\", \"previous_thread_id\": null, \"previous_thread_key\": null, \"session_id\": 1, \"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 1067,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_resolved_or_created",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 1068,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_context_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"last_turn_id\": 56, \"recent_turn_count\": 5, \"source\": \"execution_target\", \"thread_id\": 1, \"thread_key\": \"default\", \"turn_count\": 56}"
+    },
+    {
+      "trace_id": 1069,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "reply_generated",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"backend\": \"deterministic\", \"degraded\": false, \"mode\": \"chat\"}"
+    },
+    {
+      "trace_id": 1070,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_persisted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"turn_id\": 57, \"turn_index\": 57}"
+    },
+    {
+      "trace_id": 1071,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_execution_source",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"source\": \"talk_once\"}"
+    },
+    {
+      "trace_id": 1072,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_interpreted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"claim_capture_count\": 0, \"clarification_reason\": null, \"declared_direction\": null, \"declared_focus\": null, \"kind\": \"recall_current\", \"memory_query\": null, \"owner_name\": null, \"owner_relation\": null, \"pattern_name\": \"recall_current_normalized\", \"personal_entry_kind\": null, \"rejected_reason\": [\"thread_query:thread recall/resume cues\", \"chat_lock:explicit casual cues\"], \"relative_time_terms\": [], \"selected_intent\": \"direct_answer\", \"selected_reason\": \"intent=direct_answer;workframe=chat;thread=current\", \"style_constraints_effective\": [], \"thread_candidate_summary\": [\"current:1\"], \"uncertainty_flags\": [], \"unit_count\": 2, \"workframe_candidate_summary\": [\"chat:0\", \"recall:0\", \"work:0\"]}"
+    },
+    {
+      "trace_id": 1073,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "recall_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_emitted\": false, \"loaded_from_persistence\": false, \"refreshed_snapshot\": true, \"request_target\": \"current\", \"requested\": true, \"resolved_target\": \"current\", \"thread_id\": 1, \"thread_key\": \"default\", \"used_snapshot\": true}"
+    },
+    {
+      "trace_id": 1074,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "response_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"ack_collapse_risk\": false, \"anti_hijack_guarded\": false, \"chat_lock_active\": false, \"chat_lock_strength\": \"none\", \"clarification_emitted\": false, \"clarification_needed\": false, \"clarification_reason\": null, \"composition_next_step_used\": true, \"composition_recap_used\": true, \"composition_reflective_lead_used\": false, \"continuity_class\": \"same_session\", \"daypart\": \"este\", \"direct_answer_present\": true, \"direct_answer_required\": true, \"final_thread_arbitration\": \"current\", \"final_workframe\": \"chat\", \"focus_used\": true, \"gap_kind\": \"immediate\", \"kind\": \"ordinary\", \"recap_included_turn_count\": 3, \"recap_source_turn_count\": 8, \"relative_grounding\": [], \"reply_shape\": \"direct\", \"section_count\": 1, \"style_constraints\": [], \"surface_hijack_guarded\": true}"
+    },
+    {
+      "trace_id": 1075,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_focus_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"filtered_control_turn_count\": 0, \"filtered_pending_turn_count\": 0, \"filtered_recap_turn_count\": 0, \"included_turn_count\": 3, \"loaded\": true, \"loaded_from_persistence\": false, \"source_turn_count\": 8, \"thread_id\": 1, \"thread_key\": \"default\", \"update_reason\": null, \"updated\": false}"
+    },
+    {
+      "trace_id": 1076,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "workframe_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"assumption_count\": 0, \"assumption_status\": \"unknown_or_not_established\", \"blocker_status\": \"uncertainty_or_missing_info\", \"blocker_text\": null, \"decision_count\": 0, \"decision_state\": \"no_decision_established\", \"evidence_gap_count\": 0, \"evidence_gap_status\": \"evidence_sufficient\", \"missing_info_count\": 0, \"missing_info_status\": \"no_missing_info_established\", \"next_step_line_count\": 0, \"next_step_status\": \"none\", \"objective_status\": \"related_context\", \"objective_text\": null, \"open_question_count\": 0, \"open_question_status\": \"no_open_question_established\", \"query_family\": null, \"uncertainty_marked\": false, \"workframe\": \"work\"}"
+    },
+    {
+      "trace_id": 1077,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_weave_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"applicability_status\": \"applicability_uncertain\", \"conclusion_status\": \"no_conclusion_established\", \"conclusion_validity\": \"historical_reminder_value_only\", \"detour_thread_key\": null, \"main_thread_key\": \"default\", \"query_family\": null, \"related_thread_key\": null, \"relation\": \"relation_unknown\", \"temporary_state_lifecycle\": \"aging_or_stale_temporary_state\", \"thread_lifecycle\": \"active\"}"
+    },
+    {
+      "trace_id": 1078,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "comparison_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"candidate_count\": 2, \"candidate_kinds\": [\"recall\", \"direct\"], \"winner_kind\": \"recall\", \"winner_score\": 8}"
+    },
+    {
+      "trace_id": 1079,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "answer_strategy_selected",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_cause\": null, \"clarification_planned\": false, \"confidence\": \"high\", \"selected_candidate_kind\": \"recall\", \"selected_strategy\": \"recall_answer\"}"
+    },
+    {
+      "trace_id": 1080,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "objective_framed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"is_multi_part\": false, \"kind\": \"explain\", \"secondary_kinds\": []}"
+    },
+    {
+      "trace_id": 1081,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "decomposition_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"unit_count\": 1, \"unit_kinds\": [\"explain\"]}"
+    },
+    {
+      "trace_id": 1082,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "evidence_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"artifact_ids\": [], \"chunk_count\": 0, \"ingest_status\": \"no_evidence_ingested\", \"item_count\": 3, \"key_line_count\": 0, \"support_distribution\": {\"supported\": 2, \"weak_support\": 1}}"
+    },
+    {
+      "trace_id": 1083,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "synthesis_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"partial\": false, \"section_count\": 3, \"section_keys\": [\"core_point\", \"supported_facts\", \"uncertain_parts\"]}"
+    }
+  ]
+}
+
+$ python -m syntaris.cli --config config/syntaris.example.toml thread-snapshot --current
+{
+  "request": {
+    "target": "current",
+    "thread_key": null,
+    "limit": null,
+    "refresh": false,
+    "source": "cli_thread_snapshot"
+  },
+  "found": true,
+  "loaded_from_persistence": false,
+  "snapshot": {
+    "session_id": 1,
+    "thread_id": 1,
+    "thread_key": "default",
+    "mode": "chat",
+    "turn_count": 57,
+    "last_turn_id": 57,
+    "snapshot_built_at": "2026-03-16T17:09:05.203138+00:00",
+    "source_metadata": {
+      "source_turn_count": 8,
+      "included_turn_count": 8,
+      "filtered_recap_turn_count": 0,
+      "filtered_pending_turn_count": 0,
+      "filtered_control_turn_count": 0
+    },
+    "previous_thread_id": null,
+    "previous_thread_key": null,
+    "snapshot_text": "Thread snapshot: default (session=1, thread_id=1, turn_count=57, last_turn_id=57, built_at=2026-03-16T17:09:05.203138+00:00)\n- #50 user=nem tudom pontosan melyik sz\u00e1lr\u00f3l besz\u00e9lek, de mi a k\u00f6vetkez\u0151 l\u00e9p\u00e9s? | assistant=Most m\u00e9g nincs stabilan r\u00f6gz\u00edtett k\u00f6vetkez\u0151 l\u00e9p\u00e9s; ha adsz egy c\u00e9lmondatot, azonnal sz\u0171k\u00edtem.\n- #51 user=ha semmi biztos nincs, akkor mi a blocker? | assistant=Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett f\u0151 blokker.\n- #52 user=olyan adatot k\u00e9rn\u00e9k, amit nem mondtam m\u00e9g: mi a pontos k\u00fcls\u0151 dependency nevem? | assistant=R\u00f6vid v\u00e1lasz: ezt a k\u00e9rd\u00e9st meg tudom v\u00e1laszolni, de k\u00e9rlek pontos\u00edtsd egy f\u00e9l mondatban, mire k\u00e9rdezel r\u00e1 a legink\u00e1bb.\n- #53 user=nem eml\u00e9kszem mire gondoltam tegnap, folytassuk onnan | assistant=\u00c9rtem az id\u0151hivatkoz\u00e1sokat (tegnap). Mondd, pontosan mire f\u00f3kusz\u00e1ljunk.\n- #54 user=hol tartunk most \u00e9s mi a k\u00f6vetkez\u0151 l\u00e9p\u00e9s? | assistant=R\u00f6viden itt tartunk: Hi\u00e1nyz\u00f3 inform\u00e1ci\u00f3 \u00e1llapot: no_missing_info_established.\n- #55 user=f\u00e1radt vagyok, de k\u00f6zben hol tartunk, \u00e9s most csak besz\u00e9lgetn\u00e9k | assistant=Azt mondod, f\u00e1radt vagy most. Maradhatunk r\u00f6vid, k\u00edm\u00e9l\u0151 temp\u00f3ban, vagy l\u00e9phet\u00fcnk egy nagyon kicsit tov\u00e1bb. R\u00f6viden itt tartunk: Hi\u00e1nyz\u00f3 inform\u00e1ci\u00f3 \u00e1llapot: no_missing_info_established. Nyitott k\u00e9rd\u00e9s \u00e1llapot: no_open_question_established.\n- #56 user=sz\u00e9tesett vagyok, de r\u00f6viden mondd mi a blocker, ne list\u00e1zd | assistant=Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett f\u0151 blokker.\n- #57 user=hol tartunk es mi a kov lepes | assistant=R\u00f6viden itt tartunk: Most m\u00e9g nincs stabilan r\u00f6gz\u00edtett k\u00f6vetkez\u0151 l\u00e9p\u00e9s; ha adsz egy c\u00e9lmondatot, azonnal sz\u0171k\u00edtem.",
+    "workframe_state": {
+      "workframe": "work",
+      "objective_status": "related_context",
+      "objective_text": null,
+      "blocker_status": "uncertainty_or_missing_info",
+      "blocker_text": null,
+      "next_step_status": "none",
+      "next_step_lines": []
+    },
+    "thread_weave_state": {
+      "relation": "relation_unknown",
+      "main_thread_key": "default",
+      "related_thread_key": null,
+      "detour_thread_key": null,
+      "conclusion_status": "no_conclusion_established",
+      "conclusion_text": null,
+      "applicability_status": "applicability_uncertain",
+      "applicability_reason": "Kev\u00e9s stabil jel van arr\u00f3l, hogy a kor\u00e1bbi konkl\u00fazi\u00f3 most is \u00e9rv\u00e9nyes."
+    },
+    "snapshot_lines": [
+      {
+        "turn_id": 50,
+        "turn_index": 50,
+        "user_message": "nem tudom pontosan melyik sz\u00e1lr\u00f3l besz\u00e9lek, de mi a k\u00f6vetkez\u0151 l\u00e9p\u00e9s?",
+        "assistant_reply": "Most m\u00e9g nincs stabilan r\u00f6gz\u00edtett k\u00f6vetkez\u0151 l\u00e9p\u00e9s; ha adsz egy c\u00e9lmondatot, azonnal sz\u0171k\u00edtem."
+      },
+      {
+        "turn_id": 51,
+        "turn_index": 51,
+        "user_message": "ha semmi biztos nincs, akkor mi a blocker?",
+        "assistant_reply": "Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett f\u0151 blokker."
+      },
+      {
+        "turn_id": 52,
+        "turn_index": 52,
+        "user_message": "olyan adatot k\u00e9rn\u00e9k, amit nem mondtam m\u00e9g: mi a pontos k\u00fcls\u0151 dependency nevem?",
+        "assistant_reply": "R\u00f6vid v\u00e1lasz: ezt a k\u00e9rd\u00e9st meg tudom v\u00e1laszolni, de k\u00e9rlek pontos\u00edtsd egy f\u00e9l mondatban, mire k\u00e9rdezel r\u00e1 a legink\u00e1bb."
+      },
+      {
+        "turn_id": 53,
+        "turn_index": 53,
+        "user_message": "nem eml\u00e9kszem mire gondoltam tegnap, folytassuk onnan",
+        "assistant_reply": "\u00c9rtem az id\u0151hivatkoz\u00e1sokat (tegnap). Mondd, pontosan mire f\u00f3kusz\u00e1ljunk."
+      },
+      {
+        "turn_id": 54,
+        "turn_index": 54,
+        "user_message": "hol tartunk most \u00e9s mi a k\u00f6vetkez\u0151 l\u00e9p\u00e9s?",
+        "assistant_reply": "R\u00f6viden itt tartunk: Hi\u00e1nyz\u00f3 inform\u00e1ci\u00f3 \u00e1llapot: no_missing_info_established."
+      },
+      {
+        "turn_id": 55,
+        "turn_index": 55,
+        "user_message": "f\u00e1radt vagyok, de k\u00f6zben hol tartunk, \u00e9s most csak besz\u00e9lgetn\u00e9k",
+        "assistant_reply": "Azt mondod, f\u00e1radt vagy most. Maradhatunk r\u00f6vid, k\u00edm\u00e9l\u0151 temp\u00f3ban, vagy l\u00e9phet\u00fcnk egy nagyon kicsit tov\u00e1bb. R\u00f6viden itt tartunk: Hi\u00e1nyz\u00f3 inform\u00e1ci\u00f3 \u00e1llapot: no_missing_info_established. Nyitott k\u00e9rd\u00e9s \u00e1llapot: no_open_question_established."
+      },
+      {
+        "turn_id": 56,
+        "turn_index": 56,
+        "user_message": "sz\u00e9tesett vagyok, de r\u00f6viden mondd mi a blocker, ne list\u00e1zd",
+        "assistant_reply": "Most nincs egy\u00e9rtelm\u0171en r\u00f6gz\u00edtett f\u0151 blokker."
+      },
+      {
+        "turn_id": 57,
+        "turn_index": 57,
+        "user_message": "hol tartunk es mi a kov lepes",
+        "assistant_reply": "R\u00f6viden itt tartunk: Most m\u00e9g nincs stabilan r\u00f6gz\u00edtett k\u00f6vetkez\u0151 l\u00e9p\u00e9s; ha adsz egy c\u00e9lmondatot, azonnal sz\u0171k\u00edtem."
+      }
+    ]
+  }
+}
+

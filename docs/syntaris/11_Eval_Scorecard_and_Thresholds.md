@@ -84,6 +84,12 @@ A lezárás alapja:
 - noisy HU mixed-turn félreroute: cél 0
 - composition_* és surface_hijack_guarded trace koherencia: kötelező
 
+### Gate 2 exit-prep adjudikáció (REBUILD-044)
+- 24-turn HU live matrix: 21 PASS / 3 FAIL.
+- FAIL minták: style-constrained direct ack-loop (1), direct-answer-first meta-terelés (1), honest-unknown túláltalános pontosításkérés (1).
+- Recap-only hijack a vizsgált készletben: 0.
+- Következtetés: Gate 2 **ACTIVE marad**; exit-candidate címke még korai.
+
 ## 6. Gate 3 scorecard
 
 Gate 3 csak akkor értelmes, ha a Gate 2 fő red-line metrikái zöldek.
@@ -138,3 +144,5 @@ Ahol piros vonal van, ott nincs „majd később megoldjuk” kategória.
 - REBUILD-037 review: interpret-pack hardening scope checked; document reviewed for Gate 2 alignment.
 
 - 2026-03-16 | REBUILD-042 | Gate 2 scorecard kiegészítés: residual mixed-turn surface metrikák és kötelező trace-koherencia. | Miért: maradék regressziók objektív bizonyítása.
+
+- 2026-03-16 | REBUILD-044 | Gate 2 exit-prep scorecard adjudikáció rögzítve (24-turn HU live matrix, 21/3, Gate 2 ACTIVE). | Miért: kapuzárás-előkészítés objektív residual képpel.

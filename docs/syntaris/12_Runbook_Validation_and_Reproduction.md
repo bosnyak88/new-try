@@ -167,6 +167,16 @@ Ha a kör nem bizonyíthatóan tiszta, nem szabad végső ítéletet alapozni r�
 - Hivatalos teljes teszt belépési pont: `pytest` (repo-rootból, extra `PYTHONPATH` nélkül).
 - Kompatibilitási ellenőrzésként futtatható: `PYTHONPATH=. pytest` (ekvivalencia check).
 
+## REBUILD-044 exit-prep minimum kör
+1. `pytest tests/test_rebuild041_surface_continuity.py tests/test_rebuild042_gate2_residual_surface.py`
+2. `pytest`
+3. `python -m compileall src`
+4. `python -m syntaris.cli --config config/syntaris.example.toml init-db`
+5. kötelező 24-turn HU matrix (6 bucket × 4) futtatása és adjudikációja
+6. `python -m syntaris.cli --config config/syntaris.example.toml trace-last`
+7. `python -m syntaris.cli --config config/syntaris.example.toml thread-snapshot --current`
+8. artifact mentés: `artifacts/rebuild044_validation.log` és `artifacts/rebuild044_live_matrix.md`
+
 ## Delta Journal
 
 - 2026-03-15 | REBUILD-036 | Reprodukciós kör hozzáadva: tiszta temp config+DB, ticket smoke lista, live smoke, trace-last/thread-snapshot ellenőrzés | Miért: kontaminációmentes bizonyítás.
@@ -178,3 +188,5 @@ Ha a kör nem bizonyíthatóan tiszta, nem szabad végső ítéletet alapozni r�
 - REBUILD-037 review: interpret-pack hardening scope checked; document reviewed for Gate 2 alignment.
 
 - 2026-03-16 | REBUILD-042 | Runbook kiegészítés: residual mixed-turn Gate 2 minimum validációs kör és kötelező trace/snapshot proof. | Miért: reprodukálható bizonyítás.
+
+- 2026-03-16 | REBUILD-044 | Runbook kiegészítés: Gate 2 exit-prep 24-turn HU matrix kötelező evidence artifactokkal. | Miért: reprodukálható residual adjudikáció és kapu-előkészítési bizonyítás.

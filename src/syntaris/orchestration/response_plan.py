@@ -667,13 +667,29 @@ def _compose_mixed_continuity_lines(
 
     if asks_next:
         if workframe_state is not None and workframe_state.next_step_lines:
-            lines.append(f"Következő lépésnek ezt látom: {clean_display_text(workframe_state.next_step_lines[0])}")
+            next_line = f"Következő lépésnek ezt látom: {clean_display_text(workframe_state.next_step_lines[0])}"
         elif workframe_state is not None and workframe_state.blocker_text:
-            lines.append(f"Még nincs stabil következő lépés, előbb ezt kell tisztázni: {clean_display_text(workframe_state.blocker_text)}")
+            next_line = f"Még nincs stabil következő lépés, előbb ezt kell tisztázni: {clean_display_text(workframe_state.blocker_text)}"
         else:
-            lines.append("Most még nincs stabil next-stepem; egy rövid célmondattal pontosíts, és abból adok konkrét lépést.")
+            next_line = "Most még nincs stabil next-stepem; egy rövid célmondattal pontosíts, és abból adok konkrét lépést."
 
-    return lines or None
+        normalized_next = normalize_hungarian_for_match(clean_display_text(next_line)).strip().lower()
+        has_next_already = any(
+            normalized_next in normalize_hungarian_for_match(clean_display_text(line)).strip().lower()
+            for line in lines
+        )
+        if not has_next_already:
+            lines.append(next_line)
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for line in lines:
+        normalized = normalize_hungarian_for_match(clean_display_text(line)).strip().lower()
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        deduped.append(line)
+    return deduped or None
 
 
 def _natural_workframe_answer(message: str, state: WorkframeState) -> list[str] | None:

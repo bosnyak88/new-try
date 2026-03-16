@@ -98,3 +98,15 @@ def test_rebuild042_pure_recap_path_still_works(tmp_path):
 
     plan = _trace_payload(runtime, "response_plan_built")
     assert plan["composition_recap_used"] is True
+
+
+def test_rebuild042_noisy_recap_next_step_deduplicates_lines(tmp_path):
+    runtime = _runtime(tmp_path)
+    talk_once(runtime, TalkRequest(message="hol tartunk most és mi a következő lépés?"))
+    talk_once(runtime, TalkRequest(message="fáradt vagyok, de közben hol tartunk, és most csak beszélgetnék"))
+    turn = talk_once(runtime, TalkRequest(message="hol tartunk es mi a kov lepes"))
+
+    text = turn.turn.assistant_reply
+    target = "Most még nincs stabil next-stepem; egy rövid célmondattal pontosíts, és abból adok konkrét lépést."
+    assert text.count(target) <= 1
+
