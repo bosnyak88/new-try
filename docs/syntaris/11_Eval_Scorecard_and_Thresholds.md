@@ -1,7 +1,7 @@
 # Eval Scorecard and Thresholds
 
 - Dokumentum státusz: **living doc / minőségi scorecard**
-- Dátum: **2026-03-15**
+- Dátum: **2026-03-16**
 - Fő kapcsolatok: **03, 05, 06, 07, 12**
 
 ## Dokumentum célja
@@ -77,6 +77,13 @@ A lezárás alapja:
 | Noisy HU robustness | core | >= 0.85 judged pass |
 | Casual live usefulness | core | >= 0.85 judged pass on golden set |
 
+### Gate 2 residual mixed-turn surface (REBUILD-042)
+- recap-only hijack arány: cél 0 regressziós mintákon
+- style constraint sértés (brief/no_list): cél 0
+- reflective + direct kérdés szétcsúszás: cél 0
+- noisy HU mixed-turn félreroute: cél 0
+- composition_* és surface_hijack_guarded trace koherencia: kötelező
+
 ## 6. Gate 3 scorecard
 
 Gate 3 csak akkor értelmes, ha a Gate 2 fő red-line metrikái zöldek.
@@ -129,3 +136,5 @@ Ahol piros vonal van, ott nincs „majd később megoldjuk” kategória.
 - 2026-03-15 | REBUILD-037 | Eval kiegészítés: recap-quality kritériumok (nem utolsó sor ismétlés, min. 2 releváns pont ahol van) | Miért: Gate 2 polish mérhetősége.
 
 - REBUILD-037 review: interpret-pack hardening scope checked; document reviewed for Gate 2 alignment.
+
+- 2026-03-16 | REBUILD-042 | Gate 2 scorecard kiegészítés: residual mixed-turn surface metrikák és kötelező trace-koherencia. | Miért: maradék regressziók objektív bizonyítása.

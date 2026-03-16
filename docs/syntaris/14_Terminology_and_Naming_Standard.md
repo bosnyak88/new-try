@@ -104,3 +104,5 @@ Ha egy fogalom többféleképpen is értelmezhető, ezt a dokumentumot kell hasz
 - 2026-03-15 | REBUILD-036 finisher | checked, no change | Miért: terminológia nem változott, csak routing/preference viselkedés.
 
 - 2026-03-15 | REBUILD-037 | checked, no change | Miért: új recap trace mezők a meglévő naming konvenciót követik.
+
+- 2026-03-16 | REBUILD-042 | checked, no change | Miért: bevezetett mezők a meglévő naming mintát követik, terminológiai váltás nem történt.

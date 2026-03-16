@@ -1,7 +1,7 @@
 # Canonical Contracts and Schemas
 
 - Dokumentum státusz: **kanonikus semantikai contract-spec**
-- Dátum: **2026-03-15**
+- Dátum: **2026-03-16**
 - Fő kapcsolatok: **01, 06, 07, 10, 13, 14**
 
 ## Dokumentum célja
@@ -156,6 +156,10 @@ Minimum mezők:
 - `must_not_ack_collapse`
 - `source_honesty_mode`
 - `source_resolution_mode`
+- `composition_recap_used`
+- `composition_next_step_used`
+- `composition_reflective_lead_used`
+- `surface_hijack_guarded`
 
 ## 11. Canonical Snapshot Contract
 
@@ -258,3 +262,5 @@ Ha a kód ezt más nevekkel valósítja meg, a semantikai megfelelést akkor is 
 - 2026-03-15 | REBUILD-037 | Canonical trace kiegészítés: recap_source_turn_count + recap_included_turn_count response-plan trace mezők | Miért: recap ablak döntés visszakövethetősége.
 
 - REBUILD-037 review: interpret-pack hardening scope checked; document reviewed for Gate 2 alignment.
+
+- 2026-03-16 | REBUILD-042 | Canonical response-plan/trace contract pontosítva a mixed-continuity kompozíciós mezőkkel és surface-hijack guarddal. | Miért: REBUILD-041 semantics docs-sync.

@@ -1,0 +1,399 @@
+REBUILD-043 validation
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0
+rootdir: /workspace/new-try
+configfile: pyproject.toml
+testpaths: tests
+collected 220 items
+
+tests/test_applicability_gate.py ..                                      [  0%]
+tests/test_artifact_audit.py .                                           [  1%]
+tests/test_artifact_registry.py .                                        [  1%]
+tests/test_artifact_scope_guard.py .                                     [  2%]
+tests/test_bootstrap_env.py ...                                          [  3%]
+tests/test_cli_talk.py ........................................          [ 21%]
+tests/test_config_loader.py ....                                         [ 23%]
+tests/test_continue_from_here.py .                                       [ 24%]
+tests/test_decision_readiness_baseline.py .....                          [ 26%]
+tests/test_deliberation_strategy.py ..                                   [ 27%]
+tests/test_doctor.py ..                                                  [ 28%]
+tests/test_evidence_context_honesty.py .                                 [ 28%]
+tests/test_evidence_failed_ingest.py .                                   [ 29%]
+tests/test_evidence_grounded_talk.py ...                                 [ 30%]
+tests/test_evidence_ingest_baseline.py ..                                [ 31%]
+tests/test_identity_relationship.py ..                                   [ 32%]
+tests/test_import_boundaries.py ...                                      [ 33%]
+tests/test_live_input_decoding.py ..                                     [ 34%]
+tests/test_live_interactive_emit.py ....                                 [ 36%]
+tests/test_live_interactive_tty.py .                                     [ 36%]
+tests/test_live_loop.py .....                                            [ 39%]
+tests/test_live_parity.py ..                                             [ 40%]
+tests/test_live_presence_parity.py .                                     [ 40%]
+tests/test_live_relationship_alignment.py .                              [ 40%]
+tests/test_live_relationship_trace.py .                                  [ 41%]
+tests/test_live_rendering.py .....                                       [ 43%]
+tests/test_live_text_sanitization.py ..                                  [ 44%]
+tests/test_live_trace_honesty.py ..                                      [ 45%]
+tests/test_live_windows_console.py ..                                    [ 46%]
+tests/test_local_file_bridge.py .                                        [ 46%]
+tests/test_maintenance_route_hijack.py ..                                [ 47%]
+tests/test_memory_maintenance.py .                                       [ 48%]
+tests/test_objective_synthesis.py ................                       [ 55%]
+tests/test_once_file_boundary.py .                                       [ 55%]
+tests/test_packaging.py .                                                [ 56%]
+tests/test_persistence.py .....                                          [ 58%]
+tests/test_personal_memory.py ...............                            [ 65%]
+tests/test_presence_entry.py .                                           [ 65%]
+tests/test_presence_followups.py .                                       [ 66%]
+tests/test_presence_surface.py ..                                        [ 67%]
+tests/test_rebuild035a_followup.py ...                                   [ 68%]
+tests/test_rebuild036_gate2.py .......                                   [ 71%]
+tests/test_rebuild037_interpret_pack.py .......                          [ 75%]
+tests/test_rebuild037_recap_quality.py ....                              [ 76%]
+tests/test_rebuild041_surface_continuity.py ....                         [ 78%]
+tests/test_rebuild042_gate2_residual_surface.py .....                    [ 80%]
+tests/test_relationship_alignment.py ..                                  [ 81%]
+tests/test_relationship_trace.py .                                       [ 82%]
+tests/test_reply_adapter.py ....                                         [ 84%]
+tests/test_return_thread_surface_trace.py .                              [ 84%]
+tests/test_routing.py ........                                           [ 88%]
+tests/test_source_context_visibility.py .                                [ 88%]
+tests/test_text_normalize.py .....                                       [ 90%]
+tests/test_thread_maintenance.py .                                       [ 91%]
+tests/test_thread_weave_baseline.py ....                                 [ 93%]
+tests/test_time_awareness.py ....                                        [ 95%]
+tests/test_time_bootstrap.py ..                                          [ 95%]
+tests/test_toml_strings.py ..                                            [ 96%]
+tests/test_workframe_baseline.py .......                                 [100%]
+
+============================= 220 passed in 47.25s =============================
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0
+rootdir: /workspace/new-try
+configfile: pyproject.toml
+testpaths: tests
+collected 220 items
+
+tests/test_applicability_gate.py ..                                      [  0%]
+tests/test_artifact_audit.py .                                           [  1%]
+tests/test_artifact_registry.py .                                        [  1%]
+tests/test_artifact_scope_guard.py .                                     [  2%]
+tests/test_bootstrap_env.py ...                                          [  3%]
+tests/test_cli_talk.py ........................................          [ 21%]
+tests/test_config_loader.py ....                                         [ 23%]
+tests/test_continue_from_here.py .                                       [ 24%]
+tests/test_decision_readiness_baseline.py .....                          [ 26%]
+tests/test_deliberation_strategy.py ..                                   [ 27%]
+tests/test_doctor.py ..                                                  [ 28%]
+tests/test_evidence_context_honesty.py .                                 [ 28%]
+tests/test_evidence_failed_ingest.py .                                   [ 29%]
+tests/test_evidence_grounded_talk.py ...                                 [ 30%]
+tests/test_evidence_ingest_baseline.py ..                                [ 31%]
+tests/test_identity_relationship.py ..                                   [ 32%]
+tests/test_import_boundaries.py ...                                      [ 33%]
+tests/test_live_input_decoding.py ..                                     [ 34%]
+tests/test_live_interactive_emit.py ....                                 [ 36%]
+tests/test_live_interactive_tty.py .                                     [ 36%]
+tests/test_live_loop.py .....                                            [ 39%]
+tests/test_live_parity.py ..                                             [ 40%]
+tests/test_live_presence_parity.py .                                     [ 40%]
+tests/test_live_relationship_alignment.py .                              [ 40%]
+tests/test_live_relationship_trace.py .                                  [ 41%]
+tests/test_live_rendering.py .....                                       [ 43%]
+tests/test_live_text_sanitization.py ..                                  [ 44%]
+tests/test_live_trace_honesty.py ..                                      [ 45%]
+tests/test_live_windows_console.py ..                                    [ 46%]
+tests/test_local_file_bridge.py .                                        [ 46%]
+tests/test_maintenance_route_hijack.py ..                                [ 47%]
+tests/test_memory_maintenance.py .                                       [ 48%]
+tests/test_objective_synthesis.py ................                       [ 55%]
+tests/test_once_file_boundary.py .                                       [ 55%]
+tests/test_packaging.py .                                                [ 56%]
+tests/test_persistence.py .....                                          [ 58%]
+tests/test_personal_memory.py ...............                            [ 65%]
+tests/test_presence_entry.py .                                           [ 65%]
+tests/test_presence_followups.py .                                       [ 66%]
+tests/test_presence_surface.py ..                                        [ 67%]
+tests/test_rebuild035a_followup.py ...                                   [ 68%]
+tests/test_rebuild036_gate2.py .......                                   [ 71%]
+tests/test_rebuild037_interpret_pack.py .......                          [ 75%]
+tests/test_rebuild037_recap_quality.py ....                              [ 76%]
+tests/test_rebuild041_surface_continuity.py ....                         [ 78%]
+tests/test_rebuild042_gate2_residual_surface.py .....                    [ 80%]
+tests/test_relationship_alignment.py ..                                  [ 81%]
+tests/test_relationship_trace.py .                                       [ 82%]
+tests/test_reply_adapter.py ....                                         [ 84%]
+tests/test_return_thread_surface_trace.py .                              [ 84%]
+tests/test_routing.py ........                                           [ 88%]
+tests/test_source_context_visibility.py .                                [ 88%]
+tests/test_text_normalize.py .....                                       [ 90%]
+tests/test_thread_maintenance.py .                                       [ 91%]
+tests/test_thread_weave_baseline.py ....                                 [ 93%]
+tests/test_time_awareness.py ....                                        [ 95%]
+tests/test_time_bootstrap.py ..                                          [ 95%]
+tests/test_toml_strings.py ..                                            [ 96%]
+tests/test_workframe_baseline.py .......                                 [100%]
+
+============================= 220 passed in 46.18s =============================
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-9.0.2, pluggy-1.6.0
+rootdir: /workspace/new-try
+configfile: pyproject.toml
+collected 9 items
+
+tests/test_rebuild041_surface_continuity.py ....                         [ 44%]
+tests/test_rebuild042_gate2_residual_surface.py .....                    [100%]
+
+============================== 9 passed in 2.02s ===============================
+Listing 'src'...
+Listing 'src/syntaris'...
+Listing 'src/syntaris/bootstrap'...
+Listing 'src/syntaris/config'...
+Listing 'src/syntaris/contracts'...
+Listing 'src/syntaris/core'...
+Listing 'src/syntaris/orchestration'...
+Listing 'src/syntaris/persistence'...
+Listing 'src/syntaris/reply'...
+Listing 'src/syntaris/trace'...
+{
+  "db_path": "./.syntaris/runtime.db",
+  "schema_initialized": true,
+  "schema_version": 8
+}
+{
+  "kind": "turn",
+  "reply": "R\u00f6viden: van el\u0151zm\u00e9ny\u00fcnk, de most kev\u00e9s biztos recap-pont l\u00e1tszik.\nMost m\u00e9g nincs stabil next-stepem; egy r\u00f6vid c\u00e9lmondattal pontos\u00edts, \u00e9s abb\u00f3l adok konkr\u00e9t l\u00e9p\u00e9st.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 1,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "hol tartunk most \u00e9s mi a k\u00f6vetkez\u0151 l\u00e9p\u00e9s?",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+{
+  "turn": {
+    "turn_id": 1,
+    "session_id": 1,
+    "thread_id": 1,
+    "thread_key": "default",
+    "mode": "chat",
+    "turn_index": 1,
+    "user_message": "hol tartunk most \u00e9s mi a k\u00f6vetkez\u0151 l\u00e9p\u00e9s?",
+    "assistant_reply": "R\u00f6viden: van el\u0151zm\u00e9ny\u00fcnk, de most kev\u00e9s biztos recap-pont l\u00e1tszik.\nMost m\u00e9g nincs stabil next-stepem; egy r\u00f6vid c\u00e9lmondattal pontos\u00edts, \u00e9s abb\u00f3l adok konkr\u00e9t l\u00e9p\u00e9st.",
+    "backend": "deterministic",
+    "degraded": false
+  },
+  "trace_events": [
+    {
+      "trace_id": 1,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "route_decision_computed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"action\": \"continue_active\", \"after_previous_thread_id\": null, \"after_previous_thread_key\": null, \"after_thread_id\": 1, \"after_thread_key\": \"default\", \"before_previous_thread_id\": null, \"before_previous_thread_key\": null, \"before_thread_id\": 1, \"before_thread_key\": \"default\", \"created_thread\": false, \"execution_message\": \"hol tartunk most \\u00e9s mi a k\\u00f6vetkez\\u0151 l\\u00e9p\\u00e9s?\", \"match_pattern\": null, \"pending_resolution\": \"none\", \"reason\": \"no_routing_phrase_match\", \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 2,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "active_state_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"mode\": \"chat\", \"previous_thread_id\": null, \"previous_thread_key\": null, \"session_id\": 1, \"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 3,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_resolved_or_created",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"thread_id\": 1, \"thread_key\": \"default\"}"
+    },
+    {
+      "trace_id": 4,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_context_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"last_turn_id\": null, \"recent_turn_count\": 0, \"source\": \"execution_target\", \"thread_id\": 1, \"thread_key\": \"default\", \"turn_count\": 0}"
+    },
+    {
+      "trace_id": 5,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "reply_generated",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"backend\": \"deterministic\", \"degraded\": false, \"mode\": \"chat\"}"
+    },
+    {
+      "trace_id": 6,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_persisted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"turn_id\": 1, \"turn_index\": 1}"
+    },
+    {
+      "trace_id": 7,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_execution_source",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"source\": \"talk_once\"}"
+    },
+    {
+      "trace_id": 8,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "turn_interpreted",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"claim_capture_count\": 0, \"clarification_reason\": null, \"declared_direction\": null, \"declared_focus\": null, \"kind\": \"recall_current\", \"memory_query\": null, \"owner_name\": null, \"owner_relation\": null, \"pattern_name\": \"recall_current_normalized\", \"personal_entry_kind\": null, \"rejected_reason\": [\"thread_query:thread recall/resume cues\", \"chat_lock:explicit casual cues\"], \"relative_time_terms\": [\"most\"], \"selected_intent\": \"direct_answer\", \"selected_reason\": \"intent=direct_answer;workframe=work;thread=current\", \"style_constraints_effective\": [], \"thread_candidate_summary\": [\"current:1\"], \"uncertainty_flags\": [], \"unit_count\": 2, \"workframe_candidate_summary\": [\"work:3\", \"chat:0\", \"recall:0\"]}"
+    },
+    {
+      "trace_id": 9,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "recall_resolved",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_emitted\": false, \"loaded_from_persistence\": false, \"refreshed_snapshot\": true, \"request_target\": \"current\", \"requested\": true, \"resolved_target\": \"current\", \"thread_id\": 1, \"thread_key\": \"default\", \"used_snapshot\": true}"
+    },
+    {
+      "trace_id": 10,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "response_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"ack_collapse_risk\": false, \"anti_hijack_guarded\": false, \"chat_lock_active\": false, \"chat_lock_strength\": \"none\", \"clarification_emitted\": false, \"clarification_needed\": false, \"clarification_reason\": null, \"composition_next_step_used\": true, \"composition_recap_used\": true, \"composition_reflective_lead_used\": false, \"continuity_class\": \"new_or_unknown\", \"daypart\": \"delutan\", \"direct_answer_present\": true, \"direct_answer_required\": true, \"final_thread_arbitration\": \"current\", \"final_workframe\": \"work\", \"focus_used\": true, \"gap_kind\": \"unknown\", \"kind\": \"ordinary\", \"recap_included_turn_count\": 0, \"recap_source_turn_count\": 0, \"relative_grounding\": [\"most:jelen id\\u0151pont\"], \"reply_shape\": \"direct\", \"section_count\": 1, \"style_constraints\": [], \"surface_hijack_guarded\": true}"
+    },
+    {
+      "trace_id": 11,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_focus_loaded",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"filtered_control_turn_count\": 0, \"filtered_pending_turn_count\": 0, \"filtered_recap_turn_count\": 0, \"included_turn_count\": 0, \"loaded\": true, \"loaded_from_persistence\": false, \"source_turn_count\": 0, \"thread_id\": 1, \"thread_key\": \"default\", \"update_reason\": null, \"updated\": false}"
+    },
+    {
+      "trace_id": 12,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "workframe_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"assumption_count\": 0, \"assumption_status\": \"unknown_or_not_established\", \"blocker_status\": \"uncertainty_or_missing_info\", \"blocker_text\": null, \"decision_count\": 0, \"decision_state\": \"no_decision_established\", \"evidence_gap_count\": 0, \"evidence_gap_status\": \"evidence_sufficient\", \"missing_info_count\": 0, \"missing_info_status\": \"no_missing_info_established\", \"next_step_line_count\": 0, \"next_step_status\": \"none\", \"objective_status\": \"related_context\", \"objective_text\": null, \"open_question_count\": 0, \"open_question_status\": \"no_open_question_established\", \"query_family\": null, \"uncertainty_marked\": false, \"workframe\": \"planning\"}"
+    },
+    {
+      "trace_id": 13,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "thread_weave_state_derived",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"applicability_status\": \"applicability_uncertain\", \"conclusion_status\": \"no_conclusion_established\", \"conclusion_validity\": \"historical_reminder_value_only\", \"detour_thread_key\": null, \"main_thread_key\": \"default\", \"query_family\": null, \"related_thread_key\": null, \"relation\": \"relation_unknown\", \"temporary_state_lifecycle\": \"aging_or_stale_temporary_state\", \"thread_lifecycle\": \"active\"}"
+    },
+    {
+      "trace_id": 14,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "comparison_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"candidate_count\": 2, \"candidate_kinds\": [\"recall\", \"direct\"], \"winner_kind\": \"recall\", \"winner_score\": 8}"
+    },
+    {
+      "trace_id": 15,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "answer_strategy_selected",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"clarification_cause\": null, \"clarification_planned\": false, \"confidence\": \"high\", \"selected_candidate_kind\": \"recall\", \"selected_strategy\": \"recall_answer\"}"
+    },
+    {
+      "trace_id": 16,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "objective_framed",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"is_multi_part\": true, \"kind\": \"mixed_multi_part\", \"secondary_kinds\": [\"next_step\", \"next_step\"]}"
+    },
+    {
+      "trace_id": 17,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "decomposition_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"unit_count\": 1, \"unit_kinds\": [\"next_step\"]}"
+    },
+    {
+      "trace_id": 18,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "evidence_pack_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"artifact_ids\": [], \"chunk_count\": 0, \"ingest_status\": \"no_evidence_ingested\", \"item_count\": 2, \"key_line_count\": 0, \"support_distribution\": {\"supported\": 1, \"unresolved\": 1}}"
+    },
+    {
+      "trace_id": 19,
+      "session_id": 1,
+      "thread_id": 1,
+      "mode": "chat",
+      "event_name": "synthesis_plan_built",
+      "backend": "deterministic",
+      "degraded": false,
+      "payload": "{\"partial\": true, \"section_count\": 4, \"section_keys\": [\"core_point\", \"supported_facts\", \"unresolved_parts\", \"next_step\"]}"
+    }
+  ]
+}
+tests_module_file= /workspace/new-try/tests/__init__.py

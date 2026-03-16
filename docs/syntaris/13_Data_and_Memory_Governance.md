@@ -119,3 +119,5 @@ Nem cél a mindent elraktározó, ellenőrizetlen emlékezet.
 - 2026-03-15 | REBUILD-036 finisher | checked, no change | Miért: ticket nem érintett retention/governance szabályt.
 
 - 2026-03-15 | REBUILD-037 | checked, no change | Miért: recap kiválasztás nem módosít retention/governance szabályt.
+
+- 2026-03-16 | REBUILD-042 | checked, no change | Miért: ticket nem módosította data/memory governance szabályokat.
