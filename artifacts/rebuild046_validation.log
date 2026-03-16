@@ -1,0 +1,144 @@
+# REBUILD-046 validation log
+
+## clean suite
+$ python -m pytest -q
+exit=0
+```text
+........................................................................ [ 31%]
+........................................................................ [ 63%]
+........................................................................ [ 94%]
+............                                                             [100%]
+228 passed in 53.88s
+```
+
+## targeted regressions
+$ python -m pytest -q tests/test_rebuild035a_followup.py
+exit=0
+```text
+...                                                                      [100%]
+3 passed in 1.18s
+```
+
+## targeted regressions
+$ python -m pytest -q tests/test_rebuild041_surface_continuity.py tests/test_rebuild042_gate2_residual_surface.py tests/test_rebuild045_gate2_corrective.py
+exit=0
+```text
+.................                                                        [100%]
+17 passed in 3.66s
+```
+
+## compile
+$ python -m compileall -q src
+exit=0
+```text
+
+```
+
+## runtime smoke
+$ python -m syntaris.cli --config config/syntaris.example.toml init-db
+exit=0
+```text
+{
+  "db_path": "/tmp/rebuild046-8cl5h9io/runtime.db",
+  "schema_initialized": true,
+  "schema_version": 8
+}
+```
+
+## runtime smoke
+$ python -m syntaris.cli --config config/syntaris.example.toml artifact-find build_error
+exit=0
+```text
+{"pattern": "build_error", "matches": []}
+```
+
+## runtime smoke
+$ python -m syntaris.cli --config config/syntaris.example.toml artifact-read /tmp/rebuild046-8cl5h9io/sandbox/smoke.log
+exit=0
+```text
+{
+  "kind": "structured",
+  "reply": "Rendben, a nyers log/konzol blokkot evidenciak\u00e9nt beemeltem.\nKivonat: 1 relev\u00e1ns chunk, 2 kulcssor.\nMost m\u00e1r tudok v\u00e1laszolni bel\u0151le: mi a hiba / mi biztos / mi csak k\u00f6vetkeztet\u00e9s.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 1,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "Traceback (most recent call last):\nValueError: boom\n",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+```
+
+## runtime smoke
+$ python -m syntaris.cli --config config/syntaris.example.toml talk --once-file /tmp/rebuild046-8cl5h9io/sandbox/smoke.log
+exit=0
+```text
+{
+  "kind": "structured",
+  "reply": "Rendben, a nyers log/konzol blokkot evidenciak\u00e9nt beemeltem.\nKivonat: 1 relev\u00e1ns chunk, 2 kulcssor.\nMost m\u00e1r tudok v\u00e1laszolni bel\u0151le: mi a hiba / mi biztos / mi csak k\u00f6vetkeztet\u00e9s.",
+  "session_id": 1,
+  "thread_id": 1,
+  "thread_key": "default",
+  "mode": "chat",
+  "turn_id": 2,
+  "backend": "deterministic",
+  "degraded": false,
+  "route": {
+    "action": "continue_active",
+    "reason": "no_routing_phrase_match",
+    "thread_key": "default",
+    "created_thread": false,
+    "pending_resolution": "none",
+    "execution_message": "Traceback (most recent call last):\nValueError: boom\n",
+    "transition": {
+      "before_thread_id": 1,
+      "before_thread_key": "default",
+      "before_previous_thread_id": null,
+      "before_previous_thread_key": null,
+      "after_thread_id": 1,
+      "after_thread_key": "default",
+      "after_previous_thread_id": null,
+      "after_previous_thread_key": null
+    },
+    "pending_proposal": null
+  }
+}
+```
+
+## runtime smoke
+$ printf '/status\n/kilep\n' | python -m syntaris.cli --config config/syntaris.example.toml talk --live
+exit=0
+```text
+{"last_turn_id": 2, "mode": "chat", "pending_route": null, "previous_thread_id": null, "previous_thread_key": null, "session_id": 1, "thread_id": 1, "thread_key": "default", "turn_count": 2}
+{"event": "loop_exit"}
+```
+
+## clean suite (post-runtime recheck)
+$ python -m pytest -q
+exit=0
+```text
+........................................................................ [ 31%]
+........................................................................ [ 63%]
+........................................................................ [ 94%]
+............                                                             [100%]
+228 passed in 53.81s
+```
