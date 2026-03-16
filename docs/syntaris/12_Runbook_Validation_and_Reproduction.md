@@ -188,6 +188,12 @@ Ha a kör nem bizonyíthatóan tiszta, nem szabad végső ítéletet alapozni r�
 8. live-loop smoke (`talk --live`) empty_input zaj és tiszta /kilep bizonyítással
 9. artifact mentés: `artifacts/rebuild045_validation.log`, `artifacts/rebuild045_live_matrix.md`
 
+
+## REBUILD-046 harness isolation minimum kör
+1. `python scripts/rebuild046_validate.py`
+2. Ellenőrzés: `artifacts/rebuild046_validation.log` külön blokkokat tartalmaz (`clean suite`, `targeted regressions`, `runtime smoke`, `clean suite (post-runtime recheck)`).
+3. Ellenőrzés: `artifacts/rebuild046_clean_vs_runtime_split.md` tartalmazza az izolációs beállítást és a fázisonkénti eredményeket.
+
 ## Delta Journal
 
 - 2026-03-15 | REBUILD-036 | Reprodukciós kör hozzáadva: tiszta temp config+DB, ticket smoke lista, live smoke, trace-last/thread-snapshot ellenőrzés | Miért: kontaminációmentes bizonyítás.
@@ -203,3 +209,5 @@ Ha a kör nem bizonyíthatóan tiszta, nem szabad végső ítéletet alapozni r�
 - 2026-03-16 | REBUILD-044 | Runbook kiegészítés: Gate 2 exit-prep 24-turn HU matrix kötelező evidence artifactokkal. | Miért: reprodukálható residual adjudikáció és kapu-előkészítési bizonyítás.
 
 - 2026-03-16 | REBUILD-045 | Runbook kiegészítés: corrective pass minimum kör live-loop UX proof-fel és rebuild045 artifactokkal. | Miért: reprodukálható javítás-validáció a valós bukásokra.
+
+- 2026-03-16 | REBUILD-046 | Runbook kiegészítés: clean-suite és runtime-smoke fázis szétválasztása dedikált izolált validációs helperrel (`scripts/rebuild046_validate.py`) és külön artifactokkal. | Miért: env leakage/harness contamination megelőzése és determinisztikus teljes validáció.
